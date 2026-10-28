@@ -1,0 +1,138 @@
+# Implementation Plan: Automated Plugin Validation and Release
+
+**Branch**: `002-automated-plugin-release` (feature identifier; no Git branch exists yet) | **Date**: 2026-10-28 | **Spec**: [spec.md](spec.md)
+
+**Input**: Feature specification from `specs/002-automated-plugin-release/spec.md`
+
+## Summary
+
+Validate pull requests and every push to `main`; publish a GitHub release only when the developer
+explicitly bumps the committed version before merge. A version command synchronizes package,
+lockfile, and Obsidian metadata without committing or tagging. Trusted release processing uses a
+durable push-event ledger, ordered reconciliation, exact-revision validation, and a draft-first,
+idempotent publication protocol. Obsidian's first directory submission remains a maintainer action.
+
+## Technical Context
+
+**Language/Version**: TypeScript for the plugin; Node.js 24 LTS for local tooling and CI, pinned to
+the same concrete release in project configuration and automation at implementation time.
+
+**Primary Dependencies**: Official Obsidian sample plugin's npm/esbuild/TypeScript conventions;
+GitHub Actions and GitHub Releases; Prettier for formatting checks; GitHub Issues for the durable
+release-event ledger; a JavaScript
+test runner with coverage (Vitest and V8 coverage). Use pinned action commit SHAs and lockfile.
+
+**Storage**: Git repository metadata (`package.json`, `package-lock.json`, `manifest.json`,
+`versions.json`); release artifacts and tags; one automation-owned GitHub issue per captured push
+plus a designated cursor issue. No habit or vault data enters the pipeline.
+
+**Testing**: Typecheck, lint, Prettier format checks, Vitest unit/integration tests and 80%
+line/branch coverage for
+maintained application code; isolated temporary repositories for version and event logic; release
+contract tests using a mocked GitHub API and a disposable repository for end-to-end acceptance.
+
+**Target Platform**: GitHub-hosted Linux runners and maintainer workstation; released plugin targets
+Obsidian desktop, iOS, and Android. Repository must enable Actions and Issues and authorize the
+release workflow to create issues, releases, and tags.
+
+**Project Type**: Obsidian plugin with release automation; no external application service.
+
+**Commit Convention**: Project commits follow Conventional Commits. Commit messages do not select
+versions or trigger releases; the developer explicitly chooses the version bump before merge.
+
+**Performance Goals**: No elapsed-time SLA in the specification. Tests verify eventual processing
+under normal service availability and clear failure/recovery under provider limits.
+
+**Constraints**: No auto-bump, auto-commit, or local release tag; no release without an explicit
+bump in the push; no incomplete public release, secret disclosure, overwrite, or bypass of platform
+verification. Ordered processing must not rely on Actions queue order.
+
+**Scale/Scope**: One GitHub repository, one default `main` branch, public release artifacts; a
+separate issue per captured push, including no-bump pushes, retained as a reconciliation ledger.
+
+## Constitution Check
+
+*Pre-research: PASS. Post-design: PASS, contingent on the implementation and validation below.*
+
+- **Data protection**: CI handles source and release metadata, not user vault content; tests use
+  synthetic fixtures. No published release is deleted or overwritten.
+- **Predictable behavior / vault respect**: Release automation does not alter habit semantics or
+  the vault. The manifest and build preserve mobile support and plugin compatibility.
+- **Verification**: CI enforces typecheck, lint, Prettier format checks, build, and 80% line and
+  branch coverage, with only
+  documented maintainer-approved exceptions. Contract and failure tests cover release ordering and
+  data integrity; desktop/iOS/Android verification is documented per relevant change or recorded as
+  unverified with reasons under the constitution.
+- **Simplicity and usability**: One developer-facing version command and one workflow system; the
+  additional ledger is justified below by the explicit ordered, per-push release requirement.
+- **Official template and offline behavior**: Build conventions follow the official sample; CI is
+  networked infrastructure only and introduces no runtime service dependency.
+
+## Project Structure
+
+### Documentation (this feature)
+
+```text
+specs/002-automated-plugin-release/
+├── spec.md
+├── plan.md
+├── research.md
+├── data-model.md
+├── quickstart.md
+├── contracts/
+│   └── release-contract.md
+└── tasks.md                  # generated later by $speckit-tasks
+```
+
+### Source Code (repository root; planned, not yet present)
+
+```text
+.github/workflows/
+├── ci.yml                    # PR and main validation, unprivileged
+└── release.yml               # trusted push intake and reconciliation
+scripts/
+├── version-bump.mjs          # explicit version command / sample-compatible metadata update
+├── validate-release.mjs      # version, revision and artifact checks
+└── reconcile-releases.mjs    # ledger, ordering, draft/retry protocol
+tests/release/                # version, event, ordering, recovery and contract tests
+src/                          # plugin from feature 001, prerequisite
+package.json, package-lock.json, manifest.json, versions.json
+```
+
+**Structure Decision**: Extend the single official-sample-based plugin repository rather than add a
+service. All listed application files are future work; Git is initialized on `main`, but this
+workspace has no plugin, lockfile, tests, or GitHub workflows. Feature 001 supplies the plugin/build prerequisites.
+
+### Release flow and design gates
+
+1. A developer runs the explicit version command locally, reviews and commits the resulting files,
+   and merges normally. PR validation runs with read-only permissions.
+2. On every `main` push, a trusted, non-serialized intake job records the immutable `before` and
+   `after` SHAs and delivery/run identity in a per-event issue before invoking the reconciler.
+   Pushes without bumps are retained for ordering but cannot release. A separately initialized
+   cursor points to the last consumed `main` revision.
+3. A single reconciler processes the ledger by following the `before → after` chain from the cursor,
+   not by run arrival time. It validates ancestry, exact push-tip version change and validation
+   outcome. A missing link, force-push, collision, failed validation, unavailable event, or ambiguous
+   initial state halts advancement and produces actionable status; it never skips the predecessor.
+   The reconciler runs on intake, periodically, and on maintainer-requested retry. Publication and
+   cursor transitions are serialized; a waiting predecessor must not hold the lock needed to process
+   it. A receipt/processing audit and rerun of the original event recover failed intake; provider
+   events never delivered cannot be reconstructed as push boundaries from Git history alone.
+4. A changed version must be valid `x.y.z`, strictly newer than the last published version, and
+   identical in package, lockfile, and manifest. The exact `after` SHA must have passed checks;
+   build from that SHA, verify required assets and minimum-version mapping, and tag that SHA.
+5. Create or safely resume an owned draft for this version/SHA, upload assets, verify their names,
+   bytes, tag resolution, and metadata, then publish. Retry accepts only a matching draft or
+   matching already-published release; foreign, divergent, or partial published releases stop with
+   an error. Before publishing, check the last published version to prevent an older release becoming
+   latest. Advance the cursor only after successful release or confirmed no-bump event.
+6. Initial installation requires a documented baseline cursor at a known `main` revision and an
+   explicitly selected first bump after that baseline. No automatic first release is inferred from
+   an absent predecessor. Directory submission and availability are separate from release status.
+
+## Complexity Tracking
+
+| Violation / added complexity | Why needed | Simpler alternative rejected because |
+|------------------------------|------------|--------------------------------------|
+| Durable GitHub Issues ledger and cursor (no constitutional violation) | Preserve every push boundary, reconcile out-of-order deliveries, and recover after canceled or failed runs. | Actions concurrency can replace pending runs, has a bounded queue, and does not guarantee dispatch order; Git commit history alone cannot recover push boundaries. |
