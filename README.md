@@ -1,143 +1,116 @@
 # Habit Tracker for Obsidian
 
-A local-first Obsidian plugin that shows the current week as a compact Monday–Sunday habit grid with
-previous/next week navigation. Each habit is a normal Markdown note you can read and edit, with
-weekly targets, weekly streaks, history, and guarded writes that warn instead of overwriting conflicts.
+[![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20%26%20mobile-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
+[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
+[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen)](CONTRIBUTING.md)
+
+A local-first habit tracker for [Obsidian](https://obsidian.md/) with a clean weekly dashboard.
+Choose how many days a week you want to practice a habit, mark your progress, and build a streak
+that makes room for rest days. Your habits live in Markdown notes in your vault.
+
+> **Project status:** In development. The plugin is not yet available from Obsidian's community
+> plugin directory; install it from a local build for now.
 
 ## Features
 
-- Create habits with a name and a target from 1 to 7 days per week (default 7).
-- Mark and unmark one completion per habit and local date from creation through today.
-- See weekly progress, the effective target, and weekly status for the selected seven-day week.
-- Choose an optional color and an Obsidian icon per habit, or remove either choice.
-- Track a streak of successful weeks, not consecutive days. Rest days do not break a week.
-- First-week target is reduced to the days remaining through Sunday.
-- Navigate to previous and next weeks, return to the current week, and correct historical records.
-- Open a habit's yearly activity calendar and see its current and best weekly streaks and total
-  marked days.
-- Rename habits, schedule target changes or archives for next week, and reactivate this week.
-- Keep every week's history, including archived weeks, and edit eligible dates in the past.
-- Work offline on desktop and mobile; no account, network request, or external service is used.
+- **A focused weekly view:** Track Monday through Sunday in an interactive grid and navigate to
+  earlier or later weeks.
+- **Flexible targets and streaks:** Choose a target from 1 to 7 days per week. A streak counts
+  successful weeks, so a 4-day target does not require seven consecutive days.
+- **Activity history:** Open an individual yearly calendar and review marked days, current streak,
+  and best streak.
+- **Make habits your own:** Choose an optional color and an icon from Obsidian's local icon library.
+- **Keep your history:** Rename habits, schedule target changes, archive and reactivate habits, or
+  correct eligible dates in previous weeks.
+- **Local by design:** Habit notes stay in your vault; tracking works offline without an account or
+  external service.
 
-## Install
+## Installation
 
-This repository currently builds the plugin manually. Release automation is a separate feature
-(002) and is not part of this implementation.
+The plugin currently requires a manual build and installation. You need a local checkout, Node.js
+24 and npm 11 or later. From the repository root, run:
 
-1. Build the plugin (see [docs/development.md](docs/development.md)).
-2. Create `<your-vault>/.obsidian/plugins/habit-tracker/`.
-3. Copy `main.js`, `manifest.json`, and `styles.css` into that folder.
-4. Enable **Habit Tracker** in Obsidian's Community Plugins settings.
-5. Run **Habit Tracker: Open habit dashboard** from the command palette or click the check-square
-   ribbon icon.
-
-Use an isolated test vault for conflict testing. Never use a personal production vault for
-fault-injection tests.
-
-## Usage
-
-- The dashboard opens on the current local week, centered with today highlighted in its seven days.
-- Create a habit in the always-visible **New habit** row. The default target is 7 days per week.
-- Check a day to mark it. Uncheck to unmark; select the same day again to restore a mark.
-- Use the previous/next arrows to review weeks and return to the current week. **This week** appears
-  only when the current week is displayed.
-- Select a habit's name to open its activity calendar. Use the year arrows to review earlier years;
-  the calendar is read-only, and past marks can be changed in the weekly grid. Its statistics count
-  successful weeks and marked days through today. Stored future marks are visible but not counted.
-  The calendar expands to the available width and scrolls horizontally on narrow screens.
-- Archived habits remain available in **Manage habits**; archived weeks with history remain visible
-  in the grid. Expand an archived habit's **Edit** row to open its activity calendar.
-- The header shows the year above the week range; a week crossing a new year names both years. It
-  does not show a habit count, and refresh is automatic.
-- Color and icon changes apply immediately. Target changes and archiving take effect next week;
-  reactivation applies in the current week.
-- **Manage habits** shows a compact list with each habit's current streak and, for active habits,
-  target and current-week progress. Expand **Edit** to rename a habit, schedule a target, choose a
-  color and icon, or archive or reactivate it. Name and target are followed by the grouped color and
-  icon controls. The color swatch applies immediately, and **Use theme color** restores the theme.
-  **Choose icon** or **Change icon** lets you search locally registered Obsidian icons; use the page
-  controls to browse all matching icons, up to 27 per page. Select one to apply it or choose **Remove icon**
-  to clear it. Opening a habit's editor closes the previously open one; unsaved input is kept while
-  the dashboard remains open.
-
-## Storage format
-
-Each habit is one Markdown note in the configured habits folder. The plugin owns one marked JSON block
-in the note body and preserves every byte outside it, including frontmatter and prose:
-
-````markdown
-<!-- habit-tracker:start -->
-
-```json
-{
-  "schemaVersion": 1,
-  "id": "a-stable-id",
-  "name": "Gym",
-  "color": "#3366cc",
-  "icon": "dumbbell",
-  "created": "2026-10-26",
-  "targets": [{ "week": "2026-10-26", "days": 4 }],
-  "states": [{ "week": "2026-10-26", "state": "active" }],
-  "completions": ["2026-10-26", "2026-10-28"]
-}
+```sh
+npm ci
+npm run build
 ```
 
-<!-- habit-tracker:end -->
-````
+1. Create the folder `<your-vault>/.obsidian/plugins/habit-tracker/` in your vault.
+2. Copy `main.js`, `manifest.json`, and `styles.css` from the project root into that folder.
+3. In Obsidian, open **Settings → Community plugins** and enable **Habit Tracker**.
+4. Open the dashboard using the ribbon icon or the **Habit Tracker: Open habit dashboard** command.
 
-`color` is optional (`#rrggbb`); when absent or invalid, the theme accent is used. `icon` is an
-optional Obsidian icon ID. If that icon is unavailable on another device, its ID remains saved and
-the other habit data remains usable. The full contract is in
-[specs/001-weekly-habit-dashboard/contracts/habit-note.md](specs/001-weekly-habit-dashboard/contracts/habit-note.md)
-and [docs/data-format.md](docs/data-format.md). Do not rename or move the markers. Renaming a habit
-inside the plugin changes its display name but preserves its stable ID and file path.
+For development setup and test-vault instructions, see [CONTRIBUTING.md](CONTRIBUTING.md) and
+[docs/development.md](docs/development.md).
 
-### External edits and synchronization
+## Quick start
 
-- Valid external edits (name, color, icon, completions, targets, states) are loaded on refresh, focus,
-  resume, or an Obsidian vault modification event.
-- Invalid or unsupported notes are reported in the dashboard and are never overwritten.
-- Duplicate habit IDs are reported for every involved note; none of the duplicates is auto-merged.
-- The plugin detects a saved note changing between its base snapshot and the guarded write. It stops
-  the save, leaves the existing note untouched, and reports the conflict clearly.
-- The plugin cannot guarantee detection of independent sync clients or another program writing
-  outside Obsidian's documented `Vault.process` interval. Resolving cross-device sync conflicts
-  remains the user's responsibility.
-- If a habit note is open with unsaved or unverifiable editor content, no write is attempted. Save
-  or close the note, then repeat the action.
+1. Open the habit dashboard from the ribbon or command palette.
+2. In **New habit**, enter a name, choose a weekly target, and select **Create habit**.
+3. Select an eligible day in the grid to mark it. Select it again to unmark it.
+4. Use the arrows to move between weeks. Select a habit's name to open its activity history.
+5. Expand **Manage habits** to change a name, target, color, or icon, or to archive a habit.
 
-## Conflicts and data protection
+For example, set **Gym** to **4 days / week**. Once you mark four distinct days, that week counts
+toward your streak even if the days are not consecutive. An unfinished current week does not break
+the previous streak; a completed week that misses its target resets it. If you create a habit partway
+through a week, the first week's target is capped at the number of days remaining through Sunday.
 
-The plugin does not create a recovery journal or copy notes on every edit. Writes use Obsidian's
-protected local read/modify/write with an exact snapshot comparison: if the note changed, the write
-stops and the existing note is preserved. The dashboard reports conflicts and failures in text so
-you can review the note and repeat the action explicitly.
+## Configuration and habits
 
-Existing `recovery-*` notes left by earlier development builds are not read, modified, or deleted
-by the current plugin. There is no automatic cleanup. An unmarked day can be marked again directly;
-unsaved changes are not promised to survive an unexpected app exit.
+By default, habit notes are stored in the `Habits` folder. Change **Habits folder** in
+**Settings → Habit Tracker** to use a different vault folder. The plugin creates a Markdown note for
+each habit and manages a marked block inside it; content outside that block is preserved. See
+[docs/data-format.md](docs/data-format.md) for the note format and editing guidance.
 
-## Migration safeguards
+In **Manage habits**:
 
-The current schema is version 1. Unknown or unsupported versions are reported and left unchanged.
-Any future migration requires explicit user approval and a recoverable copy of the original before
-conversion. A failed migration must leave the original available. See
-[docs/data-format.md](docs/data-format.md).
+- Color and icon changes apply immediately. The icon picker searches locally available Obsidian
+  icons and shows up to 27 results per page. **Use theme color** or **Remove icon** resets a choice.
+- Target changes and archiving take effect next week. Reactivation applies in the current week.
+- Archived habits and their history remain accessible. Only one editor is open at a time; drafts
+  are kept while the dashboard remains open.
 
-## Platform support
+## Data and privacy
 
-The manifest sets `isDesktopOnly: false`, and the runtime uses supported Vault, workspace, DOM, and
-Obsidian APIs without Node.js or Electron imports. Automated tests cover the shared behavior.
-Desktop Obsidian 1.14.5 on macOS passed a smoke verification in an isolated vault. iOS and Android
-were not available for testing; the unverified platforms and reasons are recorded in
-[specs/001-weekly-habit-dashboard/validation.md](specs/001-weekly-habit-dashboard/validation.md).
+Habit data and settings stay in your vault. The plugin has no network code, telemetry, account, or
+external service dependency.
 
-## Development
+Edits use a guarded local write: if a note changed since it was read, the plugin stops and reports
+the conflict instead of overwriting it. If a note is open with unsaved or unverifiable editor
+content, save or close it before trying the action again. Invalid notes are reported without being
+rewritten. The plugin cannot guarantee detection of conflicts produced by independent sync clients
+outside Obsidian's protected write interval.
 
-See [docs/development.md](docs/development.md) for the toolchain, commands, Conventional Commits
-convention, coverage requirements, and test-vault setup.
+The plugin does not create a recovery journal. Unknown note formats are left unchanged; future
+format migrations require explicit approval and a recoverable copy of the original. See
+[docs/data-format.md](docs/data-format.md) for details.
 
-## Privacy
+## Compatibility
 
-Habit data stays in your vault. The plugin has no network code, no telemetry, and no external service
-dependency. The plugin writes only the habit notes in the configured habits folder.
+The manifest supports desktop and mobile and requires Obsidian **1.6.0 or later**. Desktop Obsidian
+has been smoke-tested on macOS. iOS and Android have not yet been tested on real devices; see the
+[validation record](specs/001-weekly-habit-dashboard/validation.md) for current results and limits.
+
+## Troubleshooting
+
+- **A habit does not appear:** Check the configured habits folder. Notes without a valid managed
+  habit block are reported as note problems; create a habit in the dashboard or review the
+  [data format](docs/data-format.md).
+- **A day cannot be marked:** Dates before the habit was created and dates after today are not
+  editable.
+- **An edit is blocked:** Check the dashboard's error or conflict message. Save or close any unsaved
+  habit note, review external changes, and repeat the action.
+
+When reporting an issue, include the Obsidian version, operating system, steps to reproduce, and
+relevant error text. Use synthetic examples and remove private vault content before sharing.
+
+## Contributing
+
+Contributions, bug reports, and documentation improvements are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and pull request guidelines.
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0 only](LICENSE). See
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the notice for the Obsidian sample plugin.

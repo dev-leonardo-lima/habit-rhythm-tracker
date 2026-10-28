@@ -1,5 +1,8 @@
 # Development
 
+For contribution workflow, pull request guidance, and the project license, see
+[CONTRIBUTING.md](../CONTRIBUTING.md).
+
 ## Requirements
 
 - Node.js 24 LTS (pinned by `.nvmrc`; run `nvm use` if you use nvm).
@@ -16,16 +19,17 @@ npm ci
 
 ## Commands
 
-| Command                 | Purpose                                                            |
-| ----------------------- | ------------------------------------------------------------------ |
-| `npm run dev`           | esbuild watch build producing `main.js`                            |
-| `npm run build`         | strict typecheck plus production esbuild bundle                    |
-| `npm run typecheck`     | `tsc --noEmit` with strict settings                                |
-| `npm run lint`          | ESLint flat config                                                 |
-| `npm run format`        | Prettier write                                                     |
-| `npm run format:check`  | Prettier check (generated output, Spec Kit, and lockfile excluded) |
-| `npm test`              | Vitest unit and integration tests                                  |
-| `npm run test:coverage` | Vitest with V8 coverage and 80% line/branch thresholds             |
+| Command                  | Purpose                                                            |
+| ------------------------ | ------------------------------------------------------------------ |
+| `npm run dev`            | Development build producing `main.js`                              |
+| `npm run dev -- --watch` | Rebuild `main.js` when source files change                         |
+| `npm run build`          | strict typecheck plus production esbuild bundle                    |
+| `npm run typecheck`      | `tsc --noEmit` with strict settings                                |
+| `npm run lint`           | ESLint flat config                                                 |
+| `npm run format`         | Prettier write                                                     |
+| `npm run format:check`   | Prettier check (generated output, Spec Kit, and lockfile excluded) |
+| `npm test`               | Vitest unit and integration tests                                  |
+| `npm run test:coverage`  | Vitest with V8 coverage and 80% line/branch thresholds             |
 
 The maintained application code under `src/` must keep at least **80% line and 80% branch
 coverage**. Generated output (`main.js`, `coverage/`) is excluded. A failure to reach the threshold
