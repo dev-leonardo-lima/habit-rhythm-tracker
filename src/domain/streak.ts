@@ -41,6 +41,45 @@ export function currentStreak(habit: Habit, today: LocalDate): number {
   return streak;
 }
 
+/** The longest run of successful weeks through today, skipping archived weeks. */
+export function bestStreak(habit: Habit, today: LocalDate): number {
+  const firstWeek = mondayOf(habit.created);
+  const currentWeek = mondayOf(today);
+  if (firstWeek > currentWeek) {
+    return 0;
+  }
+
+  // Group marks once so evaluating a long history does not rescan every date
+  // for every week. weeklyOutcome remains the source of the target rules.
+  const completionsByWeek = new Map<string, LocalDate[]>();
+  for (const date of habit.completions) {
+    if (date > today) {
+      continue;
+    }
+    const week = mondayOf(date);
+    const completions = completionsByWeek.get(week) ?? [];
+    completions.push(date);
+    completionsByWeek.set(week, completions);
+  }
+
+  let run = 0;
+  let best = 0;
+  for (let week = firstWeek; week <= currentWeek; week = addDays(week, 7)) {
+    const outcome = weeklyOutcome(
+      { ...habit, completions: completionsByWeek.get(week) ?? [] },
+      week,
+      today,
+    );
+    if (outcome === 'successful') {
+      run += 1;
+      best = Math.max(best, run);
+    } else if (outcome === 'unsuccessful') {
+      run = 0;
+    }
+  }
+  return best;
+}
+
 export function streakLabel(streak: number): string {
   return `${streak} ${streak === 1 ? 'week' : 'weeks'}`;
 }

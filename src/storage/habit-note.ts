@@ -1,4 +1,5 @@
 import { normalizeHabitColor } from '../domain/habit-color';
+import { normalizeHabitIcon } from '../domain/habit-icon';
 import { compareDates, isValidLocalDate, isWeekKey, mondayOf } from '../domain/local-date';
 import type { Habit, LocalDate, StateEntry, TargetEntry } from '../domain/types';
 import { HABIT_SCHEMA_VERSION } from '../domain/types';
@@ -179,11 +180,16 @@ export function validateHabitRecord(value: unknown): Habit {
   const states = parseStates(value.states, creationWeek);
   const completions = parseCompletions(value.completions, created);
   const color = normalizeHabitColor(value.color);
+  const icon = value.icon === undefined ? null : normalizeHabitIcon(value.icon);
+  if (value.icon !== undefined && !icon) {
+    invalid('icon must be a nonblank icon ID without control characters');
+  }
   return {
     schemaVersion: HABIT_SCHEMA_VERSION,
     id: value.id.trim(),
     name: value.name.trim(),
     ...(color ? { color } : {}),
+    ...(icon ? { icon } : {}),
     created,
     targets,
     states,
@@ -234,11 +240,16 @@ export function parseHabitNote(content: string): ParsedHabitNote {
 
 export function serializeHabitBlock(habit: Habit): string {
   const color = normalizeHabitColor(habit.color);
+  const icon = habit.icon === undefined ? null : normalizeHabitIcon(habit.icon);
+  if (habit.icon !== undefined && !icon) {
+    invalid('icon must be a nonblank icon ID without control characters');
+  }
   const normalized: Habit = {
     schemaVersion: habit.schemaVersion,
     id: habit.id,
     name: habit.name,
     ...(color ? { color } : {}),
+    ...(icon ? { icon } : {}),
     created: habit.created,
     targets: habit.targets,
     states: habit.states,

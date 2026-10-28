@@ -62,6 +62,23 @@ describe('habit note codec', () => {
     expect(serializeHabitBlock(plain)).not.toContain('"color"');
   });
 
+  it('retains an optional icon ID even when it is not registered on this device', () => {
+    const habit = makeHabit({ icon: ' custom-plugin-icon ' });
+    expect(parseHabitNote(renderHabitNote(habit)).habit.icon).toBe(' custom-plugin-icon ');
+    const changed = replaceHabitBlock(renderHabitNote(habit), { ...habit, name: 'Strength' });
+    expect(parseHabitNote(changed).habit.icon).toBe(' custom-plugin-icon ');
+    expect(serializeHabitBlock(makeHabit())).not.toContain('"icon"');
+  });
+
+  it('rejects invalid icon data instead of silently discarding it', () => {
+    const content = renderHabitNote(makeHabit()).replace(
+      '"name": "Gym",',
+      '"name": "Gym",\n    "icon": {"invalid": true},',
+    );
+    expectCode(() => parseHabitNote(content), 'invalid-record');
+    expectCode(() => serializeHabitBlock(makeHabit({ icon: '  ' })), 'invalid-record');
+  });
+
   it('ignores invalid custom colors and falls back safely', () => {
     const habit = makeHabit();
     const content = renderHabitNote(habit).replace(

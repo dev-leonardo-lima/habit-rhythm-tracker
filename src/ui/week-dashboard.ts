@@ -5,9 +5,11 @@ import type {
   HabitSummaryViewModel,
   WeekViewModel,
 } from './dashboard-controller';
+import { habitIcon } from './habit-icon-picker';
 
 export interface MonthDashboardHandlers {
   toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
+  toggleHabitHistory(habitId: string): void;
 }
 
 interface DecoratedCell {
@@ -80,9 +82,11 @@ function summaryFallback(
     path: firstRow?.path ?? '',
     name: firstRow?.name ?? 'Habit',
     color: firstRow?.color ?? null,
+    icon: firstRow?.icon ?? null,
     created: firstRow?.created ?? '',
     state: firstRow?.state ?? 'active',
     target: firstRow?.target ?? null,
+    completedThisWeek: 0,
     streak: firstRow?.streak ?? 0,
     monthlyTotal: firstRow?.monthlyTotal ?? 0,
     pendingArchive: firstRow?.pendingArchive ?? false,
@@ -121,19 +125,46 @@ function habitRows(viewModel: DashboardViewModel): Array<{
 function nameCell(
   summary: HabitSummaryViewModel,
   selectedRow: HabitRowViewModel | undefined,
+  historyOpen: boolean,
+  handlers: MonthDashboardHandlers,
 ): HTMLTableCellElement {
   const cell = el('th', 'habit-tracker-habit-cell');
   cell.scope = 'row';
   cell.setAttribute('role', 'rowheader');
-  cell.append(el('div', 'habit-tracker-habit-name', summary.name));
+  const name = el('button', 'habit-tracker-habit-name');
+  name.type = 'button';
+  name.dataset.historyHabitId = summary.habitId;
+  name.setAttribute('aria-label', `View history for ${summary.name}`);
+  name.setAttribute('aria-expanded', String(historyOpen));
+  name.title = `View history for ${summary.name}`;
+  name.addEventListener('click', () => handlers.toggleHabitHistory(summary.habitId));
+  const icon = habitIcon(summary.icon);
+  if (icon) {
+    name.append(icon);
+  }
+  name.append(el('span', 'habit-tracker-habit-name-text', summary.name));
+  cell.append(name);
 
   const meta = el('div', 'habit-tracker-habit-meta');
-  meta.append(el('span', undefined, `${selectedRow?.target ?? summary.target ?? '—'}/wk`));
+  if (selectedRow) {
+    meta.append(
+      el(
+        'span',
+        'habit-tracker-habit-status',
+        `${selectedRow.completed} / ${selectedRow.target ?? '—'} · ${selectedRow.outcomeText}`,
+      ),
+    );
+  } else if (summary.state === 'archived') {
+    meta.append(el('span', 'habit-tracker-habit-status', 'Archived'));
+  }
+  if (meta.childElementCount > 0) {
+    meta.append(document.createTextNode(' '));
+  }
   meta.append(
     el(
       'span',
-      undefined,
-      `Current streak: ${summary.streak} ${summary.streak === 1 ? 'week' : 'weeks'}`,
+      'habit-tracker-meta-streak',
+      `Streak: ${summary.streak} ${summary.streak === 1 ? 'week' : 'weeks'}`,
     ),
   );
   cell.append(meta);
@@ -144,32 +175,6 @@ function nameCell(
     );
   } else if (summary.pendingArchive) {
     cell.append(el('div', 'habit-tracker-habit-note', 'Archive next week'));
-  }
-
-  if (selectedRow) {
-    cell.append(
-      el(
-        'div',
-        'habit-tracker-habit-status',
-        `${selectedRow.completed} / ${selectedRow.target ?? '—'} · ${selectedRow.outcomeText}`,
-      ),
-    );
-    if (
-      selectedRow.target !== null &&
-      selectedRow.outcome !== 'excluded' &&
-      selectedRow.outcome !== 'not-started'
-    ) {
-      // The count and outcome above are the accessible source of truth. The
-      // rail only gives the same information a quick visual representation.
-      const progress = el('span', 'habit-tracker-progress');
-      progress.setAttribute('aria-hidden', 'true');
-      const fill = el('span', 'habit-tracker-progress-fill');
-      fill.style.width = `${Math.min(100, (selectedRow.completed / selectedRow.target) * 100)}%`;
-      progress.append(fill);
-      cell.append(progress);
-    }
-  } else if (summary.state === 'archived') {
-    cell.append(el('div', 'habit-tracker-habit-status', 'Archived'));
   }
   return cell;
 }
@@ -260,7 +265,13 @@ export function renderHabitGrid(
   const rows = habitRows(viewModel);
   if (rows.length === 0) {
     container.append(
-      el('p', 'habit-tracker-empty', 'No habits yet. Create one to start tracking this week.'),
+      el(
+        'p',
+        'habit-tracker-empty',
+        viewModel.habits.length === 0
+          ? 'No habits yet. Create one to start tracking this week.'
+          : 'No habits to track for this week.',
+      ),
     );
     return;
   }
@@ -335,7 +346,9 @@ export function renderHabitGrid(
       row.classList.add('is-archived');
     }
     const selectedRow = rowsByWeek.get(week.week);
-    row.append(nameCell(summary, selectedRow));
+    row.append(
+      nameCell(summary, selectedRow, viewModel.detail?.habitId === summary.habitId, handlers),
+    );
     const gutter = el('td', 'habit-tracker-gutter-cell');
     gutter.setAttribute('aria-hidden', 'true');
     row.append(gutter);

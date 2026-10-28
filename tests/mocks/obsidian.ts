@@ -302,3 +302,18 @@ export class Notice {
 export function setIcon(_element: HTMLElement, _icon: string): void {
   // no-op in tests
 }
+
+const TEST_ICONS = ['dumbbell', 'book-open', 'heart', 'code', 'gamepad-2', 'moon'];
+
+export function getIconIds(): string[] {
+  return [...TEST_ICONS];
+}
+
+export function getIcon(iconId: string): SVGSVGElement | null {
+  if (!TEST_ICONS.includes(iconId)) {
+    return null;
+  }
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.dataset.iconId = iconId;
+  return svg;
+}

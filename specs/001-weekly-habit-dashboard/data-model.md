@@ -15,14 +15,16 @@
 
 - **Identity**: immutable stable ID inside the managed block, independent of note path and display
   name. A rename or move preserves identity; duplicate IDs are reported and never auto-merged.
-- **Fields**: schema version, ID, nonblank name, optional completion color, creation date, target
+- **Fields**: schema version, ID, nonblank name, optional color and icon ID, creation date, target
   history, active/archive history, and a set of completion dates. One ordinary Markdown note stores
   each habit. Additional text and frontmatter belong to the user and are preserved exactly.
 - **Validation**: known schema; parseable record; unique ID; target is an integer in 1–7; valid,
   distinct dates not before creation; histories ordered by effective week with at most one value
   per week. Invalid or duplicate data is shown as an error and is not overwritten.
-- **Color**: optional `#rrggbb` string. It applies only to that habit's completion marks. When
+- **Color**: optional `#rrggbb` string. It applies to that habit's completion marks and icon. When
   absent or invalid, the Obsidian theme accent is used; invalid stored strings never reach styles.
+- **Icon**: optional Obsidian icon ID. A well-formed ID is kept when unavailable on a device;
+  malformed icon data is rejected without rewriting the note.
 - **Lifecycle**: created → active → archive scheduled for next Monday → archived → reactivated
   effective in the current week. A pending archive can be canceled by reactivation. Historical
   notes remain available and permanent habit deletion is out of scope.
@@ -41,7 +43,9 @@
 - **Fields**: effective Monday date and state (`active` or `archived`), with an initial active
   entry for the creation week. Archive becomes effective next week; reactivation takes effect in
   the current week and cancels a pending archive.
-- **Rules**: whole archived weeks are excluded from the streak, even if they have retained historical
+- **Rules**: canceling a pending archive removes only that next-week entry; reactivation changes the
+  current week and cancels a pending archive when applicable. Other past and future state entries
+  are preserved. Whole archived weeks are excluded from the streak, even if they have retained historical
   completions. Reactivation makes the entire current week evaluable with its configured full target;
   earlier dates in that week are editable subject to the creation-date/today bounds. These are
   implementation defaults following FR-003 and FR-011; only the creation week receives a reduced goal.

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { parseHabitNote, replaceHabitBlock } from '../../src/storage/habit-note';
+import { describe, expect, it, vi } from 'vitest';
+import { parseHabitNote, renderHabitNote, replaceHabitBlock } from '../../src/storage/habit-note';
 import { createDashboardHandlers } from '../../src/ui/controller-handlers';
 import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { createHarness, localNoon } from '../helpers/controller-harness';
@@ -93,6 +93,85 @@ describe('US4: lifecycle changes preserve history', () => {
     expect(view.weeks[0]?.rows[0]?.state).toBe('active');
   });
 
+  it('schedules, cancels, archives after rollover, and reactivates through the dashboard', async () => {
+    let now = localNoon(2026, 10, 21);
+    const harness = createHarness({ now: () => now });
+    addHabitNote(
+      harness.vault.files,
+      makeHabit({
+        name: 'Gym',
+        created: '2026-10-19',
+        targets: [{ week: '2026-10-19', days: 2 }],
+        completions: ['2026-10-19'],
+      }),
+      'Habits/Gym.md',
+    );
+    await harness.controller.load();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const handlers = createDashboardHandlers(harness.controller);
+    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
+    const unsubscribe = harness.controller.subscribe(render);
+    render();
+    const manage = container.querySelector<HTMLDetailsElement>('[data-disclosure-key="manage"]');
+    const edit = container.querySelector<HTMLDetailsElement>(
+      '[data-disclosure-key="edit:habit-1"]',
+    );
+    if (!manage || !edit) {
+      throw new Error('missing management controls');
+    }
+    manage.open = true;
+    edit.open = true;
+    const click = (label: string): void => {
+      const button = container.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+      if (!button) {
+        throw new Error(`missing button: ${label}`);
+      }
+      button.click();
+    };
+
+    click('Archive Gym from next week');
+    await vi.waitFor(() =>
+      expect(harness.controller.getViewModel().habits[0]?.pendingArchive).toBe(true),
+    );
+    expect(harness.controller.getViewModel().weeks[0]?.rows[0]?.state).toBe('active');
+    expect(container.textContent).toContain('Archive next week');
+    click('Cancel pending archive for Gym');
+    await vi.waitFor(() =>
+      expect(harness.controller.getViewModel().habits[0]?.pendingArchive).toBe(false),
+    );
+    expect(parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit.states).toEqual([
+      { week: '2026-10-19', state: 'active' },
+    ]);
+    click('Archive Gym from next week');
+    await vi.waitFor(() =>
+      expect(harness.controller.getViewModel().habits[0]?.pendingArchive).toBe(true),
+    );
+
+    now = localNoon(2026, 11, 2);
+    await harness.controller.refreshClock();
+    expect(harness.controller.getViewModel().habits[0]?.state).toBe('archived');
+    expect(container.textContent).toContain('No habits to track for this week.');
+    expect(container.textContent).not.toContain('No habits yet');
+    const reopened = createHarness({ now: () => now, vault: harness.vault });
+    await reopened.controller.load();
+    expect(reopened.controller.getViewModel().habits[0]?.state).toBe('archived');
+    expect(
+      parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit.completions,
+    ).toEqual(['2026-10-19']);
+    click('Reactivate Gym this week');
+    await vi.waitFor(() =>
+      expect(harness.controller.getViewModel().habits[0]?.state).toBe('active'),
+    );
+    expect(harness.controller.getViewModel().weeks[0]?.rows[0]?.target).toBe(2);
+    expect(
+      parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit.completions,
+    ).toEqual(['2026-10-19']);
+
+    unsubscribe();
+    container.remove();
+  });
+
   it('reactivates on Sunday with the full target and earlier current-week dates editable', async () => {
     const now = localNoon(2026, 11, 1);
     const harness = createHarness({ now: () => now });
@@ -137,6 +216,90 @@ describe('US4: lifecycle changes preserve history', () => {
     renderDashboard(container, view, createDashboardHandlers(harness.controller));
     expect(container.textContent).toContain('2 / 4');
     expect(container.textContent).toContain('1 week');
+  });
+
+  it('preserves other recorded state changes when canceling or reactivating from the dashboard', async () => {
+    const harness = createHarness({ now: () => localNoon(2026, 10, 21) });
+    const pending = makeHabit({
+      name: 'Gym',
+      created: '2026-10-05',
+      states: [
+        { week: '2026-10-05', state: 'active' },
+        { week: '2026-10-26', state: 'archived' },
+        { week: '2026-11-02', state: 'active' },
+        { week: '2026-11-09', state: 'archived' },
+      ],
+      completions: ['2026-10-05', '2026-11-02'],
+    });
+    const archived = makeHabit({
+      id: 'habit-2',
+      name: 'Read',
+      created: '2026-10-05',
+      states: [
+        { week: '2026-10-05', state: 'active' },
+        { week: '2026-10-12', state: 'archived' },
+        { week: '2026-11-02', state: 'active' },
+        { week: '2026-11-09', state: 'archived' },
+      ],
+      completions: ['2026-10-05', '2026-11-02'],
+    });
+    harness.vault.files.set('Habits/Gym.md', `User text\n${renderHabitNote(pending)}\nKeep this\n`);
+    addHabitNote(harness.vault.files, archived, 'Habits/Read.md');
+    await harness.controller.load();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const handlers = createDashboardHandlers(harness.controller);
+    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
+    const unsubscribe = harness.controller.subscribe(render);
+    render();
+    const manage = container.querySelector<HTMLDetailsElement>('[data-disclosure-key="manage"]');
+    const gymEdit = container.querySelector<HTMLDetailsElement>(
+      '[data-disclosure-key="edit:habit-1"]',
+    );
+    if (!manage || !gymEdit) {
+      throw new Error('missing management controls');
+    }
+    manage.open = true;
+    gymEdit.open = true;
+    container
+      .querySelector<HTMLButtonElement>('button[aria-label="Cancel pending archive for Gym"]')
+      ?.click();
+    await vi.waitFor(() => {
+      expect(
+        harness.controller.getViewModel().habits.find((habit) => habit.name === 'Gym')
+          ?.pendingArchive,
+      ).toBe(false);
+    });
+    const gymContent = harness.vault.files.get('Habits/Gym.md') ?? '';
+    const gym = parseHabitNote(gymContent).habit;
+    expect(gym.states).toEqual([pending.states[0], pending.states[2], pending.states[3]]);
+    expect(gym.completions).toEqual(pending.completions);
+    expect(gym.targets).toEqual(pending.targets);
+    expect(gymContent).toContain('User text');
+    expect(gymContent).toContain('Keep this');
+
+    container.querySelector<HTMLElement>('[data-disclosure-key="edit:habit-2"] > summary')?.click();
+    container
+      .querySelector<HTMLButtonElement>('button[aria-label="Reactivate Read this week"]')
+      ?.click();
+    await vi.waitFor(() => {
+      expect(
+        harness.controller.getViewModel().habits.find((habit) => habit.name === 'Read')?.state,
+      ).toBe('active');
+    });
+    const read = parseHabitNote(harness.vault.files.get('Habits/Read.md') ?? '').habit;
+    expect(read.states).toEqual([
+      archived.states[0],
+      archived.states[1],
+      { week: '2026-10-19', state: 'active' },
+      archived.states[2],
+      archived.states[3],
+    ]);
+    expect(read.completions).toEqual(archived.completions);
+    expect(read.targets).toEqual(archived.targets);
+
+    unsubscribe();
+    container.remove();
   });
 
   it('retries a conflicting rename against the latest note without losing external completions', async () => {

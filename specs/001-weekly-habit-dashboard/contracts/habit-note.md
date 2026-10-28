@@ -13,6 +13,7 @@ block in the note body between these literal markers; the JSON object is user-re
   "id": "example-stable-id",
   "name": "Gym",
   "color": "#3366cc",
+  "icon": "dumbbell",
   "created": "2026-10-26",
   "targets": [{ "week": "2026-10-26", "days": 4 }],
   "states": [{ "week": "2026-10-26", "state": "active" }],
@@ -26,9 +27,11 @@ block in the note body between these literal markers; the JSON object is user-re
   across file renames and must be unique. Targets/states are ordered by Monday `week`, with one
   entry per week and an initial entry for the creation week. A completion occurs at most once per
   local date and cannot predate creation. `color` is optional; when present it is a six-digit hex
-  value used only for that habit's completion marks. An absent or invalid value uses the theme
+  value used for that habit's completion marks and icon. An absent or invalid value uses the theme
   accent and does not invalidate the habit record; a later guarded edit writes only the valid color
-  fields.
+  fields. `icon` is an optional nonblank Obsidian icon ID, at most 128 characters without control
+  characters. An unavailable but well-formed ID is preserved; malformed icon data is reported and
+  never discarded silently.
 - The plugin preserves every byte outside this block, including frontmatter and arbitrary user
   content. Missing, duplicated or malformed markers, duplicate IDs, invalid data, or unsupported
   schema produce a visible error and no automatic rewrite. Valid external edits refresh the view
@@ -52,8 +55,8 @@ block in the note body between these literal markers; the JSON object is user-re
    intact and reports the issue in text. The person may review the note and repeat the action, which
    performs a fresh guarded comparison. Nothing is replayed blindly.
 6. An eligible unmarked date can be marked again directly. No unsaved intent is promised to survive
-   an unexpected app exit. An explicit color change is a normal guarded update like rename or target
-   changes.
+   an unexpected app exit. An explicit color or icon change is a normal guarded update like rename
+   or target changes.
 7. Existing `recovery-*` files from earlier development builds are ignored and left untouched. The
    plugin does not read, modify, append to, or automatically delete them.
 8. Any future format migration requires explicit user approval and a recoverable copy of the

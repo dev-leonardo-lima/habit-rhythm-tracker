@@ -124,6 +124,13 @@ and verify that the current week is shown on reopen and old records remain acces
 9. **Given** a historical or future week, **When** its header is displayed, **Then** the “This week”
    label and any return button are absent while the header retains its layout. The arrows navigate
    back to the current week.
+10. **Given** a habit with past records, **When** the person opens its history, **Then** a read-only
+    year calendar shows its dates and current and best streaks measured in successful weeks.
+11. **Given** a recorded mark in an archived week or a saved future mark, **When** the calendar is
+    viewed, **Then** both remain visible and identifiable; future marks are excluded from totals
+    and streaks until their date, and archived weeks remain excluded from streaks.
+12. **Given** a history spanning more than one year, **When** the person uses year navigation,
+    **Then** they can review years from creation through the current year without changing data.
 
 ---
 
@@ -149,10 +156,25 @@ old target and that history remains accessible.
    current week is reviewed, **Then** its full target is 4; dates from Monday through today are
    editable if they are on or after creation, and previous archived weeks remain excluded from the
    streak. The current week counts only after its target is reached.
-5. **Given** a habit using the theme color, **When** the person chooses a custom color, **Then** only
-   that habit's completion marks use the chosen color and the value is stored in its Markdown note.
+5. **Given** a habit using the theme color, **When** the person chooses a custom color, **Then** its
+   completion marks and icon use the chosen color and the value is stored in its Markdown note.
 6. **Given** a habit with a custom color, **When** the person removes it, **Then** that habit returns
    to the theme accent without changing other habits or history.
+7. **Given** the management list, **When** the person reviews an active habit, **Then** its target,
+   current-week progress and streak are visible in a compact row; editing controls expand in place.
+8. **Given** an archived habit, **When** the person expands its management row, **Then** they can
+   open its history and reactivate it without losing prior records.
+9. **Given** a habit, **When** the person searches for and chooses a locally registered Obsidian
+   icon, **Then** its ID is saved in that habit's note and shown beside the habit. The person can
+   explicitly remove it without changing the habit's history.
+10. **Given** an icon saved on one device but unavailable on another, **When** the habit is edited,
+    **Then** its icon ID and other data remain intact and the missing icon is identified in settings.
+11. **Given** more icons than fit on one page, **When** the person browses or searches, **Then**
+    all matching icons are available through page navigation and a new search starts on page one.
+12. **Given** an open habit editor, **When** another habit editor is opened, **Then** the previous
+    editor closes while its unsaved form input remains available during the current view session.
+13. **Given** a habit with other recorded state changes, **When** a pending archive is canceled or
+    the habit is reactivated, **Then** the other past and future state entries remain intact.
 
 ### Edge Cases
 
@@ -221,7 +243,8 @@ old target and that history remains accessible.
   it. Target changes and archiving take effect in the next week; reactivation applies in the
   current week. The target used in each week MUST remain preserved when settings change. On
   reactivation, the whole current week is evaluable against its full configured target unless it is
-  the habit's creation week; dates in that week from creation through today remain editable.
+  the habit's creation week; dates in that week from creation through today remain editable. Canceling
+  a pending archive or reactivating MUST preserve other recorded state changes, including later ones.
 - **FR-012**: Changes to past records MUST update affected totals and streaks without modifying
   records for other dates or habits.
 - **FR-013**: Core features MUST work offline in Obsidian on desktop and mobile devices, including
@@ -260,7 +283,7 @@ old target and that history remains accessible.
   Permanent deletion of habit notes is outside this feature.
 - **FR-025**: A person MUST be able to choose or remove an optional completion color per habit using
   a labeled control operable by keyboard and touch. The color MUST apply only to that habit's
-  completion marks and be stored as an optional `#rrggbb` value in its Markdown note. When the value
+  completion marks and icon and be stored as an optional `#rrggbb` value in its Markdown note. When the value
   is absent or invalid, the theme accent MUST be used.
 - **FR-026**: The week header MUST be centered as a group with previous/next arrows beside it, the
   year as a smaller label above the date range, and no habit count. A week crossing a year boundary
@@ -275,6 +298,23 @@ old target and that history remains accessible.
 - **FR-028**: The dashboard MUST NOT require a More menu or manual refresh control. Refresh MUST
   remain automatic, archived habits MUST remain available through Manage habits, and the New habit
   form MUST stay visible in a compact row without a disclosure.
+- **FR-029**: A person MUST be able to open a read-only individual history from a habit's name or
+  its management row. It MUST show a year calendar, current and best streaks in successful weeks,
+  and the number of marked days through today. Calendar years MUST be navigable from the creation
+  year through the current year. Archived marks and saved future marks MUST remain identifiable;
+  future marks MUST NOT count in statistics before their date. Whole archived weeks MUST be skipped
+  in both streaks, and historic targets and the reduced first-week target MUST be respected.
+- **FR-030**: Manage habits MUST show a compact row for every habit, including archived habits.
+  Active rows MUST show the current target and current-week progress; archived rows MUST show the
+  archived status. All rows MUST show the current streak. An in-place control MUST expose editing,
+  archive/reactivation, color, and history actions. Automatic refresh MUST preserve an open editor
+  and its unsaved input. Opening an editor MUST close any other habit editor without discarding its
+  unsaved input during the current view session.
+- **FR-031**: A person MUST be able to search local Obsidian icons and explicitly choose or remove
+  one per habit. All matching icons MUST be reachable through pagination, with new searches starting
+  on the first page. The optional icon ID MUST be stored in the habit note and retained across edits,
+  even when the icon is unavailable on another device. Invalid icon data MUST be reported without
+  rewriting the note. Choosing an icon MUST use the same guarded write as other habit edits.
 
 | Operation | User authorization | Result |
 |-----------|--------------------|--------|
@@ -284,7 +324,7 @@ old target and that history remains accessible.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Habit**: Name, optional completion color, start date, active or archived state, and history of
+- **Habit**: Name, optional color and icon, start date, active or archived state, and history of
   weekly targets, stored with its completion history in its own Markdown note.
 - **Completion record**: Association between a habit and a local date; at most one completion per
   habit per day.

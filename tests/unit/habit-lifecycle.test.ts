@@ -69,6 +69,63 @@ describe('US4: target and archive lifecycle', () => {
     expect(stateForWeek(canceled, WEEK_3)).toBe('active');
   });
 
+  it('cancels only the pending archive and retains later recorded state changes', () => {
+    const habit = makeHabit({
+      created: WEEK_1,
+      states: [
+        { week: WEEK_1, state: 'active' },
+        { week: WEEK_4, state: 'archived' },
+        { week: '2026-11-02', state: 'active' },
+        { week: '2026-11-09', state: 'archived' },
+      ],
+      completions: ['2026-10-05', '2026-11-02'],
+    });
+
+    const canceled = cancelPendingArchive(habit, '2026-10-21');
+    expect(canceled.states).toEqual([
+      { week: WEEK_1, state: 'active' },
+      { week: '2026-11-02', state: 'active' },
+      { week: '2026-11-09', state: 'archived' },
+    ]);
+    expect(canceled.completions).toEqual(habit.completions);
+    expect(stateForWeek(canceled, WEEK_4)).toBe('active');
+    expect(stateForWeek(canceled, '2026-11-09')).toBe('archived');
+    expect(cancelPendingArchive(habit, '2026-10-14')).toBe(habit);
+
+    const reactivated = reactivateHabit(habit, '2026-10-21');
+    expect(reactivated.states).toEqual([
+      { week: WEEK_1, state: 'active' },
+      { week: WEEK_3, state: 'active' },
+      { week: '2026-11-02', state: 'active' },
+      { week: '2026-11-09', state: 'archived' },
+    ]);
+  });
+
+  it('reactivates this week without discarding later recorded state changes', () => {
+    const habit = makeHabit({
+      created: WEEK_1,
+      states: [
+        { week: WEEK_1, state: 'active' },
+        { week: WEEK_2, state: 'archived' },
+        { week: '2026-11-02', state: 'active' },
+        { week: '2026-11-09', state: 'archived' },
+      ],
+      completions: ['2026-10-05', '2026-11-02'],
+    });
+
+    const reactivated = reactivateHabit(habit, '2026-10-21');
+    expect(reactivated.states).toEqual([
+      { week: WEEK_1, state: 'active' },
+      { week: WEEK_2, state: 'archived' },
+      { week: WEEK_3, state: 'active' },
+      { week: '2026-11-02', state: 'active' },
+      { week: '2026-11-09', state: 'archived' },
+    ]);
+    expect(reactivated.completions).toEqual(habit.completions);
+    expect(stateForWeek(reactivated, WEEK_2)).toBe('archived');
+    expect(stateForWeek(reactivated, WEEK_3)).toBe('active');
+  });
+
   it('reactivates in the current week with the full target on a Sunday', () => {
     const archived = makeHabit({
       created: WEEK_1,

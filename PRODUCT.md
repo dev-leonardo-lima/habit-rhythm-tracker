@@ -42,9 +42,13 @@ without gamification or decorative dashboards.
 ## Capabilities and Constraints
 
 - Create habits, mark/unmark eligible days, re-mark them directly, and correct historical dates.
-- Choose or remove an optional completion color per habit; absence uses the theme accent.
+- Choose or remove an optional color and locally registered Obsidian icon per habit; absence of a
+  color uses the theme accent.
 - Weekly progress, effective targets, current streaks, archived weeks, and future stored dates must
   remain visible and truthful through week navigation.
+- A habit's read-only yearly activity calendar shows marked dates, current and best weekly streaks,
+  and marked days through today. Archived history remains accessible from the management list.
+- Compact management rows show current-week progress and expand in place for editing.
 - Target and archive changes take effect next week; reactivation applies in the current week.
 - Concurrent edits and failures must be reported without overwriting the existing note.
 - Keyboard, touch, focus, text labels, and Obsidian theme variables are required.
@@ -71,8 +75,8 @@ the accent comes from the active Obsidian theme.
 1. The habit grid is the product; controls recede until they are needed.
 2. One week is the frame; density is a feature, but labels and state must remain legible without color alone.
 3. Repeated sequences are the signature: show consistency as a visual rhythm, not a score.
-4. Every edit is explicit and guarded; failures leave the saved note intact, and week navigation is
-   the history mechanism.
+4. Every edit is explicit and guarded; failures leave the saved note intact. Review activity in the
+   individual calendar and correct eligible dates through week navigation.
 5. Keep the Obsidian surface familiar; no new workflow is invented for visual effect.
 
 ## Accessibility & Inclusion

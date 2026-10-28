@@ -31,6 +31,8 @@ export interface Habit {
   name: string;
   /** Optional custom completion color in `#rrggbb` form; absent uses the theme accent. */
   color?: string;
+  /** Optional ID of an icon registered with Obsidian. */
+  icon?: string;
   /** Local date on which the habit was created. */
   created: LocalDate;
   /** Ordered by effective week, at most one value per week. */

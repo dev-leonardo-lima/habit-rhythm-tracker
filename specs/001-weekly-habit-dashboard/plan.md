@@ -45,9 +45,9 @@ SLA. Date changes and view re-entry trigger refresh without background network r
 without explicit user action; preserve unrelated note content; detected conflicts recoverable after
 reopen; no external service or desktop-only APIs.
 
-**Scale/Scope**: One user's selected vault; boolean daily completions; weekly targets 1–7; month
-and historical navigation. Importing other plugin data, numeric targets, fixed-day schedules, cloud
-sync, and permanent habit deletion are out of scope.
+**Scale/Scope**: One user's selected vault; boolean daily completions; weekly targets 1–7; weekly
+navigation and an individual yearly history. Importing other plugin data, numeric targets,
+fixed-day schedules, cloud sync, and permanent habit deletion are out of scope.
 
 ## Constitution Check
 
@@ -138,6 +138,15 @@ Feature 002's release automation is planned separately and depends on this plugi
 9. Verify release prerequisites are compatible with feature 002 without implementing that feature
    during planning. The Monday condition was added to the spec's 0/4 example to align it with the
    previously agreed reduced first-week target.
+10. Derive each habit's current and best streak and yearly activity calendar from its existing
+    note, using the same weekly target and archive rules. Open the read-only history below the
+    grid; show archived habits through a compact management list whose editing controls expand in
+    place. Preserve open editors, drafts, focus, and calendar scroll during automatic refresh.
+11. Use Obsidian's local icon registry for a searchable optional per-habit icon and retain its ID
+    when the icon is unavailable. Compact the mobile layout while preserving accessible touch targets
+    and weekly semantics.
+12. Paginate icon search results without truncating the registry, keeping the current page during
+    routine refreshes. Allow one expanded habit editor at a time while retaining unsaved view drafts.
 
 ## Complexity Tracking
 

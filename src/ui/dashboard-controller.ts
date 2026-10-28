@@ -6,11 +6,13 @@ import {
   stateForWeek,
 } from '../domain/activity-history';
 import { habitColor } from '../domain/habit-color';
+import { habitHistory, type HabitHistory } from '../domain/habit-history';
 import {
   createHabit,
   markCompletion,
   renameHabit as renameHabitRecord,
   setHabitColor,
+  setHabitIcon,
   unmarkCompletion,
 } from '../domain/habit-operations';
 import { compareDates, mondayOf, todayLocalDate, weekDates } from '../domain/local-date';
@@ -68,6 +70,7 @@ export interface HabitRowViewModel {
   path: string;
   name: string;
   color: string | null;
+  icon: string | null;
   created: LocalDate;
   state: 'active' | 'archived';
   completed: number;
@@ -106,14 +109,24 @@ export interface HabitSummaryViewModel {
   path: string;
   name: string;
   color: string | null;
+  icon: string | null;
   created: LocalDate;
   state: 'active' | 'archived';
   target: number | null;
+  completedThisWeek: number;
   streak: number;
   monthlyTotal: number;
   pendingArchive: boolean;
   pendingTarget: number | null;
   canReactivate: boolean;
+}
+
+export interface HabitDetailViewModel {
+  habitId: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+  history: HabitHistory;
 }
 
 export interface DashboardViewModel {
@@ -127,6 +140,7 @@ export interface DashboardViewModel {
   issues: NoteIssue[];
   weeks: WeekViewModel[];
   habits: HabitSummaryViewModel[];
+  detail: HabitDetailViewModel | null;
   formResetVersion: number;
 }
 
@@ -157,6 +171,8 @@ export class DashboardController {
   private loading = true;
   private message: DashboardMessage | null = null;
   private formResetVersion = 0;
+  private selectedHabitId: string | null = null;
+  private selectedHistoryYear: number | null = null;
 
   constructor(options: DashboardControllerOptions) {
     this.repository = options.repository;
@@ -240,6 +256,20 @@ export class DashboardController {
     const summaries = habits
       .map((habit) => this.buildSummary(habit, today, selectedMonth))
       .sort((left, right) => left.name.localeCompare(right.name));
+    const selected = this.discovered.find((entry) => entry.habit.id === this.selectedHabitId);
+    const year = Math.min(
+      this.selectedHistoryYear ?? Number(today.slice(0, 4)),
+      Number(today.slice(0, 4)),
+    );
+    const detail: HabitDetailViewModel | null = selected
+      ? {
+          habitId: selected.habit.id,
+          name: selected.habit.name,
+          color: habitColor(selected.habit),
+          icon: selected.habit.icon ?? null,
+          history: habitHistory(selected.habit, today, year),
+        }
+      : null;
 
     return {
       today,
@@ -252,6 +282,7 @@ export class DashboardController {
       issues: this.issues,
       weeks,
       habits: summaries,
+      detail,
       formResetVersion: this.formResetVersion,
     };
   }
@@ -311,6 +342,7 @@ export class DashboardController {
       path,
       name: habit.name,
       color: habitColor(habit),
+      icon: habit.icon ?? null,
       created: habit.created,
       state,
       completed,
@@ -360,9 +392,11 @@ export class DashboardController {
       path: this.pathById.get(habit.id) ?? '',
       name: habit.name,
       color: habitColor(habit),
+      icon: habit.icon ?? null,
       created: habit.created,
       state,
       target: effectiveTargetForWeek(habit, week),
+      completedThisWeek: completedCountInWeek(habit, week, today),
       streak: currentStreak(habit, today),
       monthlyTotal: monthTotal(habit, selectedMonth, today),
       pendingArchive: isPendingArchive(habit, today),
@@ -388,6 +422,37 @@ export class DashboardController {
 
   nextWeek(): void {
     this.calendar.nextWeek();
+    this.emit();
+  }
+
+  toggleHabitHistory(habitId: string): void {
+    if (this.selectedHabitId === habitId) {
+      this.closeHabitHistory();
+      return;
+    }
+    if (!this.discovered.some((entry) => entry.habit.id === habitId)) {
+      return;
+    }
+    this.selectedHabitId = habitId;
+    this.selectedHistoryYear = Number(this.calendar.today.slice(0, 4));
+    this.emit();
+  }
+
+  closeHabitHistory(): void {
+    this.selectedHabitId = null;
+    this.selectedHistoryYear = null;
+    this.emit();
+  }
+
+  changeHistoryYear(delta: -1 | 1): void {
+    const selected = this.discovered.find((entry) => entry.habit.id === this.selectedHabitId);
+    if (!selected) {
+      return;
+    }
+    const currentYear = Number(this.calendar.today.slice(0, 4));
+    const earliest = Math.min(currentYear, Number(selected.habit.created.slice(0, 4)));
+    const year = Math.min(this.selectedHistoryYear ?? currentYear, currentYear);
+    this.selectedHistoryYear = Math.max(earliest, Math.min(currentYear, year + delta));
     this.emit();
   }
 
@@ -454,6 +519,10 @@ export class DashboardController {
 
   async changeColor(habitId: string, color: string | null): Promise<WriteResult | null> {
     return this.applyLifecycle(habitId, (habit) => setHabitColor(habit, color));
+  }
+
+  async changeIcon(habitId: string, icon: string | null): Promise<WriteResult | null> {
+    return this.applyLifecycle(habitId, (habit) => setHabitIcon(habit, icon));
   }
 
   async changeTarget(habitId: string, target: number): Promise<WriteResult | null> {

@@ -1,8 +1,11 @@
 import type { HabitSummaryViewModel } from './dashboard-controller';
+import { habitIcon, renderIconPicker } from './habit-icon-picker';
 
 export interface HabitSettingsHandlers {
+  toggleHabitHistory(habitId: string): void;
   renameHabit(habitId: string, name: string): void | Promise<unknown>;
   changeColor(habitId: string, color: string | null): void | Promise<unknown>;
+  changeIcon(habitId: string, icon: string | null): void | Promise<unknown>;
   changeTarget(habitId: string, target: number): void | Promise<unknown>;
   archiveHabit(habitId: string): void | Promise<unknown>;
   reactivateHabit(habitId: string): void | Promise<unknown>;
@@ -70,8 +73,38 @@ export function renderHabitSettings(
     container.append(section);
     return;
   }
+  const columns = el('div', 'habit-tracker-settings-columns');
+  columns.setAttribute('aria-hidden', 'true');
+  columns.append(
+    el('span', undefined, 'Habit'),
+    el('span', undefined, 'Target'),
+    el('span', undefined, 'This week'),
+    el('span', undefined, 'Streak'),
+    el('span', undefined, ''),
+  );
+  section.append(columns);
   for (const habit of habits) {
-    section.append(renderHabitSettingsItem(habit, handlers));
+    const item = renderHabitSettingsItem(habit, handlers);
+    const closeOthers = (): void => {
+      for (const other of section.querySelectorAll<HTMLDetailsElement>(
+        '.habit-tracker-settings-item',
+      )) {
+        if (other !== item) {
+          other.open = false;
+        }
+      }
+    };
+    item.querySelector('summary')?.addEventListener('click', () => {
+      if (!item.open) {
+        closeOthers();
+      }
+    });
+    item.addEventListener('toggle', (event) => {
+      if (event.target === item && item.open) {
+        closeOthers();
+      }
+    });
+    section.append(item);
   }
   container.append(section);
 }
@@ -79,20 +112,37 @@ export function renderHabitSettings(
 function renderHabitSettingsItem(
   habit: HabitSummaryViewModel,
   handlers: HabitSettingsHandlers,
-): HTMLElement {
+): HTMLDetailsElement {
   const item = el('details', 'habit-tracker-settings-item');
   item.dataset.habitId = habit.habitId;
+  item.dataset.disclosureKey = `edit:${habit.habitId}`;
+  if (habit.color) {
+    item.style.setProperty('--ht-habit-color', habit.color);
+  }
   const summary = el('summary', 'habit-tracker-settings-summary');
-  summary.append(el('span', 'habit-tracker-settings-name', habit.name));
-  summary.append(
-    el(
-      'span',
-      'habit-tracker-settings-meta',
-      `${habit.state === 'archived' ? 'Archived' : `${habit.target ?? '—'}/wk`} · ${habit.streak} ${
-        habit.streak === 1 ? 'week' : 'weeks'
-      }`,
-    ),
+  const targetText = habit.state === 'archived' ? 'Archived' : `${habit.target ?? '—'}/wk`;
+  const progressText =
+    habit.state === 'archived' ? '—' : `${habit.completedThisWeek} / ${habit.target ?? '—'}`;
+  const streakText = `${habit.streak} ${habit.streak === 1 ? 'week' : 'weeks'}`;
+  summary.setAttribute(
+    'aria-label',
+    `Edit ${habit.name}; ${targetText}; this week ${progressText}; current streak ${streakText}`,
   );
+  const name = el('span', 'habit-tracker-settings-name');
+  const icon = habitIcon(habit.icon);
+  if (icon) {
+    name.append(icon);
+  }
+  name.append(el('span', 'habit-tracker-settings-name-text', habit.name));
+  summary.append(name);
+  const meta = el('span', 'habit-tracker-settings-meta');
+  meta.append(
+    el('span', 'habit-tracker-settings-target', targetText),
+    el('span', 'habit-tracker-settings-progress', progressText),
+    el('span', 'habit-tracker-settings-streak', streakText),
+  );
+  summary.append(meta);
+  summary.append(el('span', 'habit-tracker-settings-edit', 'Edit'));
   item.append(summary);
 
   const body = el('div', 'habit-tracker-settings-body');
@@ -145,6 +195,7 @@ function renderHabitSettingsItem(
   });
   colorRow.append(resetColor);
   body.append(colorRow);
+  body.append(renderIconPicker(habit, handlers.changeIcon));
 
   const targetForm = el('form', 'habit-tracker-inline-form');
   targetForm.dataset.formKey = `target:${habit.habitId}`;
@@ -179,6 +230,12 @@ function renderHabitSettingsItem(
   }
 
   const stateActions = el('div', 'habit-tracker-actions');
+  const history = el('button', undefined, 'View history');
+  history.type = 'button';
+  history.dataset.historyHabitId = habit.habitId;
+  history.setAttribute('aria-label', `View history for ${habit.name}`);
+  history.addEventListener('click', () => handlers.toggleHabitHistory(habit.habitId));
+  stateActions.append(history);
   if (habit.pendingArchive) {
     const cancel = el('button', undefined, 'Cancel pending archive');
     cancel.setAttribute('aria-label', `Cancel pending archive for ${habit.name}`);

@@ -85,9 +85,9 @@ relationships with their own values.
 **Key Characteristics:**
 
 - One Monday–Sunday week, exactly seven columns, no monthly calendar.
-- Habit names left; compact target, streak, and status text underneath.
+- Habit names left; compact weekly progress, outcome, and streak text underneath.
 - Completion runs are continuous capsules without count labels; each habit also has textual
-  progress and a small visual progress rail.
+  progress without repeating the target or adding another progress rail.
 - The year is a small centered label above the week range; crossing years name both.
 - Quiet typographic navigation; advanced controls are progressively disclosed.
 - Hairlines and tonal layering instead of cards, shadows, or decorative chrome.
@@ -102,7 +102,7 @@ that carries completion and current-week meaning.
 - **Theme Violet** (`#8a5cf5` reference): default completion runs, current-day header outline, current-week
   marker, and primary create action. The live value is `var(--interactive-accent)`; the accent is
   never used for decoration.
-- **Habit Color** (optional per-habit `#rrggbb`): applies only to that habit's completion marks.
+- **Habit Color** (optional per-habit `#rrggbb`): applies to that habit's completion marks and icon.
   When absent or invalid, the habit falls back to the theme accent.
 
 ### Neutral
@@ -116,8 +116,8 @@ that carries completion and current-week meaning.
 
 ### Named Rules
 
-**The One Accent Rule.** Only the theme accent marks completion, the current day/week, and the primary
-create action. Everything else is neutral.
+**The One Accent Rule.** The theme accent marks completion, the current day/week, the primary create
+action, and habit icons without a custom color. Other surfaces remain neutral.
 
 **The Theme Ownership Rule.** Runtime colors come from Obsidian variables. The hex values here are a
 dark-theme reference, not a replacement palette.
@@ -154,11 +154,11 @@ context directly beneath. It shows no habit count. The grid uses a fixed habit c
 10px gutter, and seven fluid day columns. A subtle border groups the table, while row separators and
 the column header retain the shape of an Obsidian table.
 
-The always-visible New habit row sits above the grid, separated by a hairline. Only Manage habits is
-a disclosure below the grid; details expand in place. In a narrow workspace pane or phone-sized
-view, each habit's details sit above its seven days, which remain aligned with the weekday header.
-Each day has a 44px minimum hit area; very narrow views scroll horizontally if needed. No modal is
-used for creation or management.
+The always-visible New habit row sits above the grid, separated by a hairline. A selected habit's
+history opens below the grid; Manage habits is a disclosure below it, with compact rows that expand
+in place for editing. In a narrow workspace pane or phone-sized view, each habit's details sit above
+its seven days, which remain aligned with the weekday header. Each day has a 44px minimum hit area;
+very narrow views scroll horizontally if needed. No modal is used for creation or management.
 
 ## Elevation & Depth
 
@@ -196,10 +196,21 @@ pre-creation days remain visible but muted.
 
 ### Habit Row
 
-A habit cell holds the name, `target/wk`, current streak, and the selected week's
-`completed / target · outcome`. A small rail supplements that text for eligible weeks and caps its
-fill at the target; it never treats a saved future mark as completed. The row uses a hairline bottom
-border and a tonal hover. Archived rows are muted and labeled in text.
+A habit cell holds an optional local Obsidian icon and the name as a history control. Compact
+metadata shows the selected week's `completed / target · outcome` and the current
+streak; no separate target label or progress rail repeats those values. Future marks do not count
+as completed. The row uses a hairline bottom border and a tonal hover. Archived rows are muted and
+labeled in text.
+
+### Habit History and Management
+
+The individual history is a bordered section with current and best streaks in weeks, marked days,
+and a read-only yearly calendar. Calendar squares follow the habit color, with labels for archived,
+unmarked, and unavailable days. Year navigation stays within the habit's recorded lifetime, and
+the calendar scrolls horizontally when space is limited. Management is a compact list of names,
+targets, current-week progress, and streaks; an Edit disclosure reveals the existing controls.
+On narrow screens, the name and metadata sit above the day controls, keeping each day easy to tap.
+Only one habit editor is expanded at a time; switching rows preserves unsaved form input in the view.
 
 ### Disclosure
 
@@ -212,7 +223,8 @@ in place.
 Inputs are 30px high, 6px radius, ground-colored, with a hairline border and accent focus. The color
 control is a true circular swatch with a 34px touch target; choosing a color applies immediately,
 and **Use theme color** sits beside it, disabled when the theme is already active. The input names
-the habit in its accessible label. Primary creation uses the theme accent; all secondary actions are
+the habit in its accessible label. A searchable, paginated in-place icon picker uses Obsidian's local
+icon registry, with labeled, touch-sized choices and an explicit remove action. Primary creation uses the theme accent; all secondary actions are
 text or hairline ghost buttons. Touch targets grow on narrow screens.
 
 ## Do's and Don'ts

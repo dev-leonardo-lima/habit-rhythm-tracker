@@ -23,8 +23,12 @@ function handlers(): DashboardHandlers {
   return {
     createHabit: vi.fn(),
     toggleCompletion: vi.fn(),
+    toggleHabitHistory: vi.fn(),
+    closeHabitHistory: vi.fn(),
+    changeHistoryYear: vi.fn(),
     renameHabit: vi.fn(),
     changeColor: vi.fn(),
+    changeIcon: vi.fn(),
     changeTarget: vi.fn(),
     archiveHabit: vi.fn(),
     reactivateHabit: vi.fn(),
@@ -42,9 +46,11 @@ function summary(overrides: Partial<HabitSummaryViewModel> = {}): HabitSummaryVi
     path: 'Habits/Gym.md',
     name: 'Gym',
     color: null,
+    icon: null,
     created: '2026-10-26',
     state: 'active',
     target: 4,
+    completedThisWeek: 2,
     streak: 2,
     monthlyTotal: 3,
     pendingArchive: false,
@@ -66,6 +72,7 @@ function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
     issues: [],
     weeks: [],
     habits: [],
+    detail: null,
     formResetVersion: 0,
     ...overrides,
   };
@@ -99,8 +106,10 @@ describe('UI components', () => {
   it('renders lifecycle controls for active, pending-archive and archived habits', () => {
     const container = document.createElement('div');
     const callbacks = {
+      toggleHabitHistory: vi.fn(),
       renameHabit: vi.fn(),
       changeColor: vi.fn(),
+      changeIcon: vi.fn(),
       changeTarget: vi.fn(),
       archiveHabit: vi.fn(),
       reactivateHabit: vi.fn(),
@@ -127,7 +136,7 @@ describe('UI components', () => {
     const targetSelect = first?.querySelector('select') as HTMLSelectElement;
     targetSelect.value = '3';
     first
-      ?.querySelectorAll('form')[1]
+      ?.querySelector('form[data-form-key="target:habit-1"]')
       ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(callbacks.changeTarget).toHaveBeenCalledWith('habit-1', 3);
 
@@ -150,8 +159,10 @@ describe('UI components', () => {
   it('renders an accessible color picker and removes a custom color', () => {
     const container = document.createElement('div');
     const callbacks = {
+      toggleHabitHistory: vi.fn(),
       renameHabit: vi.fn(),
       changeColor: vi.fn(),
+      changeIcon: vi.fn(),
       changeTarget: vi.fn(),
       archiveHabit: vi.fn(),
       reactivateHabit: vi.fn(),
@@ -183,7 +194,10 @@ describe('UI components', () => {
 
   it('renders an empty week state', () => {
     const weeks = document.createElement('div');
-    renderHabitGrid(weeks, viewModel({ weeks: [] }), { toggleCompletion: vi.fn() });
+    renderHabitGrid(weeks, viewModel({ weeks: [] }), {
+      toggleCompletion: vi.fn(),
+      toggleHabitHistory: vi.fn(),
+    });
     expect(weeks.textContent).toContain('No week to display');
   });
 

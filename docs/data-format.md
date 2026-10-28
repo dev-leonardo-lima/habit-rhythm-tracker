@@ -12,6 +12,7 @@ plugin owns exactly one body block between `<!-- habit-tracker:start -->` and
   "id": "a-stable-id",
   "name": "Gym",
   "color": "#3366cc",
+  "icon": "dumbbell",
   "created": "2026-10-26",
   "targets": [{ "week": "2026-10-26", "days": 4 }],
   "states": [{ "week": "2026-10-26", "state": "active" }],
@@ -24,9 +25,12 @@ plugin owns exactly one body block between `<!-- habit-tracker:start -->` and
 - `schemaVersion`: must be `1`.
 - `id`: immutable nonblank identifier without whitespace, stable across file renames and moves.
 - `name`: nonblank display name.
-- `color`: optional six-digit hex color (`#rrggbb`) used only for that habit's completion marks.
+- `color`: optional six-digit hex color (`#rrggbb`) used for that habit's marks and icon.
   When absent or invalid, the Obsidian theme accent is used. Invalid values are never injected into
   styles and the note is not treated as corrupt because of them.
+- `icon`: optional nonblank Obsidian icon ID, at most 128 characters without control characters.
+  A well-formed ID is preserved even when not registered on this device; the icon can be chosen or
+  removed explicitly. Malformed icon data is reported as invalid instead of being discarded.
 - `created`: valid local calendar date (`YYYY-MM-DD`) on which the habit was created.
 - `targets`: nonempty array ordered by Monday week, with one entry per week. `days` is an integer
   from 1 through 7. The first entry must take effect in the creation week.

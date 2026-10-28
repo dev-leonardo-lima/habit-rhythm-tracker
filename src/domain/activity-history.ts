@@ -34,19 +34,29 @@ export function archiveHabit(habit: Habit, today: LocalDate): Habit {
   return { ...habit, states };
 }
 
-/**
- * Reactivates in the current week, cancels pending archives at or after this week,
- * and preserves all earlier history.
- */
+/** Reactivates this week and preserves other recorded state changes. */
 export function reactivateHabit(habit: Habit, today: LocalDate): Habit {
   const week = mondayOf(today);
-  const states = habit.states.filter((entry) => compareDates(entry.week, week) < 0);
+  const nextWeek = addDays(week, 7);
+  const cancelPending = isPendingArchive(habit, today);
+  const states = habit.states.filter(
+    (entry) =>
+      entry.week !== week &&
+      !(cancelPending && entry.week === nextWeek && entry.state === 'archived'),
+  );
   states.push({ week, state: 'active' });
   states.sort((left, right) => compareDates(left.week, right.week));
   return { ...habit, states };
 }
 
-/** Canceling a pending archive is reactivation for the current week. */
+/** Cancel only the next-week archive, retaining all other state changes. */
 export function cancelPendingArchive(habit: Habit, today: LocalDate): Habit {
-  return reactivateHabit(habit, today);
+  if (!isPendingArchive(habit, today)) {
+    return habit;
+  }
+  const nextWeek = addDays(mondayOf(today), 7);
+  return {
+    ...habit,
+    states: habit.states.filter((entry) => entry.week !== nextWeek),
+  };
 }

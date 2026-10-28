@@ -184,11 +184,11 @@ describe('US3: week navigation and history', () => {
     if (!habit || !week) {
       throw new Error('missing week fixture');
     }
-    const handlers = { toggleCompletion: () => undefined };
+    const handlers = { toggleCompletion: () => undefined, toggleHabitHistory: () => undefined };
 
     const noRows = document.createElement('div');
     renderHabitGrid(noRows, { ...view, habits: [habit], weeks: [{ ...week, rows: [] }] }, handlers);
-    expect(noRows.textContent).toContain('No habits yet');
+    expect(noRows.textContent).toContain('No habits to track for this week');
 
     const fallback = document.createElement('div');
     renderHabitGrid(fallback, { ...view, habits: [], weeks: [week] }, handlers);
@@ -261,7 +261,7 @@ describe('US3: week navigation and history', () => {
     ).toBeUndefined();
   });
 
-  it('shows weekly progress without counting future marks and caps the visual rail at the target', async () => {
+  it('shows weekly progress once without counting future marks', async () => {
     const now = localNoon(2026, 10, 30);
     const harness = createHarness({ now: () => now });
     addHabitNote(
@@ -275,16 +275,18 @@ describe('US3: week navigation and history', () => {
     await harness.controller.load();
     const container = document.createElement('div');
     render(harness, container);
-    const fill = () => container.querySelector<HTMLElement>('.habit-tracker-progress-fill');
-    expect(fill()?.style.width).toBe('50%');
     expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toContain('2 / 4');
+    expect(container.querySelector('.habit-tracker-habit-meta')?.textContent).toContain(
+      'Streak: 0 weeks',
+    );
+    expect(container.querySelector('.habit-tracker-habit-meta')?.textContent).not.toContain('4/wk');
+    expect(container.querySelector('.habit-tracker-progress')).toBeNull();
 
     const habitId = harness.controller.getViewModel().habits[0]?.habitId ?? '';
     for (const date of ['2026-10-28', '2026-10-29', '2026-10-30']) {
       await harness.controller.toggleCompletion(habitId, date, true);
     }
     render(harness, container);
-    expect(fill()?.style.width).toBe('100%');
     expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toContain('5 / 4');
   });
 

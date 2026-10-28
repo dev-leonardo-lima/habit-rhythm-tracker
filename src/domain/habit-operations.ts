@@ -1,4 +1,5 @@
 import { normalizeHabitColor } from './habit-color';
+import { normalizeHabitIcon } from './habit-icon';
 import { addDays, compareDates, isValidLocalDate, mondayOf, todayLocalDate } from './local-date';
 import type { Habit, LocalDate } from './types';
 
@@ -8,7 +9,8 @@ export type HabitOperationErrorCode =
   | 'invalid-date'
   | 'before-creation'
   | 'after-today'
-  | 'invalid-color';
+  | 'invalid-color'
+  | 'invalid-icon';
 
 export class HabitOperationError extends Error {
   readonly code: HabitOperationErrorCode;
@@ -135,6 +137,20 @@ export function setHabitColor(habit: Habit, color: string | null): Habit {
     );
   }
   return { ...habit, color: normalized };
+}
+
+/** Changes an icon only after an explicit choice; absence means no icon. */
+export function setHabitIcon(habit: Habit, icon: string | null): Habit {
+  if (icon === null) {
+    const rest = { ...habit };
+    delete rest.icon;
+    return rest;
+  }
+  const normalized = normalizeHabitIcon(icon);
+  if (!normalized) {
+    throw new HabitOperationError('invalid-icon', 'Choose a valid icon');
+  }
+  return { ...habit, icon: normalized };
 }
 
 /** Applies only an explicit historical correction/restoration to a cloned record. */
