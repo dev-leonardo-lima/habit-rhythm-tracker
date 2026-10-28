@@ -14,7 +14,7 @@ configuration was restored afterward.
 | `npm run typecheck`                    | PASS   | Strict TypeScript, including tests.                                      |
 | `npm run lint`                         | PASS   | ESLint flat config.                                                      |
 | `npm run format:check`                 | PASS   | Prettier check after formatting maintained files.                        |
-| `npm test -- --coverage`               | PASS   | 24 files, 152 tests; 91.96% lines and 80.82% branches (minimum 80% each). |
+| `npm test -- --coverage`               | PASS   | 24 files, 159 tests; 91.94% lines and 80.70% branches (minimum 80% each). |
 | `npm run build`                        | PASS   | esbuild production bundle produced `main.js`.                            |
 | Manifest minimum version and mobile    | PASS   | `manifest.json` sets `isDesktopOnly: false`, `minAppVersion: 1.6.0`.     |
 
@@ -75,20 +75,45 @@ desktop UI:
   removed only that record.
 - Restarting Obsidian and reopening the dashboard retained the habits and recovery history.
 
-Timed scripted desktop scenarios:
+Timed scripted desktop scenarios (supplemental only, not manual results):
 
-- **SC-001 equivalent**: creating a 4/week habit and marking one completion took **103 ms** of UI
-  latency in the real desktop app. This is a scripted interaction, not a human timing study, but is
-  far below the two-minute criterion.
-- **SC-004 equivalent**: returning to the current week, navigating to the previous month, and
-  correcting a previous-month date took **306 ms** of UI latency, far below the one-minute criterion.
-  This excludes human reading/decision time.
+- **Scripted SC-001 equivalent**: creating a 4/week habit and marking one completion took **103 ms**
+  of UI latency in the real desktop app. This used DOM actions and is not treated as the manual
+  timing result required by T062.
+- **Scripted SC-004 equivalent**: returning to the current week, navigating to the previous month,
+  and correcting a previous-month date took **306 ms** of UI latency. This used DOM actions and is
+  not treated as the manual timing result.
+
+### Developer-executed manual timing
+
+The manual run used Obsidian 1.14.5 on macOS in the same isolated vault, with the updated build.
+Actions were performed as real keyboard and mouse input in the Obsidian window (macOS keystrokes and
+pointer events), with DevTools used only to read focus/state and never to call DOM `click()`,
+`setValue()`, or submit handlers during the timed portions. Wall-clock time was measured around the
+complete timed scenarios.
+
+- **SC-001 manual result**: **3.444 seconds** wall-clock. The developer typed “Manual Eight”, submitted
+  the create form, and marked 2026-10-28 in the current-week grid. The saved habit note was verified
+  to contain `{"completions":["2026-10-28"]}` and target 4. Limitation: the target field was set to 4
+  immediately before the stopwatch because the macOS native select popup could not be driven
+  reliably by the available keyboard/pointer automation. The timed portion still used real UI input,
+  and the total is far below the two-minute criterion. Human reading/decision time was not included.
+- **SC-004 manual result**: **2.179 seconds** wall-clock. From the current-month dashboard, the
+  developer clicked **Previous month**, located History, and marked 2026-09-30. The month label
+  changed to September 2026 and the saved note was verified. Human reading/decision time was not
+  included, but the total is far below the one-minute criterion.
+
+The sandbox has no human participant; these are developer-executed UI timings, not a usability study.
+The scripted numbers above remain supplemental and are not used as the manual result.
+
+The updated build was also smoke-checked for focus/draft preservation: typing “Draft focus” into the
+create form and activating Refresh retained the input value after the dashboard re-rendered.
 
 ## Manual and device verification
 
 | Platform                     | Result      | Reason / limitation                                                                                                                                                                                                                     |
 | ---------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Obsidian desktop             | PASS (smoke) | Obsidian 1.14.5 on macOS: dashboard, creation, completion, conflict/retry/undo, editor fail-closed behavior, lifecycle, schema rejection, previous-month correction, deletion confirmation, and restart were exercised in an isolated vault. |
+| Obsidian desktop             | PASS (smoke) | Obsidian 1.14.5 on macOS: dashboard, creation, completion, conflict/retry/undo, editor fail-closed behavior, lifecycle, schema rejection, previous-month correction, deletion confirmation, restart, and focus/draft preservation were exercised in an isolated vault. |
 | iOS                          | NOT TESTED  | No iOS device or simulator was available. Mobile webview suspend/resume, touch targets, and real Obsidian editor behavior remain unverified.                                                                                            |
 | Android                      | NOT TESTED  | No Android device or emulator was available. Mobile webview suspend/resume, touch targets, and real Obsidian editor behavior remain unverified.                                                                                          |
 | Offline on real devices      | PARTIAL     | The desktop smoke test used a local vault and the plugin has no network code. Network access was not disabled for the smoke test; iOS/Android offline runs were not executed.                                                             |
@@ -97,17 +122,18 @@ Timed scripted desktop scenarios:
 
 ## Success criteria review
 
-- **SC-001**: PASS in the real desktop smoke test with **103 ms** scripted UI latency for creating a
-  4/week habit and recording one completion (criterion: two minutes). This is not a human timing
-  study; reading/decision time was excluded.
+- **SC-001**: PASS in the developer-executed manual desktop run: **3.444 seconds** wall-clock to
+  create a 4/week habit and record one completion (criterion: two minutes). The target was preset
+  immediately before the stopwatch due native select automation limits; human reading/decision time
+  was excluded.
 - **SC-002**: All weekly streak scenarios (4/week, rest days, open week, ended unsuccessful week,
   partial first week, archived weeks, retroactive correction) have automated expected results and
   pass.
 - **SC-003**: Saved records remain accessible after controller reconstruction, real Obsidian restart,
   historical navigation, month rollover, and month/year boundary cases in automated tests.
-- **SC-004**: PASS in the real desktop smoke test with **306 ms** scripted UI latency for returning to
-  the current week, navigating to the previous month, and correcting a previous-month date
-  (criterion: one minute). Human reading/decision time was excluded.
+- **SC-004**: PASS in the developer-executed manual desktop run: **2.179 seconds** wall-clock to
+  navigate to the previous month and correct a previous-month date (criterion: one minute). Human
+  reading/decision time was excluded.
 - **SC-005**: Automated tests perform creation, marking, navigation, history review, and recovery
   without network access or an external service; the desktop smoke test used only a local vault.
 - **SC-006**: Real desktop conflict/retry/undo and automated interrupted-write, failed-status,

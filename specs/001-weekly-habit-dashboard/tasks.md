@@ -200,3 +200,12 @@ integration require US1 and US2.
    to validate each domain slice independently before shared UI integration.
 4. Finish cross-cutting checks and record actual device/usability results. Never treat unverified
    platform evidence or the 002 release pipeline as already implemented.
+
+## Phase 8: Convergence
+
+- [X] T057 CRITICAL: Preserve the exact note snapshot from which each edit or recovery retry is computed through journaling and guarded comparison in `src/ui/dashboard-controller.ts`, `src/storage/guarded-write.ts`, and `src/storage/recovery-service.ts`; reject mismatches without overwriting either change, and add regression tests for an external edit between the initial read and writer read and for two queued edits to the same habit in `tests/integration/recovery-store.test.ts` per Constitution I, FR-012, FR-018, and FR-020 (contradicts).
+- [X] T058 Show the current conflicting note alongside the original snapshot and intended change before explicit retry or discard in `src/ui/dashboard-controller.ts` and `src/ui/recovery-renderer.ts`; add a conflict-comparison regression test in `tests/integration/recovery-ui.test.ts` per FR-018 and US1/AC9 (partial).
+- [X] T059 Update weekly rollover in `src/ui/calendar-controller.ts` to show the current month and highlight the current week even when browsing history; add a regression case in `tests/unit/calendar-controller.test.ts` per FR-007 and US3/AC1 (contradicts).
+- [X] T060 Make editor-state inspection fail closed when an open Markdown leaf cannot be identified or safely inspected in `src/ui/obsidian-editor-guard.ts`, and document any supported-API limitations in `docs/editor-state-spike.md`; add tests for missing views, missing file identities, and multiple leaves in `tests/unit/editor-guard.test.ts` per FR-018 and plan: editor-state protection (partial).
+- [X] T061 Preserve keyboard focus and unsaved form input across routine dashboard updates in `src/ui/dashboard-renderer.ts` and related view/controller code, while retaining required error-dialog focus; add interaction tests for repeated keyboard use and timed refresh in `tests/integration/ui-components.test.ts` per FR-014 and FR-023 (partial).
+- [X] T062 Perform and record developer-executed manual timing for creating a 4/week habit and correcting a prior-month date in `specs/001-weekly-habit-dashboard/validation.md`, including elapsed time and environment; do not treat scripted UI latency alone as a manual result per SC-001, SC-004, and T056 (partial).
