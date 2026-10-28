@@ -1,9 +1,18 @@
 # Quickstart: Validate the Habit Dashboard
 
-This guide describes checks **after implementation**. The current workspace contains only Spec Kit
-artifacts and an initialized Git repository; the plugin, commands, dependencies and build do not yet exist. See
-[plan.md](plan.md), [data-model.md](data-model.md), and the
-[note](contracts/habit-note.md) and [dashboard](contracts/dashboard.md) contracts.
+This guide describes checks after implementation. The plugin, commands, dependencies, build, and
+automated tests now exist. See [plan.md](plan.md), [data-model.md](data-model.md), the
+[note](contracts/habit-note.md) and [dashboard](contracts/dashboard.md) contracts, and the recorded
+[validation evidence](validation.md).
+
+## Validation results
+
+- `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test -- --coverage`, and
+  `npm run build` pass in the implementation environment.
+- Coverage is at least 80% lines and 80% branches; exact final numbers are in
+  [validation.md](validation.md).
+- Desktop, iOS, and Android manual verification was **not available** in this environment. The
+  reasons and all unverified scenarios are recorded in [validation.md](validation.md).
 
 ## Build and install in a test vault
 
