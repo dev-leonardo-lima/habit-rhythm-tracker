@@ -50,6 +50,16 @@ export function shortDate(date: LocalDate): string {
   return `${Number(dayText)} ${SHORT_MONTHS[index] ?? ''}`;
 }
 
+export function weekRangeLabel(week: LocalDate): string {
+  return `${shortDate(week)} – ${shortDate(addDays(week, 6))}`;
+}
+
+export function weekYearsLabel(week: LocalDate): string {
+  const startYear = week.slice(0, 4);
+  const endYear = addDays(week, 6).slice(0, 4);
+  return startYear === endYear ? startYear : `${startYear} – ${endYear}`;
+}
+
 export function weekLabel(week: LocalDate): string {
   const end = addDays(week, 6);
   const startYear = week.slice(0, 4);

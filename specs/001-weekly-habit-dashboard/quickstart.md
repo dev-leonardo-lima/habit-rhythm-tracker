@@ -12,8 +12,9 @@ automated tests now exist. See [plan.md](plan.md), [data-model.md](data-model.md
 - Coverage is at least 80% lines and 80% branches; exact final numbers are in
   [validation.md](validation.md).
 - Desktop Obsidian 1.14.5 on macOS passed a smoke verification in an isolated vault covering
-  creation, completion, conflict/retry/undo, editor fail-closed behavior, lifecycle changes,
-  unsupported-schema rejection, previous-week correction, deletion confirmation, and restart.
+  creation, completion, undo, editor fail-closed behavior, lifecycle changes, custom color,
+  header year rendering, keyboard focus, unsupported-schema rejection, previous-week correction,
+  and restart.
 - iOS and Android remain **unverified**; the reasons and all unverified scenarios are recorded in
   [validation.md](validation.md).
 
@@ -53,7 +54,11 @@ folder following the official sample instructions. Enable the plugin; its manife
 5. Change a target and archive a habit; verify both take effect next week and historical values
    remain. Reactivate a 4/week habit on Sunday: its full target applies, earlier current-week dates
    from creation are editable, and prior archived weeks remain excluded from the streak.
-6. Run the core flows offline on desktop and on actual iOS and Android devices. Check theme
+6. Choose a custom color for one habit and confirm only its completion marks change; reopen and
+   confirm the value persisted in the note. Remove the color and confirm the habit returns to the
+   theme accent. Check that the year sits above the range and a crossing week shows both years.
+   Confirm completion bars have no numeric count labels.
+7. Run the core flows offline on desktop and on actual iOS and Android devices. Check theme
    adaptation, narrow scrolling, touch targets, keyboard navigation, focus, and labels. Record
    device versions and results for offline persistence and reopening in a desktop/iOS/Android
    matrix, or explicitly record unverified platforms and reasons.
@@ -73,9 +78,10 @@ folder following the official sample instructions. Enable the plugin; its manife
 4. Document editor-state proof-of-concept results for multiple open views, dirty/unknown buffers,
    supported app versions and platforms; verify unverifiable state blocks edits and asks the person
    to save or close the editor. Confirm the note is unchanged.
-5. Exercise error surfaces with keyboard and touch, including focus and text labels. Use invalid and
-   unsupported format fixtures to confirm no rewrite. For any future migration, verify explicit
-   approval, preservation of a recoverable original, and failure recovery.
+5. Exercise error surfaces with keyboard and touch, including the labeled color picker, its
+   “Use theme color” action, focus, and text labels. Use invalid and unsupported format fixtures to
+   confirm no immediate rewrite; an invalid color falls back to the theme accent. For any future migration,
+   verify explicit approval, preservation of a recoverable original, and failure recovery.
 6. Record independent offline sync conflicts as outside guaranteed detection and verify that valid
    external note edits observed by the plugin refresh the view.
 7. Confirm existing `recovery-*` files from earlier development builds are ignored and not modified

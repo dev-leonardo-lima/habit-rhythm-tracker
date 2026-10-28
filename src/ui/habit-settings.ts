@@ -2,6 +2,7 @@ import type { HabitSummaryViewModel } from './dashboard-controller';
 
 export interface HabitSettingsHandlers {
   renameHabit(habitId: string, name: string): void | Promise<unknown>;
+  changeColor(habitId: string, color: string | null): void | Promise<unknown>;
   changeTarget(habitId: string, target: number): void | Promise<unknown>;
   archiveHabit(habitId: string): void | Promise<unknown>;
   reactivateHabit(habitId: string): void | Promise<unknown>;
@@ -97,6 +98,45 @@ function renderHabitSettingsItem(
     void handlers.renameHabit(habit.habitId, nameInput.value);
   });
   body.append(renameForm);
+
+  const colorForm = el('form', 'habit-tracker-inline-form habit-tracker-color-form');
+  colorForm.dataset.formKey = `color:${habit.habitId}`;
+  const colorLabel = el('label');
+  colorLabel.append(document.createTextNode('Color'));
+  const colorInput = el('input');
+  colorInput.type = 'color';
+  colorInput.value = habit.color ?? '#8a5cf5';
+  colorInput.setAttribute('aria-label', `Habit color for ${habit.name}`);
+  colorLabel.append(colorInput);
+  colorForm.append(colorLabel);
+  const colorButton = el('button', undefined, 'Save color');
+  colorButton.type = 'submit';
+  colorButton.setAttribute('aria-label', `Save color for ${habit.name}`);
+  colorForm.append(colorButton);
+  colorForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void handlers.changeColor(habit.habitId, colorInput.value);
+  });
+  body.append(colorForm);
+
+  const colorRow = el('div', 'habit-tracker-color-row');
+  colorRow.append(
+    el(
+      'span',
+      'habit-tracker-color-status',
+      habit.color ? `Custom color ${habit.color}` : 'Using the theme color',
+    ),
+  );
+  if (habit.color) {
+    const removeColor = el('button', undefined, 'Use theme color');
+    removeColor.type = 'button';
+    removeColor.setAttribute('aria-label', `Remove custom color for ${habit.name}`);
+    removeColor.addEventListener('click', () => {
+      void handlers.changeColor(habit.habitId, null);
+    });
+    colorRow.append(removeColor);
+  }
+  body.append(colorRow);
 
   const targetForm = el('form', 'habit-tracker-inline-form');
   targetForm.dataset.formKey = `target:${habit.habitId}`;

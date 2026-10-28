@@ -96,7 +96,7 @@
       "refersTo": "button-ghost",
       "description": "Quiet previous/next week chevrons around the week range.",
       "html": "<button class=\"ds-week-nav\" aria-label=\"Previous week\">‹</button>",
-      "css": ".ds-week-nav { width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: #666; font-size: 18px; line-height: 1; cursor: pointer; } .ds-week-nav:hover { background: #282828; color: #dadada; } .ds-week-nav:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
+      "css": ".ds-week-nav { width: 32px; height: 32px; border: 0; border-radius: 6px; background: transparent; color: #666; font-size: 22px; line-height: 1; cursor: pointer; } .ds-week-nav:hover { background: #282828; color: #dadada; } .ds-week-nav:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
     },
     {
       "name": "Primary Create",
@@ -110,9 +110,9 @@
       "name": "Day Toggle",
       "kind": "custom",
       "refersTo": "day-completed",
-      "description": "Seven interactive day cells; consecutive completions form capsules.",
-      "html": "<label class=\"ds-day\"><input type=\"checkbox\" checked><span class=\"ds-day-mark\"></span><span class=\"ds-day-count\">3</span></label>",
-      "css": ".ds-day { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 48px; cursor: pointer; } .ds-day input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; } .ds-day-mark { display: block; width: 100%; height: 16px; border-radius: 8px; background: #8a5cf5; } .ds-day-count { position: absolute; right: 1px; color: #1c1c1c; font: 650 8px/1 Inter, sans-serif; pointer-events: none; } .ds-day:has(input:focus-visible) { outline: 2px solid #8a5cf5; outline-offset: -3px; }"
+      "description": "Seven interactive day cells; consecutive completions form unlabeled capsules.",
+      "html": "<label class=\"ds-day\"><input type=\"checkbox\" checked><span class=\"ds-day-mark\"></span></label>",
+      "css": ".ds-day { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 58px; cursor: pointer; } .ds-day input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; } .ds-day-mark { display: block; width: 100%; height: 26px; border-radius: 13px; background: var(--ht-habit-color, #8a5cf5); } .ds-day::before { content: ''; position: absolute; top: 50%; right: 0; left: 0; height: 36px; border-radius: 18px; transform: translateY(-50%); } .ds-day:hover::before { background: #282828; } .ds-day:has(input:focus-visible)::before { box-shadow: inset 0 0 0 2px #8a5cf5; }"
     },
     {
       "name": "Habit Meta",
@@ -120,7 +120,7 @@
       "refersTo": "button-ghost",
       "description": "Habit name with target, streak, and weekly outcome in small text.",
       "html": "<div class=\"ds-habit\"><strong>Exercise</strong><span>4/wk · 2 weeks</span><span>3 / 4 · In progress</span></div>",
-      "css": ".ds-habit { display: grid; gap: 2px; width: 190px; color: #dadada; font-family: Inter, sans-serif; } .ds-habit strong { font-size: 12px; font-weight: 560; line-height: 1.25; } .ds-habit span { color: #666; font-size: 9px; line-height: 1.35; }"
+      "css": ".ds-habit { display: grid; gap: 2px; width: 240px; color: #dadada; font-family: Inter, sans-serif; } .ds-habit strong { font-size: 13.5px; font-weight: 560; line-height: 1.25; } .ds-habit span { color: #666; font-size: 10px; line-height: 1.35; }"
     },
     {
       "name": "Disclosure",
@@ -137,14 +137,15 @@
     "keyCharacteristics": [
       "One Monday-Sunday week, exactly seven columns, no monthly calendar.",
       "Habit names left; compact target, streak, and status text underneath.",
-      "Completion runs are continuous capsules with a count at the run end.",
+      "Completion runs are continuous unlabeled capsules; progress stays textual.",
+      "The year is a small centered label above the week range; crossing years name both.",
       "Quiet typographic navigation; advanced controls are progressively disclosed.",
       "Hairlines and tonal layering instead of cards, shadows, or decorative chrome."
     ],
     "rules": [
       {
-        "name": "The One Accent Rule",
-        "body": "Only the theme accent marks completion, the current day/week, and the primary create action. Everything else is neutral.",
+        "name": "The Theme Accent Rule",
+        "body": "The theme accent marks completion by default, plus the current day/week and primary create action. An optional per-habit color may replace the accent only for that habit's completion marks; invalid or absent values fall back to the theme accent.",
         "section": "colors"
       },
       {
@@ -160,9 +161,10 @@
     ],
     "dos": [
       "Do keep one week, exactly seven date columns, and habits in rows.",
-      "Do draw consecutive completions as connected capsules with a run count.",
+      "Do draw consecutive completions as connected capsules without count labels.",
       "Do keep target, streak, and weekly outcome visible in words.",
-      "Do use one theme accent for completion/current state and neutral hairlines for structure.",
+      "Do use the theme accent by default and apply an optional habit color only to that habit's marks.",
+      "Do keep the year smaller and centered above the visible week range.",
       "Do preserve focus, keyboard access, touch targets, and progressive disclosure."
     ],
     "donts": [

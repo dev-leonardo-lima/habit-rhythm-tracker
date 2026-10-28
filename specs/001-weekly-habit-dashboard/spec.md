@@ -118,6 +118,8 @@ and verify that the current week is shown on reopen and old records remain acces
    progress until its date arrives.
 7. **Given** a completion in a wholly archived week, **When** its week is viewed, **Then** the mark
    remains visible while the archived week is excluded from the streak.
+8. **Given** a selected week, **When** its header is displayed, **Then** the year appears as a smaller
+   label centered above the date range. A week crossing a year boundary shows both years.
 
 ---
 
@@ -143,6 +145,10 @@ old target and that history remains accessible.
    current week is reviewed, **Then** its full target is 4; dates from Monday through today are
    editable if they are on or after creation, and previous archived weeks remain excluded from the
    streak. The current week counts only after its target is reached.
+5. **Given** a habit using the theme color, **When** the person chooses a custom color, **Then** only
+   that habit's completion marks use the chosen color and the value is stored in its Markdown note.
+6. **Given** a habit with a custom color, **When** the person removes it, **Then** that habit returns
+   to the theme accent without changing other habits or history.
 
 ### Edge Cases
 
@@ -248,6 +254,13 @@ old target and that history remains accessible.
 - **FR-024**: Unmarking a completion and replacing a pending target or archive setting MUST require
   an explicit user action. A failed or conflicting write MUST leave the saved note unchanged.
   Permanent deletion of habit notes is outside this feature.
+- **FR-025**: A person MUST be able to choose or remove an optional completion color per habit using
+  a labeled control operable by keyboard and touch. The color MUST apply only to that habit's
+  completion marks and be stored as an optional `#rrggbb` value in its Markdown note. When the value
+  is absent or invalid, the theme accent MUST be used.
+- **FR-026**: The week header MUST present the year as a smaller label centered above the date
+  range, and a week crossing a year boundary MUST show both years without ambiguity. Completion
+  runs MUST NOT display count labels inside the bars; weekly progress remains available as text.
 
 | Operation | User authorization | Result |
 |-----------|--------------------|--------|
@@ -257,8 +270,8 @@ old target and that history remains accessible.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Habit**: Name, start date, active or archived state, and history of weekly targets, stored with
-  its completion history in its own Markdown note.
+- **Habit**: Name, optional completion color, start date, active or archived state, and history of
+  weekly targets, stored with its completion history in its own Markdown note.
 - **Completion record**: Association between a habit and a local date; at most one completion per
   habit per day.
 - **Tracking week**: Monday-to-Sunday interval with the applicable target, number of completed days,

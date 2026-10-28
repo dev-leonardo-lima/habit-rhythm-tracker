@@ -33,8 +33,9 @@ is marking a day; creation and management are secondary.
 ## Chosen direction
 
 A compact week strip based on the supplied references: habit names in rows, seven date columns,
-completion runs as connected purple capsules with run-count labels. The selected week is named once
-at the top and navigation is limited to previous, next, and current week. Creation and habit
+completion runs as connected unlabeled capsules that use the habit color or theme accent. The
+selected week range is named once at the top, with the year smaller and centered above it; crossing
+years name both. Navigation is limited to previous, next, and current week. Creation and habit
 management are progressively disclosed below the grid; conflicts and failures surface as clear
 status text without a recovery area.
 
@@ -49,10 +50,10 @@ completion runs as continuous pill segments. Controls are quiet text/icon button
 STORY: The visitor sees the current week's rhythm in one look, marks a day in place, reads weekly
 progress and streak in the habit label, and moves backward one week at a time when reviewing history.
 
-FIRST VIEWPORT: A compact week header with small previous/next week arrows, the Monday–Sunday range,
-a current-week marker, and a return-to-current action when browsing. Immediately below, seven date
-columns and habit rows fill the surface; the current day is ringed in the theme accent and the current
-week is named in accent text. No monthly strip is shown.
+FIRST VIEWPORT: A compact week header with small previous/next week arrows, the year above the
+Monday–Sunday range, a current-week marker, and a return-to-current action when browsing. Immediately
+below, seven date columns and habit rows fill the surface; the current day is ringed in the theme
+accent and the current week is named in accent text. No monthly strip is shown.
 
 FORM: Seven-day week strip with sticky habit column; picked from the supplied reference direction.
 seed: none (unavailable)

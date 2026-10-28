@@ -1,3 +1,4 @@
+import { normalizeHabitColor } from '../domain/habit-color';
 import { compareDates, isValidLocalDate, isWeekKey, mondayOf } from '../domain/local-date';
 import type { Habit, LocalDate, StateEntry, TargetEntry } from '../domain/types';
 import { HABIT_SCHEMA_VERSION } from '../domain/types';
@@ -177,10 +178,12 @@ export function validateHabitRecord(value: unknown): Habit {
   const targets = parseTargets(value.targets, creationWeek);
   const states = parseStates(value.states, creationWeek);
   const completions = parseCompletions(value.completions, created);
+  const color = normalizeHabitColor(value.color);
   return {
     schemaVersion: HABIT_SCHEMA_VERSION,
     id: value.id.trim(),
     name: value.name.trim(),
+    ...(color ? { color } : {}),
     created,
     targets,
     states,
@@ -230,10 +233,12 @@ export function parseHabitNote(content: string): ParsedHabitNote {
 }
 
 export function serializeHabitBlock(habit: Habit): string {
+  const color = normalizeHabitColor(habit.color);
   const normalized: Habit = {
     schemaVersion: habit.schemaVersion,
     id: habit.id,
     name: habit.name,
+    ...(color ? { color } : {}),
     created: habit.created,
     targets: habit.targets,
     states: habit.states,

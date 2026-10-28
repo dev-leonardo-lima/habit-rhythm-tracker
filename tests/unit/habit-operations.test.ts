@@ -9,6 +9,7 @@ import {
   normalizeHabitName,
   renameHabit,
   setCompletion,
+  setHabitColor,
   unmarkCompletion,
   validateTarget,
 } from '../../src/domain/habit-operations';
@@ -81,6 +82,16 @@ describe('habit operations', () => {
     expect(habit.completions).toEqual(['2026-10-26']);
     expect(habit.targets[0]?.days).toBe(4);
     expect(habit.states[0]?.state).toBe('active');
+  });
+
+  it('sets and removes a normalized custom color without touching other fields', () => {
+    const habit = makeHabit({ completions: ['2026-10-26'] });
+    const colored = setHabitColor(habit, ' #3366CC ');
+    expect(colored.color).toBe('#3366cc');
+    expect(colored.completions).toEqual(['2026-10-26']);
+    expect(setHabitColor(colored, null)).toEqual(habit);
+    expect(() => setHabitColor(habit, 'red')).toThrow('valid six-digit hex color');
+    expect(() => setHabitColor(habit, '#fff')).toThrow(HabitOperationError);
   });
 
   it('calculates current and next Monday', () => {

@@ -1,8 +1,14 @@
+import { normalizeHabitColor } from './habit-color';
 import { addDays, compareDates, isValidLocalDate, mondayOf, todayLocalDate } from './local-date';
 import type { Habit, LocalDate } from './types';
 
 export type HabitOperationErrorCode =
-  'invalid-name' | 'invalid-target' | 'invalid-date' | 'before-creation' | 'after-today';
+  | 'invalid-name'
+  | 'invalid-target'
+  | 'invalid-date'
+  | 'before-creation'
+  | 'after-today'
+  | 'invalid-color';
 
 export class HabitOperationError extends Error {
   readonly code: HabitOperationErrorCode;
@@ -109,6 +115,26 @@ export function unmarkCompletion(habit: Habit, date: LocalDate, today: LocalDate
 
 export function renameHabit(habit: Habit, name: string): Habit {
   return { ...habit, name: normalizeHabitName(name) };
+}
+
+/** Sets a custom completion color, or removes it when `color` is null. */
+export function setHabitColor(habit: Habit, color: string | null): Habit {
+  if (color === null) {
+    if (habit.color === undefined) {
+      return habit;
+    }
+    const rest = { ...habit };
+    delete rest.color;
+    return rest;
+  }
+  const normalized = normalizeHabitColor(color);
+  if (!normalized) {
+    throw new HabitOperationError(
+      'invalid-color',
+      'Choose a valid six-digit hex color, such as #8a5cf5',
+    );
+  }
+  return { ...habit, color: normalized };
 }
 
 /** Applies only an explicit historical correction/restoration to a cloned record. */

@@ -1,6 +1,7 @@
 .habit-tracker-view {
   --ht-name-width: 240px;
   --ht-row-height: 58px;
+  --ht-mark-height: 26px;
   --ht-accent-soft: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
   --ht-accent-faint: color-mix(in srgb, var(--interactive-accent) 4%, transparent);
   --ht-line: color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
@@ -54,12 +55,28 @@
 }
 
 .habit-tracker-week-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin: 0;
+  color: var(--text-normal);
+  line-height: 1.15;
+  text-align: center;
+}
+
+.habit-tracker-week-year {
+  margin-bottom: 2px;
+  color: var(--text-faint);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+.habit-tracker-week-range {
   font-size: 22px;
   font-weight: 650;
-  line-height: 1.15;
   letter-spacing: -0.025em;
-  color: var(--text-normal);
 }
 
 .habit-tracker-week-meta {
@@ -492,12 +509,12 @@
 }
 
 .habit-tracker-day-cell {
+  position: relative;
   height: var(--ht-row-height);
   padding: 0;
   border-bottom: 1px solid var(--ht-line);
   border-left: 1px solid transparent;
   vertical-align: middle;
-  transition: background-color 120ms ease;
 }
 
 .habit-tracker-day-cell.is-week-start {
@@ -512,10 +529,6 @@
   background: color-mix(in srgb, var(--background-secondary) 30%, transparent);
 }
 
-.habit-tracker-day-cell:hover {
-  background: var(--background-modifier-hover);
-}
-
 .habit-tracker-day {
   position: relative;
   display: flex;
@@ -524,16 +537,42 @@
   width: 100%;
   height: var(--ht-row-height);
   cursor: pointer;
-  border-radius: 4px;
 }
 
-.habit-tracker-checkbox {
+.habit-tracker-day::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: calc(var(--ht-mark-height) + 10px);
+  border-radius: calc((var(--ht-mark-height) + 10px) / 2);
+  background: transparent;
+  transform: translateY(-50%);
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+  pointer-events: none;
+}
+
+.habit-tracker-day:hover::before {
+  background: var(--background-modifier-hover);
+}
+
+.habit-tracker-day .habit-tracker-checkbox,
+.habit-tracker-checkbox[type='checkbox'] {
   position: absolute;
   inset: 0;
   z-index: 2;
   width: 100%;
   height: 100%;
   margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  appearance: none;
   opacity: 0;
   cursor: pointer;
 }
@@ -543,10 +582,12 @@
 }
 
 .habit-tracker-day-mark {
+  position: relative;
+  z-index: 1;
   display: block;
   flex: 1 1 auto;
   min-width: 100%;
-  height: 20px;
+  height: var(--ht-mark-height);
   border-radius: 0;
   background: transparent;
   transition:
@@ -556,31 +597,25 @@
 }
 
 .habit-tracker-day.is-completed .habit-tracker-day-mark {
-  background: var(--interactive-accent);
+  background: var(--ht-habit-color, var(--interactive-accent));
 }
 
 .habit-tracker-day.is-single .habit-tracker-day-mark {
-  flex: 1 1 auto;
-  min-width: 100%;
-  width: 100%;
-  height: 20px;
-  border-radius: 10px;
+  border-radius: calc(var(--ht-mark-height) / 2);
 }
 
 .habit-tracker-day.is-run-start:not(.is-single) .habit-tracker-day-mark {
-  border-radius: 10px 0 0 10px;
+  border-radius: calc(var(--ht-mark-height) / 2) 0 0 calc(var(--ht-mark-height) / 2);
 }
 
 .habit-tracker-day.is-run-end:not(.is-single) .habit-tracker-day-mark {
-  border-radius: 0 10px 10px 0;
-}
-
-.habit-tracker-day.is-run-start.is-run-end:not(.is-single) .habit-tracker-day-mark {
-  border-radius: 10px;
+  border-radius: 0 calc(var(--ht-mark-height) / 2) calc(var(--ht-mark-height) / 2) 0;
 }
 
 .habit-tracker-day-cell.is-available .habit-tracker-day-mark {
+  flex: 0 0 auto;
   width: 3px;
+  min-width: 0;
   height: 3px;
   border-radius: 50%;
   background: var(--background-modifier-border);
@@ -594,26 +629,44 @@
   opacity: 1;
 }
 
+.habit-tracker-day-cell.is-disabled .habit-tracker-day {
+  cursor: default;
+}
+
+.habit-tracker-day-cell.is-disabled .habit-tracker-day:hover::before {
+  background: transparent;
+}
+
 .habit-tracker-day-cell.is-disabled .habit-tracker-day-mark {
   opacity: 0.4;
 }
 
-.habit-tracker-day:has(.habit-tracker-checkbox:focus-visible) {
-  outline: 2px solid var(--interactive-accent);
-  outline-offset: -3px;
+.habit-tracker-day:has(.habit-tracker-checkbox:focus-visible)::before {
+  box-shadow: inset 0 0 0 2px var(--interactive-accent);
 }
 
-.habit-tracker-run-count {
-  position: absolute;
-  right: 1px;
-  top: 50%;
-  z-index: 1;
-  color: var(--text-on-accent);
-  font-size: 9px;
-  font-weight: 650;
-  line-height: 1;
-  transform: translateY(-50%);
-  pointer-events: none;
+.habit-tracker-day.is-completed:has(.habit-tracker-checkbox:focus-visible)::before {
+  border-radius: 0;
+}
+
+.habit-tracker-day.is-completed.is-run-start:not(.is-run-end):has(
+    .habit-tracker-checkbox:focus-visible
+  )::before {
+  border-radius: calc((var(--ht-mark-height) + 10px) / 2) 0 0
+    calc((var(--ht-mark-height) + 10px) / 2);
+}
+
+.habit-tracker-day.is-completed.is-run-end:not(.is-run-start):has(
+    .habit-tracker-checkbox:focus-visible
+  )::before {
+  border-radius: 0 calc((var(--ht-mark-height) + 10px) / 2) calc((var(--ht-mark-height) + 10px) / 2)
+    0;
+}
+
+.habit-tracker-day.is-completed.is-run-start.is-run-end:has(
+    .habit-tracker-checkbox:focus-visible
+  )::before {
+  border-radius: calc((var(--ht-mark-height) + 10px) / 2);
 }
 
 .habit-tracker-empty-state {
@@ -753,6 +806,48 @@
   gap: 5px;
   align-items: end;
   margin: 6px 0;
+}
+
+.habit-tracker-color-form input[type='color'] {
+  width: 46px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.habit-tracker-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 2px 0 6px;
+}
+
+.habit-tracker-color-status {
+  color: var(--text-faint);
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.habit-tracker-color-row button {
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--ht-line);
+  border-radius: 5px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 9.5px;
+  cursor: pointer;
+}
+
+.habit-tracker-color-row button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.habit-tracker-color-row button:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
 }
 
 .habit-tracker-inline-form label {
@@ -958,7 +1053,7 @@
     padding: 16px 18px 26px;
   }
 
-  .habit-tracker-week-label {
+  .habit-tracker-week-range {
     font-size: 20px;
   }
 
@@ -979,6 +1074,7 @@
   .habit-tracker-view {
     --ht-name-width: 150px;
     --ht-row-height: 56px;
+    --ht-mark-height: 24px;
     padding: 12px 12px 22px;
   }
 
@@ -995,7 +1091,7 @@
     justify-content: flex-end;
   }
 
-  .habit-tracker-week-label {
+  .habit-tracker-week-range {
     font-size: 19px;
   }
 

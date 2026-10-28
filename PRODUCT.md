@@ -42,6 +42,7 @@ without gamification or decorative dashboards.
 ## Capabilities and Constraints
 
 - Create habits, mark/unmark eligible days, undo the latest unmark, and correct historical dates.
+- Choose or remove an optional completion color per habit; absence uses the theme accent.
 - Weekly progress, effective targets, current streaks, archived weeks, and future stored dates must
   remain visible and truthful through week navigation.
 - Target and archive changes take effect next week; reactivation applies in the current week.
@@ -53,10 +54,11 @@ without gamification or decorative dashboards.
 ## Brand Commitments
 
 The user pinned the visual direction to the supplied references: a restrained dark-first seven-day habit grid,
-compact rows, habit names on the left, exactly seven date columns, purple completion runs drawn as
-capsules with run-count labels, and discreet previous/next/current week navigation. The dashboard
-opens on the current week and lives in the main workspace tab, never as the primary right-sidebar
-surface. There is no monthly grid or month selector. The look is theme-aware;
+compact rows, habit names on the left, exactly seven date columns, completion runs drawn as
+unlabeled capsules, and discreet previous/next/current week navigation. The year sits smaller above
+the week range, and crossing years show both. The dashboard opens on the current week and lives in
+the main workspace tab, never as the primary right-sidebar surface. There is no monthly grid or
+month selector. The default accent is theme-aware, with an optional per-habit color;
 the accent comes from the active Obsidian theme.
 
 ## Evidence on Hand

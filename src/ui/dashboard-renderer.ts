@@ -8,6 +8,7 @@ export interface DashboardHandlers {
   toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
   undoUnmark(habitId: string): void | Promise<unknown>;
   renameHabit(habitId: string, name: string): void | Promise<unknown>;
+  changeColor(habitId: string, color: string | null): void | Promise<unknown>;
   changeTarget(habitId: string, target: number): void | Promise<unknown>;
   archiveHabit(habitId: string): void | Promise<unknown>;
   reactivateHabit(habitId: string): void | Promise<unknown>;
@@ -268,9 +269,15 @@ function renderHeader(
   const nav = el('div', 'habit-tracker-week-nav');
   nav.append(iconButton('‹', 'Previous week', () => handlers.previousWeek()));
   const weekBlock = el('div', 'habit-tracker-week-block');
-  const label = el('h1', 'habit-tracker-week-label', weekText);
+  const label = el('h1', 'habit-tracker-week-label');
   label.dataset.testid = 'week-label';
+  label.setAttribute('aria-label', weekText);
   label.setAttribute('aria-live', 'polite');
+  const year = el('span', 'habit-tracker-week-year', week?.yearLabel ?? '');
+  year.setAttribute('aria-hidden', 'true');
+  const range = el('span', 'habit-tracker-week-range', week?.rangeLabel ?? weekText);
+  range.setAttribute('aria-hidden', 'true');
+  label.append(year, range);
   weekBlock.append(label);
   const meta = el('p', 'habit-tracker-week-meta');
   meta.append(

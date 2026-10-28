@@ -9,6 +9,7 @@ export function makeHabit(overrides: Partial<Habit> = {}): Habit {
     schemaVersion: 1,
     id: overrides.id ?? 'habit-1',
     name: overrides.name ?? 'Gym',
+    ...(overrides.color !== undefined ? { color: overrides.color } : {}),
     created,
     targets: overrides.targets ?? [{ week: creationWeek, days: 4 }],
     states: overrides.states ?? [{ week: creationWeek, state: 'active' }],

@@ -235,3 +235,12 @@ recovery data was deleted; personal vaults were not touched.
 - [X] T071 Update `spec.md`, `plan.md`, `data-model.md`, contracts, quickstart, README, development/data-format docs, PRODUCT.md, and DESIGN.md to remove recovery obligations and document the no-journal behavior.
 - [X] T072 Delete recovery files/folders from the project's synthetic development/test vaults only, with explicit user authorization; leave personal vaults and unrelated files untouched.
 - [X] T073 Verify the weekly dashboard in Obsidian desktop, keyboard operation, and narrow widths after the visual scale/spacing refinements; record results and remaining platform limitations in `validation.md`.
+
+## Phase 11: Header, Cell Geometry, and Per-Habit Color
+
+- [X] T074 Remove numeric run-count labels from completion capsules while keeping weekly progress text.
+- [X] T075 Separate the year above the week range and show both years for cross-year weeks, with a full accessible range label.
+- [X] T076 Fix day-cell geometry, hover, and focus to follow the capsule mark, including isolated completions, by resetting the native checkbox layout and aligning the shared highlight shape.
+- [X] T077 Add an accessible optional per-habit color picker and "Use theme color" removal action, persisted as `#rrggbb` in the habit note with theme fallback for absent or invalid values.
+- [X] T078 Update specification, data model, contracts, quickstart, README, data-format docs, PRODUCT.md, DESIGN.md, design tokens, surface brief, and tests.
+- [X] T079 Verify the real Obsidian desktop and narrow-width rendering, including custom color application/removal, focus geometry, and cross-year header; then restore the personal vault configuration.

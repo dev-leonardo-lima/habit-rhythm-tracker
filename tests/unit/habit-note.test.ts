@@ -52,6 +52,26 @@ describe('habit note codec', () => {
     );
   });
 
+  it('round-trips an optional custom color and omits it when absent', () => {
+    const colored = makeHabit({ color: '#3366cc' });
+    expect(parseHabitNote(renderHabitNote(colored)).habit.color).toBe('#3366cc');
+    expect(serializeHabitBlock(colored)).toContain('"color": "#3366cc"');
+
+    const plain = makeHabit();
+    expect(parseHabitNote(renderHabitNote(plain)).habit).toEqual(plain);
+    expect(serializeHabitBlock(plain)).not.toContain('"color"');
+  });
+
+  it('ignores invalid custom colors and falls back safely', () => {
+    const habit = makeHabit();
+    const content = renderHabitNote(habit).replace(
+      '"name": "Gym",',
+      '"name": "Gym",\n    "color": "not-a-color",',
+    );
+    expect(parseHabitNote(content).habit.color).toBeUndefined();
+    expect(serializeHabitBlock(parseHabitNote(content).habit)).not.toContain('not-a-color');
+  });
+
   it('accepts valid external edits, normalizing completion order internally', () => {
     const habit = makeHabit({ completions: ['2026-10-28', '2026-10-26'] });
     const parsed = parseHabitNote(renderHabitNote(habit));

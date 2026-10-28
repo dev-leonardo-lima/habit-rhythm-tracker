@@ -29,6 +29,8 @@ export interface Habit {
   id: string;
   /** Nonblank display name. */
   name: string;
+  /** Optional custom completion color in `#rrggbb` form; absent uses the theme accent. */
+  color?: string;
   /** Local date on which the habit was created. */
   created: LocalDate;
   /** Ordered by effective week, at most one value per week. */

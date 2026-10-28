@@ -9,6 +9,7 @@ weekly targets, weekly streaks, history, and guarded writes that warn instead of
 - Create habits with a name and a target from 1 to 7 days per week (default 7).
 - Mark and unmark one completion per habit and local date from creation through today.
 - See weekly progress, the effective target, and weekly status for the selected seven-day week.
+- Choose an optional color per habit, or remove it to return to the theme accent.
 - Track a streak of successful weeks, not consecutive days. Rest days do not break a week.
 - First-week target is reduced to the days remaining through Sunday.
 - Navigate to previous and next weeks, return to the current week, and correct historical records.
@@ -40,7 +41,10 @@ fault-injection tests.
 - Use previous/next week navigation to review history; **This week** returns to the current week when browsing.
 - Archived habits remain in week history. Enable **Show archived habits** to see their rows when
   viewing a week in which they are archived.
-- Target changes and archiving take effect next Monday. Reactivation applies in the current week.
+- The header shows the year above the week range; a week crossing a new year names both years.
+- Target changes, archiving, and color changes take effect immediately for the habit; target and
+  archive changes follow their next-week rules. Reactivation applies in the current week.
+- Use **Manage habits** to rename a habit, choose a color, schedule a target, or archive it.
 
 ## Storage format
 
@@ -55,6 +59,7 @@ in the note body and preserves every byte outside it, including frontmatter and 
   "schemaVersion": 1,
   "id": "a-stable-id",
   "name": "Gym",
+  "color": "#3366cc",
   "created": "2026-10-26",
   "targets": [{ "week": "2026-10-26", "days": 4 }],
   "states": [{ "week": "2026-10-26", "state": "active" }],
@@ -65,15 +70,16 @@ in the note body and preserves every byte outside it, including frontmatter and 
 <!-- habit-tracker:end -->
 ````
 
-The full contract is in
+`color` is optional (`#rrggbb`); when absent or invalid, the theme accent is used. The full contract
+is in
 [specs/001-weekly-habit-dashboard/contracts/habit-note.md](specs/001-weekly-habit-dashboard/contracts/habit-note.md)
 and [docs/data-format.md](docs/data-format.md). Do not rename or move the markers. Renaming a habit
 inside the plugin changes its display name but preserves its stable ID and file path.
 
 ### External edits and synchronization
 
-- Valid external edits (name, completions, targets, states) are loaded on refresh, focus, resume, or
-  an Obsidian vault modification event.
+- Valid external edits (name, color, completions, targets, states) are loaded on refresh, focus,
+  resume, or an Obsidian vault modification event.
 - Invalid or unsupported notes are reported in the dashboard and are never overwritten.
 - Duplicate habit IDs are reported for every involved note; none of the duplicates is auto-merged.
 - The plugin detects a saved note changing between its base snapshot and the guarded write. It stops

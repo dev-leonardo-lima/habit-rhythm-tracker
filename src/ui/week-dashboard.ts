@@ -14,7 +14,6 @@ interface DecoratedCell {
   cell: HabitCellViewModel;
   runStart: boolean;
   runEnd: boolean;
-  runCount: number;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -37,7 +36,6 @@ function decorateRun(cells: HabitCellViewModel[]): DecoratedCell[] {
     cell,
     runStart: false,
     runEnd: false,
-    runCount: 0,
   }));
   let index = 0;
   while (index < decorated.length) {
@@ -49,13 +47,11 @@ function decorateRun(cells: HabitCellViewModel[]): DecoratedCell[] {
     while (end + 1 < decorated.length && decorated[end + 1]?.cell.completed) {
       end += 1;
     }
-    const count = end - index + 1;
     for (let cursor = index; cursor <= end; cursor += 1) {
       const item = decorated[cursor];
       if (item) {
         item.runStart = cursor === index;
         item.runEnd = cursor === end;
-        item.runCount = count;
       }
     }
     index = end + 1;
@@ -83,6 +79,7 @@ function summaryFallback(
     habitId,
     path: firstRow?.path ?? '',
     name: firstRow?.name ?? 'Habit',
+    color: firstRow?.color ?? null,
     created: firstRow?.created ?? '',
     state: firstRow?.state ?? 'active',
     target: firstRow?.target ?? null,
@@ -204,7 +201,7 @@ function dayCell(
   if (decorated.runEnd) {
     label.classList.add('is-run-end');
   }
-  if (decorated.runCount === 1) {
+  if (decorated.runStart && decorated.runEnd) {
     label.classList.add('is-single');
   }
 
@@ -226,12 +223,6 @@ function dayCell(
   const mark = el('span', 'habit-tracker-day-mark');
   mark.setAttribute('aria-hidden', 'true');
   label.append(mark);
-
-  if (decorated.runEnd && decorated.runCount > 1) {
-    const count = el('span', 'habit-tracker-run-count', String(decorated.runCount));
-    count.setAttribute('aria-hidden', 'true');
-    label.append(count);
-  }
   td.append(label);
   return td;
 }
@@ -299,6 +290,9 @@ export function renderHabitGrid(
   for (const { summary, rowsByWeek } of rows) {
     const row = el('tr', 'habit-tracker-habit-row');
     row.dataset.habitId = summary.habitId;
+    if (summary.color) {
+      row.style.setProperty('--ht-habit-color', summary.color);
+    }
     if (summary.state === 'archived') {
       row.classList.add('is-archived');
     }

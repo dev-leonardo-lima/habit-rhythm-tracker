@@ -190,15 +190,15 @@ describe('plugin lifecycle and Obsidian views', () => {
     expect(view.getViewType()).toBe(VIEW_TYPE_HABIT_DASHBOARD);
     expect(view.getDisplayText()).toBe('Habit dashboard');
     expect(view.getIcon()).toBe('check-square');
-    expect(view.contentEl.textContent).toContain('26 Oct – 1 Nov 2026');
-    expect(view.contentEl.querySelector('[data-testid="week-label"]')?.textContent).toBe(
-      '26 Oct – 1 Nov 2026',
-    );
+    expect(
+      view.contentEl.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label'),
+    ).toBe('26 Oct – 1 Nov 2026');
+    expect(view.contentEl.querySelector('.habit-tracker-week-year')?.textContent).toBe('2026');
 
     harness.controller.nextWeek();
-    expect(view.contentEl.querySelector('[data-testid="week-label"]')?.textContent).toBe(
-      '2 Nov – 8 Nov 2026',
-    );
+    expect(
+      view.contentEl.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label'),
+    ).toBe('2 Nov – 8 Nov 2026');
 
     await harness.controller.toggleCompletion(id, '2026-10-28', true);
     await harness.controller.toggleCompletion(id, '2026-10-28', false);
@@ -216,7 +216,9 @@ describe('plugin lifecycle and Obsidian views', () => {
     await rebound.onOpen();
     provider.current = other.controller;
     rebound.rebind();
-    expect(rebound.contentEl.textContent).toContain('26 Oct – 1 Nov 2026');
+    expect(
+      rebound.contentEl.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label'),
+    ).toBe('26 Oct – 1 Nov 2026');
     await rebound.onClose();
   });
 });

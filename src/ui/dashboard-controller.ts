@@ -5,10 +5,12 @@ import {
   reactivateHabit,
   stateForWeek,
 } from '../domain/activity-history';
+import { habitColor } from '../domain/habit-color';
 import {
   createHabit,
   markCompletion,
   renameHabit as renameHabitRecord,
+  setHabitColor,
   unmarkCompletion,
 } from '../domain/habit-operations';
 import { compareDates, mondayOf, todayLocalDate, weekDates } from '../domain/local-date';
@@ -30,6 +32,8 @@ import {
   monthLabel as formatMonthLabel,
   shortDate,
   weekLabel as formatWeekLabel,
+  weekRangeLabel as formatWeekRangeLabel,
+  weekYearsLabel as formatWeekYearsLabel,
   weekdayName,
   weekdayShort,
 } from './text';
@@ -64,6 +68,7 @@ export interface HabitRowViewModel {
   habitId: string;
   path: string;
   name: string;
+  color: string | null;
   created: LocalDate;
   state: 'active' | 'archived';
   completed: number;
@@ -82,6 +87,8 @@ export interface HabitRowViewModel {
 export interface WeekViewModel {
   week: WeekKey;
   label: string;
+  rangeLabel: string;
+  yearLabel: string;
   isCurrentWeek: boolean;
   isFocusedWeek: boolean;
   days: Array<{
@@ -99,6 +106,7 @@ export interface HabitSummaryViewModel {
   habitId: string;
   path: string;
   name: string;
+  color: string | null;
   created: LocalDate;
   state: 'active' | 'archived';
   target: number | null;
@@ -280,6 +288,8 @@ export class DashboardController {
     return {
       week,
       label: formatWeekLabel(week),
+      rangeLabel: formatWeekRangeLabel(week),
+      yearLabel: formatWeekYearsLabel(week),
       isCurrentWeek: week === this.calendar.currentWeek,
       isFocusedWeek: week === this.calendar.focusedWeek,
       days: days.map((date, index) => ({
@@ -311,6 +321,7 @@ export class DashboardController {
       habitId: habit.id,
       path,
       name: habit.name,
+      color: habitColor(habit),
       created: habit.created,
       state,
       completed,
@@ -359,6 +370,7 @@ export class DashboardController {
       habitId: habit.id,
       path: this.pathById.get(habit.id) ?? '',
       name: habit.name,
+      color: habitColor(habit),
       created: habit.created,
       state,
       target: effectiveTargetForWeek(habit, week),
@@ -513,6 +525,13 @@ export class DashboardController {
   async renameHabit(habitId: string, name: string): Promise<WriteResult | null> {
     return this.applyLifecycle(habitId, (habit) => renameHabitRecord(habit, name), {
       success: 'The habit was renamed.',
+    });
+  }
+
+  async changeColor(habitId: string, color: string | null): Promise<WriteResult | null> {
+    return this.applyLifecycle(habitId, (habit) => setHabitColor(habit, color), {
+      success:
+        color === null ? 'The habit now uses the theme color.' : 'The habit color was updated.',
     });
   }
 

@@ -24,7 +24,7 @@ describe('US3: week navigation and history', () => {
     const container = document.createElement('div');
     render(harness, container);
 
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '26 Oct – 1 Nov 2026',
     );
     expect(container.querySelectorAll('[data-testid="week-table"]')).toHaveLength(1);
@@ -33,7 +33,7 @@ describe('US3: week navigation and history', () => {
 
     harness.controller.nextWeek();
     render(harness, container);
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '2 Nov – 8 Nov 2026',
     );
     expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
@@ -41,20 +41,20 @@ describe('US3: week navigation and history', () => {
 
     harness.controller.previousWeek();
     render(harness, container);
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '26 Oct – 1 Nov 2026',
     );
 
     harness.controller.previousWeek();
     render(harness, container);
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '19 Oct – 25 Oct 2026',
     );
     container
       .querySelector('button[aria-label="Return to the current week"]')
       ?.dispatchEvent(new Event('click'));
     render(harness, container);
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '26 Oct – 1 Nov 2026',
     );
   });
@@ -72,7 +72,7 @@ describe('US3: week navigation and history', () => {
     expect(change).toEqual({ dateChanged: true, weekChanged: true });
 
     render(harness, container);
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '2 Nov – 8 Nov 2026',
     );
     expect(container.textContent).toContain('This week');
@@ -143,7 +143,7 @@ describe('US3: week navigation and history', () => {
 
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '28 Sep – 4 Oct 2026',
     );
     expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain('1 / 4');
@@ -200,6 +200,56 @@ describe('US3: week navigation and history', () => {
     expect(pendingArchive.textContent).toContain('Archive next week');
   });
 
+  it('shows the year above the range and both years for a cross-year week', async () => {
+    const now = localNoon(2026, 10, 28);
+    const harness = createHarness({ now: () => now });
+    addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
+    await harness.controller.load();
+    for (let index = 0; index < 9; index += 1) {
+      harness.controller.nextWeek();
+    }
+    const container = document.createElement('div');
+    render(harness, container);
+
+    const label = container.querySelector('[data-testid="week-label"]');
+    expect(label?.getAttribute('aria-label')).toBe('28 Dec 2026 – 3 Jan 2027');
+    expect(label?.querySelector('.habit-tracker-week-year')?.textContent).toBe('2026 – 2027');
+    expect(label?.querySelector('.habit-tracker-week-range')?.textContent).toBe('28 Dec – 3 Jan');
+  });
+
+  it('uses a per-habit color and omits run-count labels', async () => {
+    const now = localNoon(2026, 10, 28);
+    const harness = createHarness({ now: () => now });
+    await harness.controller.load();
+    await harness.controller.createHabit('Gym', 4);
+    await harness.controller.createHabit('Read', 7);
+    const gymId = harness.controller
+      .getViewModel()
+      .habits.find((habit) => habit.name === 'Gym')?.habitId;
+    if (!gymId) {
+      throw new Error('missing Gym habit');
+    }
+    expect((await harness.controller.changeColor(gymId, '#3366cc'))?.status).toBe('applied');
+    await harness.controller.toggleCompletion(gymId, '2026-10-28', true);
+
+    const container = document.createElement('div');
+    render(harness, container);
+    const gymRow = container.querySelector<HTMLElement>('.habit-tracker-habit-row[data-habit-id]');
+    expect(gymRow?.style.getPropertyValue('--ht-habit-color')).toBe('#3366cc');
+    expect(gymRow?.querySelectorAll('.habit-tracker-run-count')).toHaveLength(0);
+    expect(gymRow?.textContent).toContain('1 / 4');
+    expect(gymRow?.querySelector('.habit-tracker-day.is-single')).not.toBeNull();
+    const readRow = container.querySelectorAll<HTMLElement>('.habit-tracker-habit-row')[1];
+    expect(readRow?.style.getPropertyValue('--ht-habit-color')).toBe('');
+
+    const note = parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit;
+    expect(note.color).toBe('#3366cc');
+    expect((await harness.controller.changeColor(gymId, null))?.status).toBe('applied');
+    expect(
+      parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit.color,
+    ).toBeUndefined();
+  });
+
   it('keeps a future-dated saved mark visible but excluded until its date arrives', async () => {
     let now = localNoon(2026, 10, 28);
     const harness = createHarness({ now: () => now });
@@ -251,7 +301,7 @@ describe('US3: week navigation and history', () => {
     }
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '5 Oct – 11 Oct 2026',
     );
     expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain(

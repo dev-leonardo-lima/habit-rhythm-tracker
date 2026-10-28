@@ -11,6 +11,7 @@ plugin owns exactly one body block between `<!-- habit-tracker:start -->` and
   "schemaVersion": 1,
   "id": "a-stable-id",
   "name": "Gym",
+  "color": "#3366cc",
   "created": "2026-10-26",
   "targets": [{ "week": "2026-10-26", "days": 4 }],
   "states": [{ "week": "2026-10-26", "state": "active" }],
@@ -23,6 +24,9 @@ plugin owns exactly one body block between `<!-- habit-tracker:start -->` and
 - `schemaVersion`: must be `1`.
 - `id`: immutable nonblank identifier without whitespace, stable across file renames and moves.
 - `name`: nonblank display name.
+- `color`: optional six-digit hex color (`#rrggbb`) used only for that habit's completion marks.
+  When absent or invalid, the Obsidian theme accent is used. Invalid values are never injected into
+  styles and the note is not treated as corrupt because of them.
 - `created`: valid local calendar date (`YYYY-MM-DD`) on which the habit was created.
 - `targets`: nonempty array ordered by Monday week, with one entry per week. `days` is an integer
   from 1 through 7. The first entry must take effect in the creation week.
@@ -44,7 +48,8 @@ the managed block.
 - Malformed JSON, an unknown schema version, an invalid record, or a duplicate habit ID is reported.
   Every conflicting note is preserved; duplicates are never auto-merged.
 - A valid external edit is loaded on refresh, focus, resume, a vault modify event, or a manual
-  refresh.
+  refresh. An absent or invalid `color` falls back to the theme accent without corrupting the
+  record, and an explicit color edit is written back as a normalized hex value.
 - An unsupported schema version is rejected visibly. The note remains unchanged; no automatic
   migration or rewrite occurs.
 

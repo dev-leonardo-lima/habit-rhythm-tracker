@@ -86,7 +86,8 @@ relationships with their own values.
 
 - One Monday–Sunday week, exactly seven columns, no monthly calendar.
 - Habit names left; compact target, streak, and status text underneath.
-- Completion runs are continuous capsules with a count at the run end.
+- Completion runs are continuous capsules without count labels; progress stays textual.
+- The year is a small centered label above the week range; crossing years name both.
 - Quiet typographic navigation; advanced controls are progressively disclosed.
 - Hairlines and tonal layering instead of cards, shadows, or decorative chrome.
 
@@ -97,9 +98,11 @@ that carries completion and current-week meaning.
 
 ### Primary
 
-- **Theme Violet** (`#8a5cf5` reference): completion runs, current-day ring, current-week marker, and
-  primary create action. The live value is `var(--interactive-accent)`; the accent is never used for
-  decoration.
+- **Theme Violet** (`#8a5cf5` reference): default completion runs, current-day ring, current-week
+  marker, and primary create action. The live value is `var(--interactive-accent)`; the accent is
+  never used for decoration.
+- **Habit Color** (optional per-habit `#rrggbb`): applies only to that habit's completion marks.
+  When absent or invalid, the habit falls back to the theme accent.
 
 ### Neutral
 
@@ -129,12 +132,13 @@ than a display face. Numerals are tabular so dates, targets, and counts stay ali
 
 ### Hierarchy
 
-- **Headline** (650, 19px, 1.15): the selected week range; one per view.
+- **Headline** (650, 19–22px, 1.15): the selected week range; one per view.
+- **Year Label** (500, 10px, 1): the year above the range, or both years when the week crosses one.
 - **Title** (560, 12px, 1.25): habit names in the grid.
 - **Body** (400, 11.5px, 1.45): forms, messages, and disclosure copy.
 - **Label** (450, 9–10.5px, 1.3): weekdays, dates, targets, streaks, week status, and disclosure
   summaries.
-- **Micro/Caption** (450, 7–8.5px, 1.2–1.3): weekday initials, run counts, and compact labels.
+- **Micro/Caption** (450, 7–8.5px, 1.2–1.3): weekday initials and compact labels.
 
 ### Named Rules
 
@@ -143,10 +147,11 @@ always written in words.
 
 ## Layout
 
-The dashboard is a centered 820px week strip inside the main Obsidian tab. The week header holds
-small previous/next arrows around the range; a current-week marker sits beneath it. The grid uses a
-fixed habit column (190px) and seven fluid day columns; the full week fits without horizontal
-scrolling. Rows are 48px high, with a 22px week context row and a 32px date row.
+The dashboard is a centered strip up to 1080px inside the main Obsidian tab. The week header holds
+small previous/next arrows around a centered year label and range; a current-week marker sits
+beneath it. The grid uses a fixed habit column (240px) and seven fluid day columns; the full week
+fits without horizontal scrolling. Rows are 58px high, with a 20px week context row and a 38px date
+row.
 
 Below the grid, bordered disclosures stack in order: New habit and Manage habits. Details expand in
 place. On narrow widths the header wraps, the habit column narrows
@@ -161,24 +166,27 @@ ambient shadow (`0 8px 24px rgba(0, 0, 0, 0.22)`) to separate it from the ground
 
 ## Shapes
 
-Corners are restrained: 6px for fields and buttons, 7px for message surfaces, 8px for completed run
-ends, and full pills for state labels and counts. Completion runs are the signature shape: adjacent completed days share a
-continuous 16px capsule, while a single day is a 14px circle. Empty days are open space with a small
-hover hint; focus is a theme-accent ring around the day cell.
+Corners are restrained: 6px for fields and buttons, 7px for message surfaces, and full pills for
+state labels. Completion runs are the signature shape: adjacent completed days share a continuous
+26px capsule with 13px rounded ends, and an isolated completed day is the same full-cell capsule.
+Empty days keep a small centered hint. Hover and focus highlights use the same capsule geometry as
+the marks, so the realce never becomes a larger offset rectangle.
 
 ## Components
 
 ### Week Navigation
 
-Icon-only chevrons at 26px, muted at rest. Hover raises the text to normal; focus uses a 2px accent
-ring. The week range is the only headline. “This week” appears as a quiet text button only when the
-visitor is browsing history.
+Icon-only chevrons at 32px, muted at rest. Hover raises the text to normal; focus uses a 2px accent
+ring. The year is a small centered label above the week range; a crossing week shows both years.
+The range is the only headline. “This week” appears as a quiet text button only when the visitor is
+browsing history.
 
 ### Day Toggle
 
 The whole day cell is the hit area. A visually hidden native checkbox keeps keyboard, touch, and
-screen-reader semantics. Completed days form capsules; run counts appear at the trailing end of runs
-of two or more. Disabled future or pre-creation days remain visible but muted.
+screen-reader semantics. Completed days form unlabeled capsules in the habit's color or the theme
+accent. Hover and focus draw a capsule-shaped halo aligned with the mark. Disabled future or
+pre-creation days remain visible but muted.
 
 ### Habit Row
 
@@ -192,18 +200,20 @@ Hairline-top rows with a small rotating chevron. New habit and Manage habits use
 
 ### Inputs and Buttons
 
-Inputs are 30px high, 6px radius, ground-colored, with a hairline border and accent focus. Primary
-creation uses the theme accent; all secondary actions are text or hairline ghost buttons. Touch
-targets grow on narrow screens.
+Inputs are 30px high, 6px radius, ground-colored, with a hairline border and accent focus. The color
+picker sits beside its Save color action and names the habit in its accessible label; “Use theme
+color” removes a custom value. Primary creation uses the theme accent; all secondary actions are
+text or hairline ghost buttons. Touch targets grow on narrow screens.
 
 ## Do's and Don'ts
 
 ### Do:
 
 - **Do** keep one week, exactly seven date columns, and habits in rows.
-- **Do** draw consecutive completions as connected capsules with a run count.
+- **Do** draw consecutive completions as connected capsules without count labels.
 - **Do** keep target, streak, and weekly outcome visible in words.
-- **Do** use one theme accent for completion/current state and neutral hairlines for structure.
+- **Do** use the theme accent by default and apply an optional habit color only to that habit.
+- **Do** keep the year smaller and centered above the visible week range.
 - **Do** preserve focus, keyboard access, touch targets, and progressive disclosure.
 
 ### Don't:

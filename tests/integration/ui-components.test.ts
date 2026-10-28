@@ -10,6 +10,8 @@ import {
   monthLabel,
   shortDate,
   weekLabel,
+  weekRangeLabel,
+  weekYearsLabel,
   weekdayDateLabel,
   weekdayName,
   weekdayShort,
@@ -23,6 +25,7 @@ function handlers(): DashboardHandlers {
     toggleCompletion: vi.fn(),
     undoUnmark: vi.fn(),
     renameHabit: vi.fn(),
+    changeColor: vi.fn(),
     changeTarget: vi.fn(),
     archiveHabit: vi.fn(),
     reactivateHabit: vi.fn(),
@@ -42,6 +45,7 @@ function summary(overrides: Partial<HabitSummaryViewModel> = {}): HabitSummaryVi
     habitId: 'habit-1',
     path: 'Habits/Gym.md',
     name: 'Gym',
+    color: null,
     created: '2026-10-26',
     state: 'active',
     target: 4,
@@ -102,6 +106,7 @@ describe('UI components', () => {
     const container = document.createElement('div');
     const callbacks = {
       renameHabit: vi.fn(),
+      changeColor: vi.fn(),
       changeTarget: vi.fn(),
       archiveHabit: vi.fn(),
       reactivateHabit: vi.fn(),
@@ -125,10 +130,17 @@ describe('UI components', () => {
       ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(callbacks.renameHabit).toHaveBeenCalledWith('habit-1', 'Strength');
 
+    const colorInput = first?.querySelector('input[type="color"]') as HTMLInputElement;
+    colorInput.value = '#3366cc';
+    first
+      ?.querySelectorAll('form')[1]
+      ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(callbacks.changeColor).toHaveBeenCalledWith('habit-1', '#3366cc');
+
     const targetSelect = first?.querySelector('select') as HTMLSelectElement;
     targetSelect.value = '3';
     first
-      ?.querySelectorAll('form')[1]
+      ?.querySelectorAll('form')[2]
       ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(callbacks.changeTarget).toHaveBeenCalledWith('habit-1', 3);
 
@@ -146,6 +158,29 @@ describe('UI components', () => {
       .querySelector('button[aria-label="Cancel pending archive for Walk"]')
       ?.dispatchEvent(new Event('click'));
     expect(callbacks.cancelPendingArchive).toHaveBeenCalledWith('habit-3');
+  });
+
+  it('renders an accessible color picker and removes a custom color', () => {
+    const container = document.createElement('div');
+    const callbacks = {
+      renameHabit: vi.fn(),
+      changeColor: vi.fn(),
+      changeTarget: vi.fn(),
+      archiveHabit: vi.fn(),
+      reactivateHabit: vi.fn(),
+      cancelPendingArchive: vi.fn(),
+    };
+    renderHabitSettings(container, [summary({ color: '#3366cc' })], callbacks);
+
+    const input = container.querySelector<HTMLInputElement>('input[type="color"]');
+    expect(input?.value).toBe('#3366cc');
+    expect(input?.getAttribute('aria-label')).toBe('Habit color for Gym');
+    expect(container.textContent).toContain('Custom color #3366cc');
+
+    container
+      .querySelector('button[aria-label="Remove custom color for Gym"]')
+      ?.dispatchEvent(new Event('click'));
+    expect(callbacks.changeColor).toHaveBeenCalledWith('habit-1', null);
   });
 
   it('renders an empty week state', () => {
@@ -315,6 +350,10 @@ describe('UI components', () => {
     expect(shortDate('2026-10-26')).toBe('26 Oct');
     expect(weekLabel('2026-10-26')).toBe('26 Oct – 1 Nov 2026');
     expect(weekLabel('2026-12-28')).toBe('28 Dec 2026 – 3 Jan 2027');
+    expect(weekRangeLabel('2026-10-26')).toBe('26 Oct – 1 Nov');
+    expect(weekRangeLabel('2026-12-28')).toBe('28 Dec – 3 Jan');
+    expect(weekYearsLabel('2026-10-26')).toBe('2026');
+    expect(weekYearsLabel('2026-12-28')).toBe('2026 – 2027');
     expect(weekdayDateLabel('2026-10-26', 2)).toBe('Wednesday 28 Oct');
     expect(formatTimestamp('not-a-date')).toBe('not-a-date');
     expect(formatTimestamp('2026-10-28T10:00:00.000Z')).not.toBe('2026-10-28T10:00:00.000Z');
