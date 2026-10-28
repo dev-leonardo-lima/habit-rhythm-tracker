@@ -49,11 +49,158 @@ function button(label: string, ariaLabel: string, onClick: () => void): HTMLButt
   return control;
 }
 
+type FocusDescriptor =
+  { kind: 'selector'; selector: string } | { kind: 'index'; tagName: string; index: number };
+
+interface CapturedUiState {
+  focus: FocusDescriptor | null;
+  forms: Record<string, Record<string, string>>;
+  formResetVersion: number;
+}
+
+function escapeSelectorValue(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, '\\d ')
+    .replace(/\n/g, '\\a ');
+}
+
+function fieldKey(field: HTMLInputElement | HTMLSelectElement): string | null {
+  return field.getAttribute('aria-label') ?? field.name ?? null;
+}
+
+function captureFocus(container: HTMLElement): FocusDescriptor | null {
+  const active = container.ownerDocument.activeElement;
+  if (!(active instanceof HTMLElement) || !container.contains(active)) {
+    return null;
+  }
+  if (
+    active instanceof HTMLInputElement &&
+    active.type === 'checkbox' &&
+    active.dataset.habitId &&
+    active.dataset.date
+  ) {
+    return {
+      kind: 'selector',
+      selector: `input[type="checkbox"][data-habit-id="${escapeSelectorValue(
+        active.dataset.habitId,
+      )}"][data-date="${escapeSelectorValue(active.dataset.date)}"]`,
+    };
+  }
+  const ariaLabel = active.getAttribute('aria-label');
+  if (ariaLabel) {
+    const operation = active.closest<HTMLElement>('[data-operation-id]');
+    if (operation?.dataset.operationId) {
+      return {
+        kind: 'selector',
+        selector: `[data-operation-id="${escapeSelectorValue(
+          operation.dataset.operationId,
+        )}"] [aria-label="${escapeSelectorValue(ariaLabel)}"]`,
+      };
+    }
+    const habit = active.closest<HTMLElement>('[data-habit-id]');
+    if (habit?.dataset.habitId) {
+      return {
+        kind: 'selector',
+        selector: `[data-habit-id="${escapeSelectorValue(
+          habit.dataset.habitId,
+        )}"] [aria-label="${escapeSelectorValue(ariaLabel)}"]`,
+      };
+    }
+    return {
+      kind: 'selector',
+      selector: `[aria-label="${escapeSelectorValue(ariaLabel)}"]`,
+    };
+  }
+  if (active.dataset.testid) {
+    return {
+      kind: 'selector',
+      selector: `[data-testid="${escapeSelectorValue(active.dataset.testid)}"]`,
+    };
+  }
+  const tagName = active.tagName.toLowerCase();
+  const sameTag = [...container.querySelectorAll<HTMLElement>(tagName)];
+  const index = sameTag.indexOf(active);
+  return index === -1 ? null : { kind: 'index', tagName, index };
+}
+
+function captureUiState(container: HTMLElement): CapturedUiState {
+  const forms: Record<string, Record<string, string>> = {};
+  for (const form of container.querySelectorAll<HTMLFormElement>('form[data-form-key]')) {
+    const key = form.dataset.formKey;
+    if (!key) {
+      continue;
+    }
+    const values: Record<string, string> = {};
+    for (const field of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+      'input, select',
+    )) {
+      const keyForField = fieldKey(field);
+      if (keyForField) {
+        values[keyForField] = field.value;
+      }
+    }
+    forms[key] = values;
+  }
+  return {
+    focus: captureFocus(container),
+    forms,
+    formResetVersion: Number(container.dataset.formResetVersion ?? '0'),
+  };
+}
+
+function restoreFormValues(
+  container: HTMLElement,
+  captured: CapturedUiState,
+  viewModel: DashboardViewModel,
+): void {
+  for (const form of container.querySelectorAll<HTMLFormElement>('form[data-form-key]')) {
+    const key = form.dataset.formKey;
+    if (!key) {
+      continue;
+    }
+    if (key === 'create' && captured.formResetVersion !== viewModel.formResetVersion) {
+      continue;
+    }
+    const values = captured.forms[key];
+    if (!values) {
+      continue;
+    }
+    for (const field of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+      'input, select',
+    )) {
+      const keyForField = fieldKey(field);
+      if (keyForField && Object.prototype.hasOwnProperty.call(values, keyForField)) {
+        field.value = values[keyForField] ?? field.value;
+      }
+    }
+  }
+}
+
+function restoreFocus(
+  container: HTMLElement,
+  captured: CapturedUiState,
+  viewModel: DashboardViewModel,
+): void {
+  if (!captured.focus || viewModel.message?.kind === 'error') {
+    return;
+  }
+  const target =
+    captured.focus.kind === 'selector'
+      ? container.querySelector<HTMLElement>(captured.focus.selector)
+      : ([...container.querySelectorAll<HTMLElement>(captured.focus.tagName)][
+          captured.focus.index
+        ] ?? null);
+  target?.focus({ preventScroll: true });
+}
+
 export function renderDashboard(
   container: HTMLElement,
   viewModel: DashboardViewModel,
   handlers: DashboardHandlers,
 ): void {
+  const captured = captureUiState(container);
   container.replaceChildren();
   container.classList.add('habit-tracker-dashboard');
 
@@ -174,4 +321,8 @@ export function renderDashboard(
   renderMonthWeeks(container, viewModel.weeks, handlers);
   renderHabitSettings(container, viewModel.habits, handlers);
   renderRecoveryList(container, viewModel.recovery, handlers);
+
+  container.dataset.formResetVersion = String(viewModel.formResetVersion);
+  restoreFormValues(container, captured, viewModel);
+  restoreFocus(container, captured, viewModel);
 }

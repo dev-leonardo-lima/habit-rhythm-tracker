@@ -76,7 +76,7 @@ describe('US3: month navigation, history and rollover', () => {
     expect(current?.textContent).toContain('Current week');
   });
 
-  it('does not yank a historical month away when the date changes', async () => {
+  it('returns to the current month on a weekly rollover while browsing history', async () => {
     let now = localNoon(2026, 10, 31);
     const harness = createHarness({ now: () => now });
     addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
@@ -88,7 +88,8 @@ describe('US3: month navigation, history and rollover', () => {
     now = localNoon(2026, 11, 2);
     await harness.controller.refreshClock();
 
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-08');
+    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
+    expect(harness.controller.getViewModel().focusedWeek).toBe('2026-11-02');
     expect(harness.controller.getViewModel().today).toBe('2026-11-02');
   });
 

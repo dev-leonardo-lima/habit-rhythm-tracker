@@ -67,6 +67,7 @@ function renderHabitSettingsItem(
   );
 
   const renameForm = el('form', 'habit-tracker-inline-form');
+  renameForm.dataset.formKey = `rename:${habit.habitId}`;
   renameForm.noValidate = true;
   const renameLabel = el('label');
   renameLabel.append(document.createTextNode('Habit name '));
@@ -88,6 +89,7 @@ function renderHabitSettingsItem(
   item.append(renameForm);
 
   const targetForm = el('form', 'habit-tracker-inline-form');
+  targetForm.dataset.formKey = `target:${habit.habitId}`;
   const targetLabel = el('label');
   targetLabel.append(document.createTextNode('Target from next week '));
   const targetSelect = el('select');

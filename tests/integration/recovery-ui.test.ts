@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseHabitNote } from '../../src/storage/habit-note';
 import { DashboardController } from '../../src/ui/dashboard-controller';
+import { renderRecoveryList } from '../../src/ui/recovery-renderer';
 import { createHarness, localNoon } from '../helpers/controller-harness';
 
 async function createGym(harness: ReturnType<typeof createHarness>): Promise<string> {
@@ -80,6 +81,18 @@ describe('US1: undo, conflicts and durable recovery', () => {
     expect(view.habits[0]?.name).toBe('Gym edited elsewhere');
     const conflict = view.recovery.find((entry) => entry.state === 'conflict');
     expect(conflict).toBeTruthy();
+    expect(conflict?.currentContent).toContain('"name": "Gym edited elsewhere"');
+    const container = document.createElement('div');
+    renderRecoveryList(container, view.recovery, {
+      retryRecovery: vi.fn(),
+      discardRecovery: vi.fn(),
+      restoreRecovery: vi.fn(),
+      deleteRecovery: vi.fn(),
+    });
+    expect(container.textContent).toContain('Original snapshot');
+    expect(container.textContent).toContain('Current note in the vault');
+    expect(container.textContent).toContain('Gym edited elsewhere');
+    expect(container.textContent).toContain('Intended change');
     const noteDuringConflict = parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit;
     expect(noteDuringConflict.name).toBe('Gym edited elsewhere');
     expect(noteDuringConflict.completions).toEqual(['2026-10-26']);

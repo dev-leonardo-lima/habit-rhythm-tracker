@@ -118,7 +118,7 @@ export class RecoveryService {
       }
       result = await this.creator.create(record.habitPath, intent);
     } else {
-      let current: Habit;
+      let current: { content: string; habit: Habit };
       try {
         current = await this.readCurrentHabit(record.habitPath);
       } catch (error) {
@@ -129,8 +129,12 @@ export class RecoveryService {
           }`,
         };
       }
-      const merged = this.mergeIntent(record.base, record.intent, current);
-      result = await this.writer.update(record.habitPath, { ...intent, habit: merged });
+      const merged = this.mergeIntent(record.base, record.intent, current.habit);
+      result = await this.writer.update(record.habitPath, {
+        ...intent,
+        habit: merged,
+        baseContent: current.content,
+      });
     }
 
     if (result.status === 'applied') {
@@ -208,11 +212,13 @@ export class RecoveryService {
       habit: restored,
       date,
       summary: `Restore completion ${date} for ${restored.name}`,
+      baseContent: currentContent,
     });
   }
 
-  private async readCurrentHabit(path: string): Promise<Habit> {
-    return parseHabitNote(await this.vault.read(path)).habit;
+  private async readCurrentHabit(path: string): Promise<{ content: string; habit: Habit }> {
+    const content = await this.vault.read(path);
+    return { content, habit: parseHabitNote(content).habit };
   }
 
   /**

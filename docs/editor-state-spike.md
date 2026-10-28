@@ -23,6 +23,8 @@ snapshot before a guarded write:
 2. One or more open leaves whose buffers all equal the saved note → safe (`clean`).
 3. Any open leaf whose buffer differs from the saved note → blocked (`dirty`).
 4. Any leaf whose editor is unavailable, throws, or whose open copies disagree → blocked (`unknown`).
+5. Any open Markdown leaf whose view or file identity cannot be determined → blocked (`unknown`).
+   The plugin cannot prove such a leaf is unrelated, so it fails closed for the whole write.
 
 If a leaf is dirty or its state is unknown, the write is **not attempted**. The recovery record is
 persisted first, the person is told to save or close the editor, and an explicit retry starts a new
@@ -64,5 +66,10 @@ The unverified platforms and reasons are also recorded in
 - The comparison detects open editor buffers and saved vault content. It cannot guarantee detection
   of an independent writer (another program or device sync) that changes the vault outside
   Obsidian's documented `Vault.process` interval.
+- Deferred, unresolved, or reading-mode Markdown leaves may expose no editor or no file identity to
+  the plugin. Because the target cannot be ruled out, such leaves block writes with an explicit
+  save/close/retry message instead of allowing a potentially unsafe write.
+- Multiple open leaves with different buffers are treated as ambiguous and block the write even if
+  one buffer appears current.
 - Mobile webviews may suspend the app; on resume the plugin re-checks the local date and reloads the
   dashboard, but an external sync conflict remains the user's responsibility.

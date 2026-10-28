@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { App, WorkspaceLeaf } from 'obsidian';
 import { ObsidianEditorGuard } from '../../src/ui/obsidian-editor-guard';
 
-function appWithLeaves(leaves: Array<{ file: { path: string } | null; editor: unknown }>): App {
+function appWithLeaves(
+  leaves: Array<{ file: { path: string } | null; editor: unknown } | null>,
+): App {
   return {
     workspace: {
       getLeavesOfType() {
@@ -34,6 +36,27 @@ describe('Obsidian editor guard', () => {
       status: 'clean',
       content: 'content',
     });
+  });
+
+  it('fails closed for unidentified leaves and missing views', async () => {
+    const missingView = new ObsidianEditorGuard(appWithLeaves([null]));
+    expect(await missingView.inspect('Habits/Gym.md')).toEqual({ status: 'unknown' });
+
+    const missingFile = new ObsidianEditorGuard(appWithLeaves([{ file: null, editor: null }]));
+    expect(await missingFile.inspect('Habits/Gym.md')).toEqual({ status: 'unknown' });
+
+    const emptyPath = new ObsidianEditorGuard(
+      appWithLeaves([{ file: { path: '' }, editor: null }]),
+    );
+    expect(await emptyPath.inspect('Habits/Gym.md')).toEqual({ status: 'unknown' });
+
+    const mixed = new ObsidianEditorGuard(
+      appWithLeaves([
+        { file: { path: 'Habits/Gym.md' }, editor: { getValue: () => 'content' } },
+        null,
+      ]),
+    );
+    expect(await mixed.inspect('Habits/Gym.md')).toEqual({ status: 'unknown' });
   });
 
   it('fails closed for unknown, missing, throwing or disagreeing editors', async () => {

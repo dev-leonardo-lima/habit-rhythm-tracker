@@ -26,6 +26,12 @@ export interface WriteIntent {
   habit: Habit;
   date?: LocalDate;
   summary: string;
+  /**
+   * Exact note content from which this intent was computed. When present, the
+   * writer journals this snapshot and fails closed if the note no longer matches,
+   * so an external edit between the intent read and the guarded write is preserved.
+   */
+  baseContent?: string;
 }
 
 export type WriteResult =
@@ -61,6 +67,7 @@ export type WriteResult =
   | {
       status: 'failed';
       error: string;
+      recoveryPath?: string;
     };
 
 export interface GuardedWriterOptions {
@@ -139,13 +146,17 @@ export class GuardedWriter {
 
   private async doUpdate(path: string, intent: WriteIntent): Promise<WriteResult> {
     let baseContent: string;
-    try {
-      baseContent = await this.vault.read(path);
-    } catch (error) {
-      return {
-        status: 'failed',
-        error: `Could not read the habit note: ${errorMessage(error)}`,
-      };
+    if (intent.baseContent !== undefined) {
+      baseContent = intent.baseContent;
+    } else {
+      try {
+        baseContent = await this.vault.read(path);
+      } catch (error) {
+        return {
+          status: 'failed',
+          error: `Could not read the habit note: ${errorMessage(error)}`,
+        };
+      }
     }
 
     const record = this.buildRecord(path, intent, { exists: true, content: baseContent });
@@ -154,6 +165,34 @@ export class GuardedWriter {
       recoveryPath = await this.recoveryStore.saveInitial(record);
     } catch (error) {
       return { status: 'recovery-failed', error: errorMessage(error) };
+    }
+
+    if (intent.baseContent !== undefined) {
+      let currentContent: string;
+      try {
+        currentContent = await this.vault.read(path);
+      } catch (error) {
+        await this.tryAppend(record.operationId, 'uncertain');
+        return {
+          status: 'failed',
+          error: `Could not verify the habit note against the recorded snapshot: ${errorMessage(error)}`,
+          recoveryPath,
+        };
+      }
+      if (currentContent !== baseContent) {
+        const journalWarning = await this.tryAppend(record.operationId, 'conflict');
+        const result: WriteResult = {
+          status: 'conflict',
+          recoveryPath,
+          reason: 'snapshot-mismatch',
+          baseContent,
+          currentContent,
+        };
+        if (journalWarning) {
+          result.journalWarning = journalWarning;
+        }
+        return result;
+      }
     }
 
     let inspection: EditorInspection;

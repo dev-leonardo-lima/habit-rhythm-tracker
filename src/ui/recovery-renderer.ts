@@ -77,10 +77,14 @@ function renderRecoveryItem(record: RecoveryViewModel, handlers: RecoveryHandler
   const originalHeading = el('h4', undefined, 'Original snapshot');
   const original = el('pre', 'habit-tracker-code');
   original.textContent = record.originalContent;
+  const currentHeading = el('h4', undefined, 'Current note in the vault');
+  const current = el('pre', 'habit-tracker-code');
+  current.textContent =
+    record.currentContent ?? '(The current note is unavailable or the habit note did not exist.)';
   const intendedHeading = el('h4', undefined, 'Intended change');
   const intended = el('pre', 'habit-tracker-code');
   intended.textContent = record.intendedContent;
-  details.append(originalHeading, original, intendedHeading, intended);
+  details.append(originalHeading, original, currentHeading, current, intendedHeading, intended);
   item.append(details);
 
   const actions = el('div', 'habit-tracker-actions');

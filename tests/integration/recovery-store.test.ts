@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { parseHabitNote } from '../../src/storage/habit-note';
 import { GuardedCreator } from '../../src/storage/guarded-create';
 import { GuardedWriter } from '../../src/storage/guarded-write';
-import { parseHabitNote } from '../../src/storage/habit-note';
+import { createHarness, localNoon } from '../helpers/controller-harness';
 import { parseRecoveryRecord, serializeStatusRecord } from '../../src/storage/recovery-record';
 import { RecoveryService } from '../../src/storage/recovery-service';
 import { RecoveryStore } from '../../src/storage/recovery-store';
@@ -60,6 +61,75 @@ describe('durable recovery and guarded writes', () => {
 
     expect(result.status).toBe('recovery-failed');
     expect(vault.files.has(HABIT_PATH)).toBe(false);
+  });
+
+  it('rejects an external edit between the controller read and the guarded write', async () => {
+    const now = localNoon(2026, 10, 26);
+    const harness = createHarness({ now: () => now });
+    addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), HABIT_PATH);
+    await harness.controller.load();
+    const id = harness.controller.getViewModel().habits[0]?.habitId ?? '';
+    const original = harness.vault.files.get(HABIT_PATH) ?? '';
+    let habitReads = 0;
+    harness.vault.beforeRead = (path) => {
+      if (path === HABIT_PATH) {
+        habitReads += 1;
+        if (habitReads === 2) {
+          harness.vault.files.set(
+            HABIT_PATH,
+            original.replace('"name": "Gym"', '"name": "Gym edited elsewhere"'),
+          );
+        }
+      }
+    };
+
+    const result = await harness.controller.toggleCompletion(id, '2026-10-26', true);
+
+    expect(result?.status).toBe('conflict');
+    const note = parseHabitNote(harness.vault.files.get(HABIT_PATH) ?? '').habit;
+    expect(note.name).toBe('Gym edited elsewhere');
+    expect(note.completions).toEqual([]);
+    const conflict = harness.controller
+      .getViewModel()
+      .recovery.find((entry) => entry.state === 'conflict');
+    expect(conflict?.originalContent).toBe(original);
+    expect(conflict?.intendedContent).toContain('2026-10-26');
+    expect(habitReads).toBeGreaterThanOrEqual(2);
+  });
+
+  it('serializes two queued edits and rejects the second stale snapshot', async () => {
+    const { vault, store, writer } = setup();
+    const habit = makeHabit({ name: 'Gym' });
+    addHabitNote(vault.files, habit, HABIT_PATH);
+    const base = vault.files.get(HABIT_PATH) ?? '';
+
+    const first = writer.update(HABIT_PATH, {
+      kind: 'mark',
+      habit: { ...habit, completions: ['2026-10-26'] },
+      date: '2026-10-26',
+      summary: 'First queued edit',
+      baseContent: base,
+    });
+    const second = writer.update(HABIT_PATH, {
+      kind: 'mark',
+      habit: { ...habit, completions: ['2026-10-27'] },
+      date: '2026-10-27',
+      summary: 'Second queued edit',
+      baseContent: base,
+    });
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+    expect(firstResult.status).toBe('applied');
+    expect(secondResult.status).toBe('conflict');
+    const note = parseHabitNote(vault.files.get(HABIT_PATH) ?? '').habit;
+    expect(note.completions).toEqual(['2026-10-26']);
+    const listing = await store.list();
+    const secondEntry = listing.entries.find(
+      (entry) => entry.record.intent.summary === 'Second queued edit',
+    );
+    expect(secondEntry?.state).toBe('conflict');
+    expect(secondEntry?.record.base.content).toBe(base);
+    expect(secondEntry?.record.intent.habit.completions).toEqual(['2026-10-27']);
   });
 
   it('preserves the base snapshot and intent unchanged when a status record fails', async () => {

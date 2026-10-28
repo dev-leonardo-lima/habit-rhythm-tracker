@@ -21,7 +21,7 @@ import {
   pendingTargetChange,
   scheduleTargetChange,
 } from '../domain/target-history';
-import type { Habit, LocalDate, NoteIssue, WeekKey } from '../domain/types';
+import type { DiscoveredHabit, Habit, LocalDate, NoteIssue, WeekKey } from '../domain/types';
 import { outcomeLabel, weeklyOutcome } from '../domain/weekly-outcome';
 import { completedDatesInWeek, completedCountInWeek } from '../domain/week-progress';
 import type { HabitRepository } from '../storage/habit-repository';
@@ -127,6 +127,7 @@ export interface RecoveryViewModel {
   summary: string;
   originalContent: string;
   intendedContent: string;
+  currentContent: string | null;
   warnings: string[];
   canRetry: boolean;
   canDiscard: boolean;
@@ -149,6 +150,7 @@ export interface DashboardViewModel {
   habits: HabitSummaryViewModel[];
   recovery: RecoveryViewModel[];
   undo: Array<{ habitId: string; date: LocalDate }>;
+  formResetVersion: number;
 }
 
 const RECOVERY_STATE_LABELS: Record<string, string> = {
@@ -197,6 +199,7 @@ export class DashboardController {
   private loading = true;
   private showArchived = false;
   private message: DashboardMessage | null = null;
+  private formResetVersion = 0;
 
   constructor(options: DashboardControllerOptions) {
     this.repository = options.repository;
@@ -313,6 +316,7 @@ export class DashboardController {
         habitId: entry.habitId,
         date: entry.date,
       })),
+      formResetVersion: this.formResetVersion,
     };
   }
 
@@ -453,6 +457,7 @@ export class DashboardController {
         ? (record.base.content ?? '')
         : '(The habit note did not exist before this operation.)',
       intendedContent: JSON.stringify(record.intent.habit, null, 2),
+      currentContent: entry.currentContent,
       warnings: entry.warnings,
       canRetry: !isFinalState(entry.state),
       canDiscard: !isFinalState(entry.state),
@@ -519,6 +524,9 @@ export class DashboardController {
       habit,
       summary: `Create habit "${habit.name}" with a target of ${target} day(s) per week`,
     });
+    if (result.status === 'applied') {
+      this.formResetVersion += 1;
+    }
     await this.handleWriteResult(result, `Created “${habit.name}”.`, habit.id, null);
     return result;
   }
@@ -528,32 +536,33 @@ export class DashboardController {
     date: LocalDate,
     completed?: boolean,
   ): Promise<WriteResult | null> {
-    let fresh: Habit;
+    let fresh: DiscoveredHabit;
     try {
       fresh = await this.loadFresh(habitId);
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
       return null;
     }
-    const desired = completed ?? !fresh.completions.includes(date);
-    if (desired === fresh.completions.includes(date)) {
+    const desired = completed ?? !fresh.habit.completions.includes(date);
+    if (desired === fresh.habit.completions.includes(date)) {
       return null;
     }
     let updated: Habit;
     try {
       updated =
         desired === true
-          ? markCompletion(fresh, date, this.calendar.today)
-          : unmarkCompletion(fresh, date, this.calendar.today);
+          ? markCompletion(fresh.habit, date, this.calendar.today)
+          : unmarkCompletion(fresh.habit, date, this.calendar.today);
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
       return null;
     }
-    const result = await this.writer.update(this.requirePath(habitId), {
+    const result = await this.writer.update(fresh.path, {
       kind: desired ? 'mark' : 'unmark',
       habit: updated,
       date,
-      summary: `${desired ? 'Mark' : 'Unmark'} ${date} for ${fresh.name}`,
+      summary: `${desired ? 'Mark' : 'Unmark'} ${date} for ${fresh.habit.name}`,
+      baseContent: fresh.content,
     });
     await this.handleWriteResult(
       result,
@@ -570,30 +579,31 @@ export class DashboardController {
       this.setMessage('warning', 'There is no recent unmark to undo for this habit.');
       return null;
     }
-    let fresh: Habit;
+    let fresh: DiscoveredHabit;
     try {
       fresh = await this.loadFresh(habitId);
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
       return null;
     }
-    if (fresh.completions.includes(entry.date)) {
+    if (fresh.habit.completions.includes(entry.date)) {
       this.undo.clearHabit(habitId);
       await this.refresh();
       return null;
     }
     let updated: Habit;
     try {
-      updated = markCompletion(fresh, entry.date, this.calendar.today);
+      updated = markCompletion(fresh.habit, entry.date, this.calendar.today);
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
       return null;
     }
-    const result = await this.writer.update(this.requirePath(habitId), {
+    const result = await this.writer.update(fresh.path, {
       kind: 'mark',
       habit: updated,
       date: entry.date,
-      summary: `Undo unmark of ${entry.date} for ${fresh.name}`,
+      summary: `Undo unmark of ${entry.date} for ${fresh.habit.name}`,
+      baseContent: fresh.content,
     });
     if (result.status === 'applied') {
       this.undo.clearHabit(habitId);
@@ -739,7 +749,7 @@ export class DashboardController {
     transform: (habit: Habit) => Habit,
     messages: { success: string; summary: string },
   ): Promise<WriteResult | null> {
-    let fresh: Habit;
+    let fresh: DiscoveredHabit;
     try {
       fresh = await this.loadFresh(habitId);
     } catch (error) {
@@ -748,15 +758,16 @@ export class DashboardController {
     }
     let updated: Habit;
     try {
-      updated = transform(fresh);
+      updated = transform(fresh.habit);
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
       return null;
     }
-    const result = await this.writer.update(this.requirePath(habitId), {
+    const result = await this.writer.update(fresh.path, {
       kind,
       habit: updated,
       summary: messages.summary,
+      baseContent: fresh.content,
     });
     await this.handleWriteResult(result, messages.success, habitId, null);
     return result;
@@ -787,27 +798,21 @@ export class DashboardController {
       text: messageForWriteFailure(result),
     };
     this.notify?.(this.message.text);
-    if (result.status !== 'recovery-failed' && result.status !== 'failed') {
+    if (
+      result.status !== 'recovery-failed' &&
+      (result.status !== 'failed' || result.recoveryPath !== undefined)
+    ) {
       await this.refresh();
     } else {
       this.emit();
     }
   }
 
-  private async loadFresh(habitId: string): Promise<Habit> {
+  private async loadFresh(habitId: string): Promise<DiscoveredHabit> {
     const path = this.pathById.get(habitId);
     if (!path) {
       throw new Error('The habit was not found. Refresh the dashboard and try again.');
     }
-    const loaded = await this.repository.loadByPath(path);
-    return loaded.habit;
-  }
-
-  private requirePath(habitId: string): string {
-    const path = this.pathById.get(habitId);
-    if (!path) {
-      throw new Error('The habit was not found. Refresh the dashboard and try again.');
-    }
-    return path;
+    return this.repository.loadByPath(path);
   }
 }

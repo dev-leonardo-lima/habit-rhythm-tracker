@@ -21,6 +21,7 @@ export function renderHabitForm(container: HTMLElement, handlers: HabitFormHandl
   const form = document.createElement('form');
   form.className = 'habit-tracker-form habit-tracker-create-form';
   form.dataset.testid = 'create-habit-form';
+  form.dataset.formKey = 'create';
   form.setAttribute('aria-label', 'Create a habit');
   form.noValidate = true;
 
@@ -63,6 +64,7 @@ export function renderHabitForm(container: HTMLElement, handlers: HabitFormHandl
   submit.type = 'submit';
   submit.className = 'habit-tracker-primary';
   submit.textContent = 'Create habit';
+  submit.setAttribute('aria-label', 'Create habit');
   form.append(submit);
 
   const error = document.createElement('p');

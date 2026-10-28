@@ -19,6 +19,8 @@ import {
   weekdayName,
   weekdayShort,
 } from '../../src/ui/text';
+import { createDashboardHandlers } from '../../src/ui/controller-handlers';
+import { createHarness, localNoon } from '../helpers/controller-harness';
 
 function handlers(): DashboardHandlers {
   return {
@@ -75,6 +77,7 @@ function recovery(overrides: Partial<RecoveryViewModel> = {}): RecoveryViewModel
     summary: 'Unmark 2026-10-26 for Gym',
     originalContent: 'original',
     intendedContent: 'intended',
+    currentContent: 'current',
     warnings: [],
     canRetry: true,
     canDiscard: true,
@@ -100,6 +103,7 @@ function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
     habits: [],
     recovery: [],
     undo: [],
+    formResetVersion: 0,
     ...overrides,
   };
 }
@@ -305,6 +309,103 @@ describe('UI components', () => {
     expect(callbacks.refresh).toHaveBeenCalled();
     expect(callbacks.undoUnmark).toHaveBeenCalledWith('habit-1');
     expect(callbacks.setShowArchived).toHaveBeenCalledWith(false);
+  });
+
+  it('preserves keyboard focus and unsaved form input across routine refreshes', async () => {
+    const now = localNoon(2026, 10, 26);
+    const harness = createHarness({ now: () => now });
+    await harness.controller.load();
+    await harness.controller.createHabit('Gym', 4);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const handlers = createDashboardHandlers(harness.controller);
+    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
+    const unsubscribe = harness.controller.subscribe(render);
+    render();
+
+    const name = container.querySelector<HTMLInputElement>(
+      '[data-testid="create-habit-form"] input',
+    );
+    const target = container.querySelector<HTMLSelectElement>(
+      '[data-testid="create-habit-form"] select',
+    );
+    if (!name || !target) {
+      throw new Error('missing create form');
+    }
+    name.focus();
+    name.value = 'Draft habit';
+    target.value = '3';
+    expect(document.activeElement).toBe(name);
+
+    await harness.controller.refresh();
+
+    const refreshedName = container.querySelector<HTMLInputElement>(
+      '[data-testid="create-habit-form"] input',
+    );
+    const refreshedTarget = container.querySelector<HTMLSelectElement>(
+      '[data-testid="create-habit-form"] select',
+    );
+    expect(refreshedName?.value).toBe('Draft habit');
+    expect(refreshedTarget?.value).toBe('3');
+    expect(document.activeElement).toBe(refreshedName);
+
+    refreshedTarget?.focus();
+    await harness.controller.refreshClock();
+    expect(document.activeElement).toBe(
+      container.querySelector('[data-testid="create-habit-form"] select'),
+    );
+    expect(
+      container.querySelector<HTMLInputElement>('[data-testid="create-habit-form"] input')?.value,
+    ).toBe('Draft habit');
+
+    const id = harness.controller.getViewModel().habits[0]?.habitId ?? '';
+    await harness.controller.toggleCompletion(id, '2026-10-27', true);
+    expect(document.activeElement).toBe(container.querySelector('[data-testid="status-message"]'));
+    expect(
+      container.querySelector<HTMLInputElement>('[data-testid="create-habit-form"] input')?.value,
+    ).toBe('Draft habit');
+
+    await harness.controller.createHabit('Read', 7);
+    expect(
+      container.querySelector<HTMLInputElement>('[data-testid="create-habit-form"] input')?.value,
+    ).toBe('');
+    expect(
+      container.querySelector<HTMLSelectElement>('[data-testid="create-habit-form"] select')?.value,
+    ).toBe('7');
+
+    unsubscribe();
+    container.remove();
+  });
+
+  it('restores checkbox focus after a timed refresh', async () => {
+    const now = localNoon(2026, 10, 26);
+    const harness = createHarness({ now: () => now });
+    await harness.controller.load();
+    await harness.controller.createHabit('Gym', 4);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const handlers = createDashboardHandlers(harness.controller);
+    const unsubscribe = harness.controller.subscribe(() =>
+      renderDashboard(container, harness.controller.getViewModel(), handlers),
+    );
+    renderDashboard(container, harness.controller.getViewModel(), handlers);
+
+    const checkbox = container.querySelector<HTMLInputElement>(
+      'input[data-date="2026-10-26"][data-habit-id]',
+    );
+    checkbox?.focus();
+    expect(document.activeElement).toBe(checkbox);
+
+    await harness.controller.refreshClock();
+
+    const refreshed = container.querySelector<HTMLInputElement>(
+      'input[data-date="2026-10-26"][data-habit-id]',
+    );
+    expect(document.activeElement).toBe(refreshed);
+    expect(refreshed).not.toBe(checkbox);
+
+    unsubscribe();
+    container.remove();
   });
 
   it('formats dates and months deterministically', () => {

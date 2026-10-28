@@ -46,9 +46,11 @@ export class CalendarController {
   }
 
   /**
-   * Advances the local date. While following the current period, a date or week
-   * change moves the view to the new current month and highlights the new week.
-   * While browsing history, only the date/current-week highlight changes.
+   * Advances the local date. A weekly rollover always returns the view to the
+   * current month and highlights the new current week, even when the user was
+   * browsing history. Within the current period, any date change also refreshes
+   * the selected month/week; date-only changes while browsing history do not
+   * pull the user away from the historical month.
    */
   setToday(today: LocalDate): CalendarChange {
     const previousToday = this.todayDate;
@@ -60,7 +62,11 @@ export class CalendarController {
     const weekChanged = nextWeek !== previousWeek;
     const dateChanged = today !== previousToday;
     const monthChanged = nextMonth !== previousMonth;
-    if (this.followingCurrent && (weekChanged || dateChanged)) {
+    if (weekChanged) {
+      this.selected = nextMonth;
+      this.focused = nextWeek;
+      this.followingCurrent = true;
+    } else if (this.followingCurrent && dateChanged) {
       this.selected = nextMonth;
       this.focused = nextWeek;
     }

@@ -22,7 +22,13 @@ export class ObsidianEditorGuard implements EditorGuard {
     let buffer: string | undefined;
     for (const leaf of leaves) {
       const view = leaf.view as unknown as MarkdownLeafView | null;
-      if (!view || !view.file || view.file.path !== path) {
+      if (!view) {
+        return { status: 'unknown' };
+      }
+      if (!view.file || typeof view.file.path !== 'string' || view.file.path.length === 0) {
+        return { status: 'unknown' };
+      }
+      if (view.file.path !== path) {
         continue;
       }
       if (!view.editor || typeof view.editor.getValue !== 'function') {

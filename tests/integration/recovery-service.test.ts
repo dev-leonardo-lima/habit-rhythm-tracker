@@ -181,6 +181,45 @@ describe('recovery service branches', () => {
     expect(listing.entries[0]?.warnings.join(' ')).toContain('invalid-current-note');
   });
 
+  it('rejects an external edit between the retry read and the guarded write', async () => {
+    const harness = createHarness({ now: () => NOW });
+    const habit = makeHabit({ name: 'Gym', completions: ['2026-10-26'] });
+    const base = renderHabitNote(habit);
+    await harness.recoveryStore.saveInitial(
+      baseRecord({
+        operationId: 'op-retry-snapshot',
+        base: { exists: true, content: base },
+        intent: {
+          kind: 'mark',
+          habit: { ...habit, completions: ['2026-10-26', '2026-10-27'] },
+          date: '2026-10-27',
+          summary: 'Mark 2026-10-27',
+        },
+      }),
+    );
+    const externalOne = base.replace('"name": "Gym"', '"name": "Gym external one"');
+    harness.vault.files.set('Habits/Gym.md', externalOne);
+    let habitReads = 0;
+    harness.vault.beforeRead = (path) => {
+      if (path === 'Habits/Gym.md') {
+        habitReads += 1;
+        if (habitReads === 3) {
+          harness.vault.files.set(
+            path,
+            externalOne.replace('Gym external one', 'Gym external two'),
+          );
+        }
+      }
+    };
+
+    const result = await harness.recoveryService.retry('op-retry-snapshot');
+
+    expect(result.status).toBe('conflict');
+    const note = parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit;
+    expect(note.name).toBe('Gym external two');
+    expect(note.completions).toEqual(['2026-10-26']);
+  });
+
   it('reports malformed and orphan status files as issues', async () => {
     const harness = createHarness({ now: () => NOW });
     await harness.recoveryStore.saveInitial(baseRecord({ operationId: 'op-status' }));
