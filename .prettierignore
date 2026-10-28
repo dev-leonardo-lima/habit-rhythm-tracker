@@ -1,0 +1,9 @@
+node_modules/
+main.js
+coverage/
+dist/
+package-lock.json
+specs/
+.specify/
+.agents/
+.opencode/
