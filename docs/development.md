@@ -33,10 +33,11 @@ fails the command.
 
 ## Tests
 
-- `tests/unit/` covers local dates, note codecs, weekly targets, streaks, week views, settings, and
-  guarded-write result validation.
+- `tests/unit/` covers local dates, note codecs, weekly targets, streaks, yearly history, week views,
+  settings, and guarded-write result validation.
 - `tests/integration/` covers repository discovery, guarded writes and creation,
-  repeated marking, conflicts, lifecycle changes, week navigation, UI rendering, and plugin lifecycle.
+  repeated marking, conflicts, lifecycle changes, week navigation, activity history, icon pagination,
+  management focus and drafts, UI rendering, and plugin lifecycle.
 - `tests/mocks/obsidian.ts` provides the minimal Obsidian runtime used by Vitest; production builds
   use the real `obsidian` package as an external dependency.
 - Fixtures are synthetic. Tests never read or write a personal vault.
@@ -86,7 +87,7 @@ inputs that release automation can consume. Do not implement the 002 pipeline he
 
 ## Manual verification
 
-Use [specs/001-weekly-habit-dashboard/quickstart.md](specs/001-weekly-habit-dashboard/quickstart.md)
+Use [specs/001-weekly-habit-dashboard/quickstart.md](../specs/001-weekly-habit-dashboard/quickstart.md)
 for functional and conflict scenarios. Record actual desktop/iOS/Android results or the
 unverified platform and reason in
-[specs/001-weekly-habit-dashboard/validation.md](specs/001-weekly-habit-dashboard/validation.md).
+[specs/001-weekly-habit-dashboard/validation.md](../specs/001-weekly-habit-dashboard/validation.md).

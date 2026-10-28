@@ -85,6 +85,8 @@ week; the dashboard shows a two-week streak, even with rest days between records
    current streak becomes zero until a new week reaches its target; history remains available.
 4. **Given** an editable past week, **When** a record is corrected, **Then** affected weekly results
    and streaks are recalculated from the updated history.
+5. **Given** the weekly dashboard, **When** the person reviews progress, **Then** each habit's
+   progress and streak remain visible without aggregate average-progress or goals-met indicators.
 
 ---
 
@@ -131,6 +133,9 @@ and verify that the current week is shown on reopen and old records remain acces
     and streaks until their date, and archived weeks remain excluded from streaks.
 12. **Given** a history spanning more than one year, **When** the person uses year navigation,
     **Then** they can review years from creation through the current year without changing data.
+13. **Given** a wide history view, **When** the yearly activity calendar is displayed, **Then** it
+    uses the available width with square day cells. On a narrow view it remains accessible through
+    horizontal scrolling with weekday labels visible.
 
 ---
 
@@ -175,6 +180,11 @@ old target and that history remains accessible.
     editor closes while its unsaved form input remains available during the current view session.
 13. **Given** a habit with other recorded state changes, **When** a pending archive is canceled or
     the habit is reactivated, **Then** the other past and future state entries remain intact.
+14. **Given** an expanded habit editor, **When** the controls are displayed, **Then** name and next
+    week's target appear first, followed by grouped color and icon controls. Those appearance
+    controls sit side by side when space permits and wrap on narrow screens.
+15. **Given** a selected icon, **When** the editor is displayed, **Then** its preview appears without
+    displaying its technical name; the selected icon remains identifiable to assistive technology.
 
 ### Edge Cases
 
@@ -303,18 +313,26 @@ old target and that history remains accessible.
   and the number of marked days through today. Calendar years MUST be navigable from the creation
   year through the current year. Archived marks and saved future marks MUST remain identifiable;
   future marks MUST NOT count in statistics before their date. Whole archived weeks MUST be skipped
-  in both streaks, and historic targets and the reduced first-week target MUST be respected.
+  in both streaks, and historic targets and the reduced first-week target MUST be respected. The
+  activity calendar MUST expand to the available width with square day cells and remain horizontally
+  scrollable on narrow views, with weekday labels visible.
 - **FR-030**: Manage habits MUST show a compact row for every habit, including archived habits.
   Active rows MUST show the current target and current-week progress; archived rows MUST show the
   archived status. All rows MUST show the current streak. An in-place control MUST expose editing,
   archive/reactivation, color, and history actions. Automatic refresh MUST preserve an open editor
   and its unsaved input. Opening an editor MUST close any other habit editor without discarding its
-  unsaved input during the current view session.
+  unsaved input during the current view session. The editor MUST place name and the next-week target
+  before grouped color and icon controls; the appearance controls sit side by side when space
+  permits. Row summaries MUST have accessible descriptions without an intrusive redundant tooltip.
 - **FR-031**: A person MUST be able to search local Obsidian icons and explicitly choose or remove
   one per habit. All matching icons MUST be reachable through pagination, with new searches starting
   on the first page. The optional icon ID MUST be stored in the habit note and retained across edits,
   even when the icon is unavailable on another device. Invalid icon data MUST be reported without
-  rewriting the note. Choosing an icon MUST use the same guarded write as other habit edits.
+  rewriting the note. Choosing an icon MUST use the same guarded write as other habit edits. The
+  picker MUST show up to 27 results per page, show the chosen icon without its technical name in the
+  visible control, and identify the selection to assistive technology.
+- **FR-032**: The weekly dashboard MUST NOT display aggregate average-progress or weekly-goals-met
+  indicators; individual habit progress and streaks remain available.
 
 | Operation | User authorization | Result |
 |-----------|--------------------|--------|

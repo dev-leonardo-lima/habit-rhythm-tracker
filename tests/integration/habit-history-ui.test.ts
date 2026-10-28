@@ -138,6 +138,20 @@ describe('habit history and compact management', () => {
       container.querySelector<HTMLInputElement>('input[aria-label="Habit name for Read"]')?.value,
     ).toBe('Draft name');
 
+    const editSummary = container.querySelector<HTMLElement>(
+      '[data-disclosure-key="edit:habit-1"] > summary',
+    );
+    const accessibleLabel = editSummary?.getAttribute('aria-labelledby');
+    expect(editSummary?.hasAttribute('aria-label')).toBe(false);
+    expect(
+      accessibleLabel && container.querySelector(`#${accessibleLabel}`)?.textContent,
+    ).toContain('Edit Read; Archived; this week —; current streak');
+    editSummary?.focus();
+    await harness.controller.refresh();
+    expect(document.activeElement).toBe(
+      container.querySelector('[data-disclosure-key="edit:habit-1"] > summary'),
+    );
+
     container
       .querySelector<HTMLButtonElement>('button[aria-label="View history for Read"]')
       ?.click();

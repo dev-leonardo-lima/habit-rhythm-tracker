@@ -1,11 +1,12 @@
 ---
-description: "Dependency-ordered implementation tasks for the weekly and monthly habit dashboard"
+description: "Implementation history for the weekly habit dashboard"
 ---
 
 # Tasks: Weekly Habit Dashboard
 
 **Historical record**: Completed tasks below describe the decisions at the time they were carried
-out. The current specification supersedes earlier undo controls and the return-to-current shortcut.
+out. The current specification supersedes the earlier monthly primary view, recovery journal,
+undo controls, and return-to-current shortcut. Later phases record those decisions and the current UI.
 
 **Input**: `specs/001-weekly-habit-dashboard/plan.md`, `spec.md`, `research.md`, `data-model.md`,
 `contracts/habit-note.md`, `contracts/dashboard.md`, and `quickstart.md`.
@@ -257,3 +258,20 @@ recovery data was deleted; personal vaults were not touched.
 - [X] T084 Replace the color form with a circular swatch that applies on change, with an adjacent Use theme color control and visible keyboard focus.
 - [X] T085 Remove success banners for routine changes while preserving visible/focused errors and conflicts plus the in-session undo control.
 - [X] T086 Update specs, contracts, quickstart, README, design docs/tokens, surface brief, validation, and tests; verify Obsidian desktop, 760px, and 430px layouts.
+
+## Phase 13: Individual History and Compact Management
+
+- [X] T087 Remove the separate undo and return-to-current controls; allow an eligible day to be marked again and navigate weeks with the arrows.
+- [X] T088 Add a read-only yearly activity calendar and current/best weekly streak statistics in `src/ui/habit-history-view.ts` and `src/domain/habit-history.ts`, including archived and future marks.
+- [X] T089 Add optional per-habit icons from the local Obsidian registry with guarded persistence and an explicit remove action in `src/ui/habit-icon-picker.ts` and the habit-note codec.
+- [X] T090 Make the icon picker searchable and paginated with up to 27 results per page; retain selection, search, and page state through routine refreshes.
+- [X] T091 Limit Manage habits to one expanded editor at a time while preserving drafts during the view session.
+- [X] T092 Remove aggregate average-progress and weekly-goals-met indicators while keeping each habit's progress and streak.
+- [X] T093 Cover yearly history, icon persistence and pagination, exclusive editors, drafts, and archive behavior in the unit and integration suites.
+
+## Phase 14: Management and Activity Layout Refinement
+
+- [X] T094 Group name and next-week target before side-by-side color and icon controls where space permits; omit the technical icon name visually while retaining its accessible description.
+- [X] T095 Expand the activity calendar to the available width with square cells and preserve horizontal scrolling and weekday labels on narrow views.
+- [X] T096 Replace the redundant management-row tooltip with an accessible description and preserve summary focus across refreshes.
+- [X] T097 Update the feature specification, contracts, plan, quickstart, design and user documentation, and automated validation evidence. Record current visual/device verification limits in `validation.md`.

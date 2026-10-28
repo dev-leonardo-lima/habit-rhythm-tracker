@@ -92,6 +92,12 @@ runtime surface. Actual iOS and Android testing is necessary; desktop emulation 
 **Alternatives considered**: React is optional and unnecessary for this scope; color-only completion
 states are inaccessible; relying only on midnight timers misses suspended mobile apps or zone changes.
 
+**Later UI decisions**: Keep habit editing in place, with name and next week's target grouped before
+color and icon. Use the local Obsidian icon registry with search and 27-result pages; expose the
+selected icon to assistive technology without displaying its technical name in the control. A yearly
+history calendar uses the available width and scrolls on narrow views. Aggregate progress indicators
+were removed to keep the weekly dashboard focused on individual habits.
+
 **Sources**: [Custom views](https://docs.obsidian.md/Plugins/Getting%20started/Use%20React%20in%20your%20plugin),
 [Deferred views](https://docs.obsidian.md/plugins/guides/defer-views),
 [Lifecycle](https://docs.obsidian.md/plugins/guides/lifecycle-management),

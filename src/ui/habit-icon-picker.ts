@@ -33,6 +33,7 @@ const SUGGESTED_ICONS = [
 ];
 
 const PAGE_SIZE = 27;
+let iconDescriptionSequence = 0;
 
 export function iconLabel(id: string): string {
   return id.replace(/^lucide-/, '').replace(/[-_]+/g, ' ');
@@ -69,11 +70,18 @@ export function renderIconPicker(
     summary.append(badge);
   }
   const current = document.createElement('span');
-  current.textContent = habit.icon
-    ? `Icon: ${iconLabel(habit.icon)}${badge ? '' : ' (unavailable)'}`
-    : 'Choose icon';
+  current.textContent = habit.icon ? (badge ? 'Change icon' : 'Icon unavailable') : 'Choose icon';
   summary.append(current);
-  details.append(summary);
+  const description = document.createElement('span');
+  description.id = `habit-tracker-icon-description-${++iconDescriptionSequence}`;
+  description.className = 'habit-tracker-visually-hidden';
+  description.textContent = habit.icon
+    ? badge
+      ? `Selected icon: ${iconLabel(habit.icon)}`
+      : 'The selected icon is unavailable on this device'
+    : 'No icon selected';
+  summary.setAttribute('aria-describedby', description.id);
+  details.append(summary, description);
 
   const panel = document.createElement('div');
   panel.className = 'habit-tracker-icon-picker-panel';

@@ -120,6 +120,15 @@ function captureFocus(container: HTMLElement): FocusDescriptor | null {
       selector: `[data-testid="${escapeSelectorValue(active.dataset.testid)}"]`,
     };
   }
+  if (active.tagName === 'SUMMARY') {
+    const disclosure = active.parentElement;
+    if (disclosure instanceof HTMLDetailsElement && disclosure.dataset.disclosureKey) {
+      return {
+        kind: 'selector',
+        selector: `details[data-disclosure-key="${escapeSelectorValue(disclosure.dataset.disclosureKey)}"] > summary`,
+      };
+    }
+  }
   const ariaLabel = active.getAttribute('aria-label');
   if (ariaLabel) {
     const operation = active.closest<HTMLElement>('[data-operation-id]');

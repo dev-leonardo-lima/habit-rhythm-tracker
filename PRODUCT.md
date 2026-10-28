@@ -48,7 +48,10 @@ without gamification or decorative dashboards.
   remain visible and truthful through week navigation.
 - A habit's read-only yearly activity calendar shows marked dates, current and best weekly streaks,
   and marked days through today. Archived history remains accessible from the management list.
-- Compact management rows show current-week progress and expand in place for editing.
+- Compact management rows show current-week progress and expand in place for editing; name and
+  next week's target precede grouped color and icon controls.
+- The activity calendar fills the available width and scrolls on narrow views. The weekly dashboard
+  keeps individual progress without aggregate average-progress or goals-met indicators.
 - Target and archive changes take effect next week; reactivation applies in the current week.
 - Concurrent edits and failures must be reported without overwriting the existing note.
 - Keyboard, touch, focus, text labels, and Obsidian theme variables are required.

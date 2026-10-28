@@ -16,6 +16,8 @@ export interface HabitSettingsOptions {
   heading?: boolean;
 }
 
+let summarySequence = 0;
+
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className?: string,
@@ -124,10 +126,14 @@ function renderHabitSettingsItem(
   const progressText =
     habit.state === 'archived' ? '—' : `${habit.completedThisWeek} / ${habit.target ?? '—'}`;
   const streakText = `${habit.streak} ${habit.streak === 1 ? 'week' : 'weeks'}`;
-  summary.setAttribute(
-    'aria-label',
+  const accessibleSummary = el(
+    'span',
+    'habit-tracker-visually-hidden',
     `Edit ${habit.name}; ${targetText}; this week ${progressText}; current streak ${streakText}`,
   );
+  accessibleSummary.id = `habit-tracker-settings-summary-${++summarySequence}`;
+  summary.setAttribute('aria-labelledby', accessibleSummary.id);
+  summary.append(accessibleSummary);
   const name = el('span', 'habit-tracker-settings-name');
   const icon = habitIcon(habit.icon);
   if (icon) {
@@ -146,6 +152,7 @@ function renderHabitSettingsItem(
   item.append(summary);
 
   const body = el('div', 'habit-tracker-settings-body');
+  const fields = el('div', 'habit-tracker-settings-fields');
   const renameForm = el('form', 'habit-tracker-inline-form');
   renameForm.dataset.formKey = `rename:${habit.habitId}`;
   renameForm.noValidate = true;
@@ -166,8 +173,42 @@ function renderHabitSettingsItem(
     event.preventDefault();
     void handlers.renameHabit(habit.habitId, nameInput.value);
   });
-  body.append(renameForm);
+  fields.append(renameForm);
 
+  const targetForm = el('form', 'habit-tracker-inline-form');
+  targetForm.dataset.formKey = `target:${habit.habitId}`;
+  const targetLabel = el('label');
+  targetLabel.append(document.createTextNode('Target from next week'));
+  const targetSelect = el('select');
+  targetSelect.setAttribute('aria-label', `Weekly target for ${habit.name} from next week`);
+  for (let day = 1; day <= 7; day += 1) {
+    const option = el('option', undefined, `${day} ${day === 1 ? 'day' : 'days'} / week`);
+    option.value = String(day);
+    if ((habit.pendingTarget ?? habit.target ?? 7) === day) {
+      option.selected = true;
+    }
+    targetSelect.append(option);
+  }
+  targetLabel.append(targetSelect);
+  targetForm.append(targetLabel);
+  const targetButton = el('button', undefined, 'Save target');
+  targetButton.type = 'submit';
+  targetButton.setAttribute('aria-label', `Schedule target for ${habit.name}`);
+  targetForm.append(targetButton);
+  targetForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void handlers.changeTarget(habit.habitId, Number(targetSelect.value));
+  });
+  fields.append(targetForm);
+  body.append(fields);
+
+  if (habit.pendingTarget !== null) {
+    body.append(
+      el('p', 'habit-tracker-hint', `${habit.pendingTarget}-day target scheduled for next week.`),
+    );
+  }
+
+  const appearance = el('div', 'habit-tracker-settings-appearance');
   const colorRow = el('div', 'habit-tracker-color-row');
   colorRow.append(el('span', 'habit-tracker-color-label', 'Color'));
   const colorPicker = el('label', 'habit-tracker-color-picker');
@@ -194,40 +235,8 @@ function renderHabitSettingsItem(
     void handlers.changeColor(habit.habitId, null);
   });
   colorRow.append(resetColor);
-  body.append(colorRow);
-  body.append(renderIconPicker(habit, handlers.changeIcon));
-
-  const targetForm = el('form', 'habit-tracker-inline-form');
-  targetForm.dataset.formKey = `target:${habit.habitId}`;
-  const targetLabel = el('label');
-  targetLabel.append(document.createTextNode('Next week'));
-  const targetSelect = el('select');
-  targetSelect.setAttribute('aria-label', `Weekly target for ${habit.name} from next week`);
-  for (let day = 1; day <= 7; day += 1) {
-    const option = el('option', undefined, `${day} ${day === 1 ? 'day' : 'days'} / week`);
-    option.value = String(day);
-    if ((habit.pendingTarget ?? habit.target ?? 7) === day) {
-      option.selected = true;
-    }
-    targetSelect.append(option);
-  }
-  targetLabel.append(targetSelect);
-  targetForm.append(targetLabel);
-  const targetButton = el('button', undefined, 'Save target');
-  targetButton.type = 'submit';
-  targetButton.setAttribute('aria-label', `Schedule target for ${habit.name}`);
-  targetForm.append(targetButton);
-  targetForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    void handlers.changeTarget(habit.habitId, Number(targetSelect.value));
-  });
-  body.append(targetForm);
-
-  if (habit.pendingTarget !== null) {
-    body.append(
-      el('p', 'habit-tracker-hint', `${habit.pendingTarget}-day target scheduled for next week.`),
-    );
-  }
+  appearance.append(colorRow, renderIconPicker(habit, handlers.changeIcon));
+  body.append(appearance);
 
   const stateActions = el('div', 'habit-tracker-actions');
   const history = el('button', undefined, 'View history');

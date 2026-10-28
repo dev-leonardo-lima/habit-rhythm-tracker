@@ -4,6 +4,10 @@
 **Created**: 2026-10-28
 **Feature**: [spec.md](../spec.md)
 
+**Historical review**: These markers record the initial specification-quality review. The primary
+view and recovery policy changed afterward; current requirements and verification results are in
+[spec.md](../spec.md) and [validation.md](../validation.md).
+
 ## Content Quality
 
 - [x] No implementation details (languages, frameworks, APIs)

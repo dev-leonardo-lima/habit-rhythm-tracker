@@ -20,9 +20,9 @@ automated tests now exist. See [plan.md](plan.md), [data-model.md](data-model.md
 
 ## Build and install in a test vault
 
-1. Complete the planned plugin setup based on the official sample; use the project-pinned Node.js
-   version and an isolated Obsidian test vault. Never use a personal production vault for fault tests.
-2. After implementation, from the repository root run:
+1. Use the project-pinned Node.js version and an isolated Obsidian test vault. Never use a personal
+   production vault for fault tests.
+2. From the repository root run:
 
 ```sh
 npm ci
@@ -51,8 +51,8 @@ folder following the official sample instructions. Enable the plugin; its manife
    header is centered, has no habit count, and sits between the arrows. Confirm New habit is always
    visible in a compact row and there is no More or manual Refresh control; archived habits remain
    reachable through Manage habits. Navigate to previous and next weeks and return with the arrows;
-   confirm other weeks do not show a “This week” button or shift the header layout. Then
-   and correct an eligible date in a prior week. Verify a week that crosses a month boundary,
+   confirm other weeks do not show a “This week” button or shift the header layout. Correct an
+   eligible date in a prior week. Verify a week that crosses a month boundary,
    archived-week history, and exclusion of stored dates made future by a clock reversal. Test
    rollover while open and after a suspended/reopened app.
 5. Change a target and archive a habit; verify both take effect next week and historical values
@@ -63,7 +63,20 @@ folder following the official sample instructions. Enable the plugin; its manife
    Confirm Use theme color restores the theme accent. Check that the year sits above the centered
    range and a crossing week shows both years. Confirm completion bars have no numeric count labels
    and a gutter separates the name column from the first day.
-7. Run the core flows offline on desktop and on actual iOS and Android devices. Check theme
+7. Open a habit's activity calendar. Verify year navigation, marked and future dates, weekly-streak
+   statistics, and read-only behavior. On a wide desktop view, confirm the square day cells fill
+   the available width and stay aligned; on a narrow view, confirm horizontal scrolling and visible
+   weekday labels. Record the real platform and viewport when reporting visual verification.
+8. Expand a habit in Manage habits. Check that name and next week's target appear before the grouped
+   color and icon controls, that those controls sit side by side when space permits, and that the
+   selected icon appears without its technical name in the button. Check the accessible selection
+   description and that the management-row tooltip does not cover the editor. Open a second editor
+   and verify the first closes while its draft remains available; verify focus and draft preservation
+   through a refresh. Search icons, navigate 27-result pages, choose and remove an icon, and check
+   that an unavailable icon is identified without losing its stored ID.
+9. Confirm individual weekly progress remains visible without an average-progress or
+   weekly-goals-met summary.
+10. Run the core flows offline on desktop and on actual iOS and Android devices. Check theme
    adaptation, narrow scrolling, touch targets, keyboard navigation, focus, and labels. Record
    device versions and results for offline persistence and reopening in a desktop/iOS/Android
    matrix, or explicitly record unverified platforms and reasons.

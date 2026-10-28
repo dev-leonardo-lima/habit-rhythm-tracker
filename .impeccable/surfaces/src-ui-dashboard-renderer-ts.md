@@ -37,11 +37,14 @@ A compact week strip based on the supplied references: habit names in rows, seve
 completion runs as connected unlabeled capsules that use the habit color or theme accent. The
 selected week range is named once at the top, with the year smaller and centered above it; crossing
 years name both and the header group is centered. Empty day outlines make the controls discoverable,
-and a small rail complements each habit's textual weekly progress. On narrow widths the habit details
+and each habit's textual weekly progress remains visible without an extra progress rail or aggregate
+summary. On narrow widths the habit details
 sit above the seven day cells to keep the controls touchable. Navigation is limited to previous, next,
-and current week. Creation is always visible above the grid; management is progressively disclosed
-below it. Successful routine changes stay quiet, while conflicts and failures surface as clear
-status text without a recovery area.
+and returning to the current week through the arrows. Creation is always visible above the grid;
+management is progressively disclosed below it. Its editor groups name and target before color and
+icon, with the selected icon shown without its technical name. The yearly activity calendar expands
+to the available width and scrolls on narrow screens. Successful routine changes stay quiet, while
+conflicts and failures surface as clear status text without a recovery area.
 
 ## Direction contract
 

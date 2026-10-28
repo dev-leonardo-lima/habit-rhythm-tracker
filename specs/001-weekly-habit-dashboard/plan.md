@@ -1,6 +1,6 @@
 # Implementation Plan: Weekly Habit Dashboard
 
-**Branch**: `001-weekly-habit-dashboard` (feature identifier; no Git branch exists yet) | **Date**: 2026-10-28 | **Spec**: [spec.md](spec.md)
+**Feature**: `001-weekly-habit-dashboard` | **Date**: 2026-10-28 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/001-weekly-habit-dashboard/spec.md`
 
@@ -80,10 +80,11 @@ specs/001-weekly-habit-dashboard/
 ├── contracts/
 │   ├── habit-note.md
 │   └── dashboard.md
-└── tasks.md                    # later output of $speckit-tasks
+├── tasks.md
+└── validation.md
 ```
 
-### Source Code (repository root; planned, not yet present)
+### Source Code (repository root)
 
 ```text
 src/
@@ -99,8 +100,8 @@ manifest.json, package.json, package-lock.json, tsconfig.json, esbuild.config.mj
 ```
 
 **Structure Decision**: Extend the official single-plugin sample with small domain, storage and UI
-modules. The repository currently has no application code, commits, dependencies or tests.
-Feature 002's release automation is planned separately and depends on this plugin's build and tests.
+modules. The implementation, automated tests and build are present. Feature 002's release automation
+is planned separately and depends on this plugin's build and tests.
 
 ### Phase 0/1 design decisions
 
@@ -147,6 +148,11 @@ Feature 002's release automation is planned separately and depends on this plugi
     and weekly semantics.
 12. Paginate icon search results without truncating the registry, keeping the current page during
     routine refreshes. Allow one expanded habit editor at a time while retaining unsaved view drafts.
+13. Group name and next-week target before the color and icon controls. Place the latter side by
+    side when space permits, show the chosen icon without its technical name in the visible button,
+    and retain an accessible description and focus across refreshes.
+14. Expand the yearly activity grid to the available width with square cells; retain horizontal
+    scrolling and visible weekday labels on narrow screens. Do not add aggregate progress indicators.
 
 ## Complexity Tracking
 

@@ -69,6 +69,13 @@ describe('icons and weekly progress', () => {
     expect(
       container.querySelector<HTMLDetailsElement>('[data-disclosure-key="icon:habit-1"]')?.open,
     ).toBe(true);
+    const pickerSummary = container.querySelector('[data-disclosure-key="icon:habit-1"] > summary');
+    expect(pickerSummary?.textContent).toBe('Change icon');
+    expect(pickerSummary?.querySelector('svg')?.getAttribute('data-icon-id')).toBe('book-open');
+    const iconDescription = pickerSummary?.getAttribute('aria-describedby');
+    expect(iconDescription && container.querySelector(`#${iconDescription}`)?.textContent).toBe(
+      'Selected icon: book open',
+    );
     expect(
       container.querySelector<HTMLInputElement>('input[aria-label="Search icons for Gym"]')?.value,
     ).toBe('book open');
@@ -111,7 +118,7 @@ describe('icons and weekly progress', () => {
       harness.controller.getViewModel(),
       createDashboardHandlers(harness.controller),
     );
-    expect(container.textContent).toContain('Icon: plugin icon on another device (unavailable)');
+    expect(container.textContent).toContain('Icon unavailable');
   });
 
   it('does not overwrite a concurrent note edit while saving an icon', async () => {

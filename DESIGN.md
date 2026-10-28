@@ -156,7 +156,11 @@ the column header retain the shape of an Obsidian table.
 
 The always-visible New habit row sits above the grid, separated by a hairline. A selected habit's
 history opens below the grid; Manage habits is a disclosure below it, with compact rows that expand
-in place for editing. In a narrow workspace pane or phone-sized view, each habit's details sit above
+in place for editing. The editor groups name and next week's target, then places the color and icon
+controls together; the selected icon is shown without its technical name but is identified for
+assistive technology. The yearly activity grid
+uses the available width while keeping its day cells square, and scrolls on narrower panes. In a
+narrow workspace pane or phone-sized view, each habit's details sit above
 its seven days, which remain aligned with the weekday header. Each day has a 44px minimum hit area;
 very narrow views scroll horizontally if needed. No modal is used for creation or management.
 
@@ -211,6 +215,7 @@ the calendar scrolls horizontally when space is limited. Management is a compact
 targets, current-week progress, and streaks; an Edit disclosure reveals the existing controls.
 On narrow screens, the name and metadata sit above the day controls, keeping each day easy to tap.
 Only one habit editor is expanded at a time; switching rows preserves unsaved form input in the view.
+The row has an accessible description without a redundant tooltip covering the editor.
 
 ### Disclosure
 

@@ -44,19 +44,21 @@ fault-injection tests.
 - Select a habit's name to open its activity calendar. Use the year arrows to review earlier years;
   the calendar is read-only, and past marks can be changed in the weekly grid. Its statistics count
   successful weeks and marked days through today. Stored future marks are visible but not counted.
+  The calendar expands to the available width and scrolls horizontally on narrow screens.
 - Archived habits remain available in **Manage habits**; archived weeks with history remain visible
   in the grid. Expand an archived habit's **Edit** row to open its activity calendar.
 - The header shows the year above the week range; a week crossing a new year names both years. It
   does not show a habit count, and refresh is automatic.
-- Target changes, archiving, and color changes take effect immediately for the habit; target and
-  archive changes follow their next-week rules. Reactivation applies in the current week.
+- Color and icon changes apply immediately. Target changes and archiving take effect next week;
+  reactivation applies in the current week.
 - **Manage habits** shows a compact list with each habit's current streak and, for active habits,
-  target and current-week progress. Expand **Edit** to rename a habit, choose a color and icon,
-  schedule a target, or archive or reactivate it. The color swatch applies immediately, and **Use
-  theme color** restores the theme. **Choose icon** lets you search locally registered Obsidian icons;
-  use the page controls to browse all matching icons, 27 per page. Select one to apply it or choose
-  **Remove icon** to clear it. Opening a habit's editor closes the previously open one; unsaved input
-  is kept while the dashboard remains open.
+  target and current-week progress. Expand **Edit** to rename a habit, schedule a target, choose a
+  color and icon, or archive or reactivate it. Name and target are followed by the grouped color and
+  icon controls. The color swatch applies immediately, and **Use theme color** restores the theme.
+  **Choose icon** or **Change icon** lets you search locally registered Obsidian icons; use the page
+  controls to browse all matching icons, up to 27 per page. Select one to apply it or choose **Remove icon**
+  to clear it. Opening a habit's editor closes the previously open one; unsaved input is kept while
+  the dashboard remains open.
 
 ## Storage format
 

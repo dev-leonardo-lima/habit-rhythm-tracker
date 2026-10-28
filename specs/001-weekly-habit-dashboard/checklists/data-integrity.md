@@ -5,6 +5,13 @@ weekly calculations, data protection, and recovery before implementation.
 **Created**: 2026-10-28
 **Feature**: [spec.md](../spec.md)
 
+**Historical review**: The checked items record the earlier requirements review. Later decisions
+replaced the monthly primary view with a weekly view and removed per-edit recovery journals; items
+about monthly totals or recovery-record retention describe the earlier scope, not current product
+requirements. The current [specification](../spec.md), [plan](../plan.md), and
+[data model](../data-model.md) govern the present behavior. The existing checkmarks do not assert
+that the superseded features exist.
+
 **Review Ownership**: This is a reviewer-owned requirements-quality review artifact. Mark an item
 `[x]` only when the reviewer determines the requirements-quality criterion is satisfied.
 **Marker Semantics**: `[x]` does not mean implementation work is complete.

@@ -9,8 +9,8 @@
   year as a smaller label centered above it; a crossing week names both years. A gutter separates
   the name column from the first day while headers and cells stay aligned. Completion runs are
   connected capsules without count labels; progress remains textual without a duplicate target or rail.
-  No monthly grid or month
-  selector is the primary view. Stored dates now in the future remain visible but do not count.
+  No aggregate average-progress or weekly-goals-met indicator, monthly grid, or month selector is
+  shown. Stored dates now in the future remain visible but do not count.
 - Interactions: a uniquely labeled checkbox per habit/date works with pointer, touch and keyboard.
   Dates before creation or after today are disabled. Marking persists once per date; unmarking is
   explicit, and the same eligible date can be marked again without a separate undo control. Hover
@@ -27,13 +27,18 @@
 - Individual history: selecting a habit name opens a read-only yearly activity calendar and current
   and best streaks in successful weeks, with total marked days through today. Calendar years run from
   habit creation to the current year. Archived-week and future marks remain identifiable; future
-  marks are excluded from counts and streaks until their date. The management list also provides
-  history for archived habits, and past marks are edited through the weekly grid.
+  marks are excluded from counts and streaks until their date. The calendar expands to use the
+  available width, with square day cells. The management list also provides history for archived
+  habits, and past marks are edited through the weekly grid.
 - Management: a compact list displays the current target, current-week progress and streak for
   active habits, plus archived status and streak for archived habits. An Edit disclosure reveals
   the habit controls in place; opening another closes the previous editor while retaining its
-  unsaved input during the view session. Automatic updates retain open disclosures and unsaved form
-  input. The icon picker searches the local registry and pages through all matching results.
+  unsaved input during the view session. Name and next week's target precede grouped color and icon
+  controls, which sit side by side when space permits. The selected icon's technical name is not
+  displayed but remains available to assistive technology. Row summaries retain accessible labels
+  without an intrusive redundant tooltip. Automatic updates retain open disclosures, focus, and
+  unsaved form input. The icon picker searches the local registry and pages through all matching
+  results, up to 27 per page.
 - Live behavior: update automatically after successful note changes or valid external edits; no
   manual Refresh or More menu is exposed. Detect a new local date/zone after the app resumes and
   while the view is open; a new week shows the current week. An incomplete current week does not
