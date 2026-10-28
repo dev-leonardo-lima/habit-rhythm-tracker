@@ -1,8 +1,7 @@
 import type { DashboardViewModel } from './dashboard-controller';
 import { renderHabitForm } from './habit-form';
 import { renderHabitSettings } from './habit-settings';
-import { renderMonthSummary, renderMonthWeeks } from './month-dashboard';
-import { renderRecoveryList } from './recovery-renderer';
+import { renderHabitGrid } from './week-dashboard';
 
 export interface DashboardHandlers {
   createHabit(name: string, target: number): void | Promise<unknown>;
@@ -13,10 +12,6 @@ export interface DashboardHandlers {
   archiveHabit(habitId: string): void | Promise<unknown>;
   reactivateHabit(habitId: string): void | Promise<unknown>;
   cancelPendingArchive(habitId: string): void | Promise<unknown>;
-  retryRecovery(operationId: string): void | Promise<unknown>;
-  discardRecovery(operationId: string): void | Promise<unknown>;
-  restoreRecovery(operationId: string): void | Promise<unknown>;
-  deleteRecovery(operationIds: string[]): void | Promise<unknown>;
   previousMonth(): void;
   nextMonth(): void;
   previousWeek(): void;
@@ -41,12 +36,44 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
-function button(label: string, ariaLabel: string, onClick: () => void): HTMLButtonElement {
-  const control = el('button', undefined, label);
+function iconButton(glyph: string, ariaLabel: string, onClick: () => void): HTMLButtonElement {
+  const control = el('button', 'habit-tracker-icon-button', glyph);
   control.type = 'button';
   control.setAttribute('aria-label', ariaLabel);
   control.addEventListener('click', onClick);
   return control;
+}
+
+function textButton(label: string, ariaLabel: string, onClick: () => void): HTMLButtonElement {
+  const control = el('button', 'habit-tracker-text-button', label);
+  control.type = 'button';
+  control.setAttribute('aria-label', ariaLabel);
+  control.addEventListener('click', onClick);
+  return control;
+}
+
+function disclosure(
+  key: string,
+  label: string,
+  count?: number,
+  ariaLabel = label,
+): HTMLDetailsElement {
+  const details = el('details', 'habit-tracker-disclosure');
+  details.dataset.disclosureKey = key;
+  const summary = el('summary', 'habit-tracker-disclosure-summary');
+  summary.setAttribute('aria-label', ariaLabel);
+  summary.append(el('span', 'habit-tracker-disclosure-label', label));
+  if (count !== undefined && count > 0) {
+    summary.append(el('span', 'habit-tracker-disclosure-count', String(count)));
+  }
+  details.append(summary);
+  return details;
+}
+
+function disclosureBody(details: HTMLDetailsElement): HTMLElement {
+  const body = el('div', 'habit-tracker-disclosure-body');
+  details.append(body);
+  return body;
 }
 
 type FocusDescriptor =
@@ -55,6 +82,7 @@ type FocusDescriptor =
 interface CapturedUiState {
   focus: FocusDescriptor | null;
   forms: Record<string, Record<string, string>>;
+  disclosure: Record<string, boolean>;
   formResetVersion: number;
 }
 
@@ -143,9 +171,19 @@ function captureUiState(container: HTMLElement): CapturedUiState {
     }
     forms[key] = values;
   }
+  const disclosure: Record<string, boolean> = {};
+  for (const details of container.querySelectorAll<HTMLDetailsElement>(
+    'details[data-disclosure-key]',
+  )) {
+    const key = details.dataset.disclosureKey;
+    if (key) {
+      disclosure[key] = details.open;
+    }
+  }
   return {
     focus: captureFocus(container),
     forms,
+    disclosure,
     formResetVersion: Number(container.dataset.formResetVersion ?? '0'),
   };
 }
@@ -178,6 +216,28 @@ function restoreFormValues(
   }
 }
 
+function restoreDisclosure(
+  container: HTMLElement,
+  captured: CapturedUiState,
+  viewModel: DashboardViewModel,
+): void {
+  for (const details of container.querySelectorAll<HTMLDetailsElement>(
+    'details[data-disclosure-key]',
+  )) {
+    const key = details.dataset.disclosureKey;
+    if (!key) {
+      continue;
+    }
+    if (captured.disclosure[key] !== undefined) {
+      details.open = captured.disclosure[key] ?? false;
+    } else if (key === 'create' && viewModel.habits.length === 0) {
+      details.open = true;
+    } else if (key === 'issues' && viewModel.issues.length > 0) {
+      details.open = true;
+    }
+  }
+}
+
 function restoreFocus(
   container: HTMLElement,
   captured: CapturedUiState,
@@ -195,6 +255,155 @@ function restoreFocus(
   target?.focus({ preventScroll: true });
 }
 
+function renderHeader(
+  container: HTMLElement,
+  viewModel: DashboardViewModel,
+  handlers: DashboardHandlers,
+): void {
+  const week = viewModel.weeks[0];
+  const weekText = week?.label ?? viewModel.monthLabel;
+  const isCurrentWeek = week?.isCurrentWeek ?? false;
+  const header = el('header', 'habit-tracker-header');
+  const heading = el('div', 'habit-tracker-heading');
+  const nav = el('div', 'habit-tracker-week-nav');
+  nav.append(iconButton('‹', 'Previous week', () => handlers.previousWeek()));
+  const weekBlock = el('div', 'habit-tracker-week-block');
+  const label = el('h1', 'habit-tracker-week-label', weekText);
+  label.dataset.testid = 'week-label';
+  label.setAttribute('aria-live', 'polite');
+  weekBlock.append(label);
+  const meta = el('p', 'habit-tracker-week-meta');
+  meta.append(
+    document.createTextNode(
+      `${viewModel.habits.length} ${viewModel.habits.length === 1 ? 'habit' : 'habits'}`,
+    ),
+  );
+  meta.append(
+    el(
+      'span',
+      isCurrentWeek ? 'habit-tracker-week-context is-current' : 'habit-tracker-week-context',
+      isCurrentWeek ? 'This week' : 'Week in history',
+    ),
+  );
+  weekBlock.append(meta);
+  nav.append(weekBlock);
+  nav.append(iconButton('›', 'Next week', () => handlers.nextWeek()));
+  heading.append(nav);
+
+  const actions = el('div', 'habit-tracker-actions');
+  if (!isCurrentWeek) {
+    actions.append(
+      textButton('This week', 'Return to the current week', () => handlers.goToCurrent()),
+    );
+  }
+  const more = disclosure('more', 'More', undefined, 'More options');
+  const moreBody = disclosureBody(more);
+  const archivedLabel = el('label', 'habit-tracker-toggle');
+  const archived = el('input');
+  archived.type = 'checkbox';
+  archived.checked = viewModel.showArchived;
+  archived.setAttribute('aria-label', 'Show archived habits');
+  archived.addEventListener('change', () => handlers.setShowArchived(archived.checked));
+  archivedLabel.append(archived, document.createTextNode(' Show archived'));
+  moreBody.append(archivedLabel);
+  moreBody.append(textButton('Refresh', 'Refresh habits', () => void handlers.refresh()));
+  actions.append(more);
+  heading.append(actions);
+  header.append(heading);
+  container.append(header);
+}
+
+function renderMessage(container: HTMLElement, viewModel: DashboardViewModel): void {
+  if (!viewModel.message) {
+    return;
+  }
+  const message = el(
+    'p',
+    `habit-tracker-message message-${viewModel.message.kind}`,
+    viewModel.message.text,
+  );
+  message.dataset.testid = 'status-message';
+  message.setAttribute('role', viewModel.message.kind === 'error' ? 'alert' : 'status');
+  if (viewModel.message.kind === 'error') {
+    message.tabIndex = -1;
+  }
+  container.append(message);
+  if (viewModel.message.kind === 'error') {
+    message.focus();
+  }
+}
+
+function renderIssues(container: HTMLElement, viewModel: DashboardViewModel): void {
+  if (viewModel.issues.length > 0) {
+    const issues = disclosure('issues', 'Note problems', viewModel.issues.length);
+    const body = disclosureBody(issues);
+    body.append(
+      el(
+        'p',
+        'habit-tracker-hint',
+        'These notes were not loaded or overwritten. Fix the note in the vault, then refresh.',
+      ),
+    );
+    const list = el('ul', 'habit-tracker-issue-list');
+    for (const issue of viewModel.issues) {
+      list.append(el('li', undefined, `${issue.path}: ${issue.message}`));
+    }
+    body.append(list);
+    container.append(issues);
+  }
+}
+
+function renderUndo(
+  container: HTMLElement,
+  viewModel: DashboardViewModel,
+  handlers: DashboardHandlers,
+): void {
+  if (viewModel.undo.length === 0) {
+    return;
+  }
+  const undo = el('div', 'habit-tracker-undo');
+  undo.append(el('span', 'habit-tracker-undo-label', 'Unmarked'));
+  for (const item of viewModel.undo) {
+    const habit = viewModel.habits.find((entry) => entry.habitId === item.habitId);
+    undo.append(
+      textButton(
+        `Undo ${item.date}${habit ? ` · ${habit.name}` : ''}`,
+        `Undo unmark of ${item.date} for ${habit?.name ?? 'habit'}`,
+        () => void handlers.undoUnmark(item.habitId),
+      ),
+    );
+  }
+  container.append(undo);
+}
+
+function renderCreateDisclosure(
+  container: HTMLElement,
+  viewModel: DashboardViewModel,
+  handlers: DashboardHandlers,
+): void {
+  const create = disclosure('create', 'New habit');
+  const body = disclosureBody(create);
+  renderHabitForm(body, handlers, { heading: false });
+  if (viewModel.habits.length === 0) {
+    create.open = true;
+  }
+  container.append(create);
+}
+
+function renderManageDisclosure(
+  container: HTMLElement,
+  viewModel: DashboardViewModel,
+  handlers: DashboardHandlers,
+): void {
+  if (viewModel.habits.length === 0) {
+    return;
+  }
+  const manage = disclosure('manage', 'Manage habits');
+  const body = disclosureBody(manage);
+  renderHabitSettings(body, viewModel.habits, handlers, { heading: false });
+  container.append(manage);
+}
+
 export function renderDashboard(
   container: HTMLElement,
   viewModel: DashboardViewModel,
@@ -204,40 +413,8 @@ export function renderDashboard(
   container.replaceChildren();
   container.classList.add('habit-tracker-dashboard');
 
-  const header = el('header', 'habit-tracker-header');
-  header.append(el('h1', undefined, 'Habit tracker'));
-  const nav = el('div', 'habit-tracker-nav');
-  nav.append(button('‹ Previous month', 'Previous month', () => handlers.previousMonth()));
-  nav.append(button('Next month ›', 'Next month', () => handlers.nextMonth()));
-  nav.append(button('‹ Previous week', 'Previous week', () => handlers.previousWeek()));
-  nav.append(button('Next week ›', 'Next week', () => handlers.nextWeek()));
-  nav.append(button('Today', 'Return to the current week', () => handlers.goToCurrent()));
-  nav.append(
-    button('Refresh', 'Refresh habits and recovery records', () => void handlers.refresh()),
-  );
-  header.append(nav);
-  const month = el('h2', 'habit-tracker-month', viewModel.monthLabel);
-  month.dataset.testid = 'month-label';
-  month.setAttribute('aria-live', 'polite');
-  header.append(month);
-  container.append(header);
-
-  if (viewModel.message) {
-    const message = el(
-      'p',
-      `habit-tracker-message message-${viewModel.message.kind}`,
-      viewModel.message.text,
-    );
-    message.dataset.testid = 'status-message';
-    message.setAttribute('role', viewModel.message.kind === 'error' ? 'alert' : 'status');
-    if (viewModel.message.kind === 'error') {
-      message.tabIndex = -1;
-    }
-    container.append(message);
-    if (viewModel.message.kind === 'error') {
-      message.focus();
-    }
-  }
+  renderHeader(container, viewModel, handlers);
+  renderMessage(container, viewModel);
 
   if (viewModel.loading) {
     const loading = el('p', 'habit-tracker-loading', 'Loading habits…');
@@ -245,83 +422,28 @@ export function renderDashboard(
     container.append(loading);
   }
 
-  const controls = el('div', 'habit-tracker-controls');
-  const archivedLabel = el('label', 'habit-tracker-toggle');
-  const archived = el('input');
-  archived.type = 'checkbox';
-  archived.checked = viewModel.showArchived;
-  archived.setAttribute('aria-label', 'Show archived habits');
-  archived.addEventListener('change', () => handlers.setShowArchived(archived.checked));
-  archivedLabel.append(archived, document.createTextNode(' Show archived habits'));
-  controls.append(archivedLabel);
-  container.append(controls);
-
-  if (viewModel.issues.length > 0) {
-    const issues = el('section', 'habit-tracker-issues');
-    issues.dataset.testid = 'note-issues';
-    issues.append(el('h2', undefined, 'Note problems'));
-    issues.append(
-      el(
-        'p',
-        'habit-tracker-hint',
-        'These notes were not loaded or overwritten. Fix the note in the vault, then refresh.',
-      ),
-    );
-    const list = el('ul');
-    for (const issue of viewModel.issues) {
-      list.append(el('li', undefined, `${issue.path}: ${issue.message}`));
-    }
-    issues.append(list);
-    container.append(issues);
-  }
-
-  if (viewModel.recoveryIssues.length > 0) {
-    const issues = el('section', 'habit-tracker-issues');
-    issues.append(el('h2', undefined, 'Recovery record problems'));
-    const list = el('ul');
-    for (const issue of viewModel.recoveryIssues) {
-      list.append(el('li', undefined, `${issue.path}: ${issue.message}`));
-    }
-    issues.append(list);
-    container.append(issues);
-  }
-
-  const undoSection = el('section', 'habit-tracker-undo');
-  if (viewModel.undo.length > 0) {
-    undoSection.append(el('h2', undefined, 'Undo'));
-    for (const undo of viewModel.undo) {
-      const habit = viewModel.habits.find((item) => item.habitId === undo.habitId);
-      const name = habit?.name ?? 'habit';
-      undoSection.append(
-        button(
-          `Undo unmark of ${undo.date} for ${name}`,
-          `Undo unmark of ${undo.date} for ${name}`,
-          () => void handlers.undoUnmark(undo.habitId),
-        ),
-      );
-    }
-  }
-  container.append(undoSection);
-
-  const createContainer = el('div', 'habit-tracker-create');
-  renderHabitForm(createContainer, handlers);
-  container.append(createContainer);
+  renderIssues(container, viewModel);
+  renderUndo(container, viewModel, handlers);
+  renderCreateDisclosure(container, viewModel, handlers);
 
   if (!viewModel.loading && viewModel.habits.length === 0) {
-    container.append(
+    const empty = el('div', 'habit-tracker-empty-state');
+    empty.append(el('p', 'habit-tracker-empty-title', 'A month of small marks'));
+    empty.append(
       el(
         'p',
-        'habit-tracker-empty',
-        'No habits yet. Create a habit above to start tracking this week.',
+        'habit-tracker-empty-copy',
+        'Add your first habit below. Each day you complete it becomes part of the week’s rhythm.',
       ),
     );
+    container.append(empty);
+  } else if (viewModel.habits.length > 0) {
+    renderHabitGrid(container, viewModel, handlers);
   }
 
-  renderMonthSummary(container, viewModel);
-  renderMonthWeeks(container, viewModel.weeks, handlers);
-  renderHabitSettings(container, viewModel.habits, handlers);
-  renderRecoveryList(container, viewModel.recovery, handlers);
+  renderManageDisclosure(container, viewModel, handlers);
 
+  restoreDisclosure(container, captured, viewModel);
   container.dataset.formResetVersion = String(viewModel.formResetVersion);
   restoreFormValues(container, captured, viewModel);
   restoreFocus(container, captured, viewModel);

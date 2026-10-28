@@ -1,4 +1,4 @@
-# Feature Specification: Weekly and Monthly Habit Dashboard
+# Feature Specification: Weekly Habit Dashboard
 
 **Feature Branch**: None created
 
@@ -7,7 +7,7 @@
 **Status**: Draft
 
 **Input**: An Obsidian habit plugin inspired by the referenced repositories and supplied image: a
-minimalist design, monthly dashboard with an interactive weekly grid, weekly targets, streaks of
+minimalist design, weekly dashboard with an interactive seven-day grid, weekly targets, streaks of
 successful weeks, automatic rollover, and persistent history.
 
 ## Clarifications
@@ -17,8 +17,8 @@ successful weeks, automatic rollover, and persistent history.
 - Q: How should the first week count when a habit is created midweek and there are not enough days left to meet its target? → A: Use the weekly target or the number of days remaining from creation, whichever is lower.
 - Q: Where should habit data be kept in the Obsidian vault? → A: In user-readable and editable Markdown notes in the vault.
 - Q: How should the notes that store habits be organized? → A: One Markdown note per habit, containing its target and history.
-- Q: What should happen when a habit note changes while a dashboard edit is being saved? → A: Preserve both changes, stop the save, and ask the user to resolve the conflict.
-- Q: How should the weeks of the month be displayed on the dashboard? → A: Show all weeks of the month, each in a seven-day grid.
+- Q: What should happen when a habit note changes while a dashboard edit is being saved? → A: Stop the save, leave the changed note untouched, and warn the person to review it and repeat the action explicitly.
+- Q: What is the primary time frame of the dashboard? → A: The current week, displayed as exactly seven days; previous and next weeks are reachable through navigation. A monthly grid is not the primary view.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -41,7 +41,7 @@ the dashboard; all four records and 4/4 progress remain visible.
    the cell shows completion and weekly progress increases once for that date.
 3. **Given** a marked completion, **When** the person explicitly unmarks it, **Then** it no longer
    counts and the latest unmark for that habit can be undone until the dashboard closes or another
-   change to that habit succeeds. Its recovery record remains accessible after reopening.
+   change to that habit succeeds. After that window, no recovery of the unmark is promised.
 4. **Given** a future date or a date before the habit was created, **When** the person attempts to
    mark it, **Then** the action is prevented and history remains unchanged.
 5. **Given** a habit with a target of four days is created on Friday, **When** the person completes
@@ -49,20 +49,16 @@ the dashboard; all four records and 4/4 progress remain visible.
 6. **Given** a newly created habit, **When** the person opens its Markdown note in the vault, **Then**
    its name, target, and recorded completion dates are available together.
 7. **Given** a note changes while a dashboard edit is being saved, **When** the conflict is detected,
-   **Then** the save stops, both changes remain recoverable, and the person is asked to resolve it.
-8. **Given** an unmark was made and the dashboard was reopened, **When** the person inspects its
-   retained recovery record, **Then** the earlier completion and intended unmark are available for
-   an explicit, guarded restoration rather than automatic replay.
-9. **Given** a detected conflict, **When** the person compares both changes and explicitly retries,
-   **Then** the latest valid note is guarded again; if it changes again, neither change is lost.
-10. **Given** a detected conflict, **When** the person explicitly discards the pending change,
-    **Then** the note remains unchanged and the recovery record retains the discarded intent.
-11. **Given** recovery preservation fails, including because storage is full, **When** a habit edit
-    is requested, **Then** the saved habit remains unchanged and an actionable error is shown.
-12. **Given** a write outcome is uncertain after interruption, **When** the dashboard is reopened,
-    **Then** the retained record is available for inspection and no change is replayed automatically.
-13. **Given** retained recovery records, **When** the person requests deletion of selected records,
-    **Then** the records and loss of recoverability are identified for explicit confirmation.
+   **Then** the save stops, the existing note remains unchanged, and the person receives a clear
+   warning to review the note and repeat the action.
+8. **Given** a note is open with an unsaved or unverifiable editor state, **When** a dashboard edit is
+   requested, **Then** no write is attempted, the note remains unchanged, and the person is told to
+   save or close the editor before repeating the action.
+9. **Given** a save fails or its outcome is uncertain, **When** the person returns to the dashboard,
+   **Then** the saved note remains intact, the change is not presented as saved, and an actionable
+   error is shown. No unsaved intent is promised after an unexpected app exit.
+10. **Given** a mixed or invalid habit block, **When** it is loaded, **Then** the problem is reported
+    and the note is preserved without overwrite.
 
 ---
 
@@ -91,37 +87,37 @@ week; the dashboard shows a two-week streak, even with rest days between records
 
 ---
 
-### User Story 3 - Navigate the Month and History (Priority: P2)
+### User Story 3 - Navigate Weeks and History (Priority: P2)
 
-A person opens a clean, readable dashboard to review all weeks of the month in seven-day grids,
-navigate between months and weeks, and correct earlier records. The current week changes
-automatically without deleting past records.
+A person opens a clean, readable dashboard for the current week, marks days in a seven-day grid,
+and moves to previous or next weeks to review and correct history. The current week is the default
+view and updates automatically without deleting past records.
 
-**Why this priority**: The calendar view and history support tracking progress over time and
-resuming use after an absence.
+**Why this priority**: Week navigation and history support tracking progress over time and resuming
+use after an absence without turning the dashboard into a monthly calendar.
 
-**Independent Test**: Record a habit in one week, advance to the next, and return to the previous
-month; the current week is shown automatically and old records remain accessible.
+**Independent Test**: Record a habit in one week, navigate to the next and back to the previous week,
+and verify that the current week is shown on reopen and old records remain accessible.
 
 **Acceptance Scenarios**:
 
 1. **Given** the dashboard is open, **When** a new week starts in the local date, **Then** the
-   dashboard highlights the current week, shows the current month, and retains records and results
-   from previous weeks.
+   dashboard shows the new current week, highlights today, and retains records and results from
+   previous weeks.
 2. **Given** the dashboard has been closed for several weeks, **When** the person opens it again,
-   **Then** they see the current week and can navigate history without data loss.
-3. **Given** a week that spans two months, **When** it is displayed in either month, **Then** all
-   seven days and the same weekly progress are shown; monthly totals count only dates in the
-   selected month.
+   **Then** they see the current week and can navigate to earlier weeks without data loss.
+3. **Given** a week that spans two months, **When** it is displayed, **Then** all seven days and the
+   same weekly progress are shown, with dates labeled clearly.
 4. **Given** a past week with a forgotten record, **When** the person navigates to it and marks a
    valid date, **Then** the change persists and the dashboard updates the related results.
-5. **Given** a selected month, **When** the person opens its dashboard, **Then** all intersecting
-   weeks are displayed as separate seven-day grids, including weeks that span a month boundary.
-6. **Given** a saved completion becomes future-dated after a clock change, **When** the month is
-   viewed, **Then** the mark remains visible and noninteractive but is excluded from both totals
-   until its date arrives.
-7. **Given** a completion in a wholly archived week, **When** its month is viewed, **Then** the mark
-   contributes to that month's total while the archived week is excluded from the streak.
+5. **Given** the dashboard is opened, **Then** the current week is displayed as one seven-day grid
+   with Monday through Sunday columns and habits in rows; no monthly grid or month selector is the
+   primary view.
+6. **Given** a saved completion becomes future-dated after a clock change, **When** its week is
+   viewed, **Then** the mark remains visible and noninteractive and is excluded from weekly
+   progress until its date arrives.
+7. **Given** a completion in a wholly archived week, **When** its week is viewed, **Then** the mark
+   remains visible while the archived week is excluded from the streak.
 
 ---
 
@@ -153,7 +149,7 @@ old target and that history remains accessible.
 - For the first week, the effective target is the lower of the weekly target and the number of days
   from the creation date through Sunday, inclusive; only dates on or after creation can be marked.
 - The week runs Monday through Sunday, including month and year boundaries and leap years. A week
-  belongs to both months when it crosses the boundary, but its target is evaluated only once.
+  that crosses a month boundary remains one seven-day interval with one target and result.
 - Unmarked days do not break a streak by themselves; evaluation uses the weekly target.
 - A completed week with no records for an active habit is an unsuccessful week, including when the
   dashboard was not opened. Whole weeks spent archived are ignored in the streak.
@@ -162,17 +158,18 @@ old target and that history remains accessible.
 - If a save fails, the person is informed, the change is not presented as saved, and previously
   saved data remains available; the person can retry. If a habit note contains invalid data, the
   system reports the problem and preserves the note rather than silently overwriting its contents.
-- When the system detects a conflicting note change during a dashboard save, it stops the save and
-  preserves both changes for user resolution, including after closing and reopening the dashboard.
+- When the system detects a conflicting note change during a dashboard save, it stops the save,
+  leaves the existing note unchanged, and reports the conflict so the person can review and repeat
+  the action explicitly. No recovery journal is created.
 - If a device clock moves backward, stored dates now in the future remain intact and visible as
-  noninteractive future records; they do not contribute to weekly or monthly totals until their date
-  is no longer in the future.
-- A past completion in an archived week remains visible and contributes to its calendar month's
-  total; that archived week remains excluded from weekly goal and streak evaluation.
-- If a note has an unsaved or unverifiable open editor state, the change is held for recovery; the
-  person is told to save or close the editor before explicitly retrying.
-- The monthly dashboard and its weekly grids must remain usable on narrow screens without
-  preventing access to days or habits.
+  noninteractive future records; they do not contribute to weekly progress until their date is no
+  longer in the future.
+- A past completion in an archived week remains visible when that week is viewed; the archived week
+  remains excluded from weekly goal and streak evaluation.
+- If a note has an unsaved or unverifiable open editor state, no write is attempted; the person is
+  told to save or close the editor before repeating the action.
+- The weekly dashboard must remain usable on narrow screens without preventing access to its
+  seven days or any habit.
 
 ## Requirements *(mandatory)*
 
@@ -186,9 +183,8 @@ old target and that history remains accessible.
   creation date through today, including in past weeks; future dates MUST remain unavailable.
 - **FR-004**: Unmarking MUST be an explicit action and immediately offer undo for the latest
   unmark of that habit until the dashboard closes or another change to that habit succeeds. After
-  that window, the retained recovery record MUST remain available for explicit guarded restoration until the
-  person explicitly deletes that record.
-  The system MUST report failures and preserve previously saved data.
+  that window, the unmark is not promised to be recoverable after an unexpected app exit. The
+  system MUST report failures and preserve previously saved data.
 - **FR-005**: The dashboard MUST show, for each habit, distinct completed days in the week, the
   effective target, and whether the week is not started, in progress, successful, ended without
   meeting the target, or excluded because it is archived. A wholly future week is not started. In
@@ -200,16 +196,15 @@ old target and that history remains accessible.
   the previous streak. A completed unsuccessful week resets the current streak to zero. Whole weeks
   spent archived are ignored; after an unsuccessful week, a new streak starts with a later
   successful week.
-- **FR-007**: The dashboard MUST open on the current month with the current week highlighted and
-  automatically update the current date and week while open. When a new week begins, it MUST show
-  the current month and highlight the current week; when reopened, it MUST reflect the local date.
-- **FR-008**: A person MUST be able to navigate between weeks and months, review historical records,
-  and return to the current week. The monthly view MUST display every week intersecting the selected
-  month as a separate seven-day grid and show each habit's total completions on dates in that month.
-  Monthly totals MUST include saved completions in archived weeks and exclude saved dates that are
-  currently in the future; excluded future dates MUST remain intact and visible but noninteractive.
-- **FR-009**: A week spanning months MUST have the same seven days, target, and result in both
-  monthly views; the monthly total MUST count only completions on dates in the selected month.
+- **FR-007**: The dashboard MUST open on the current week with today highlighted and automatically
+  update the current date and week while open. When a new week begins, it MUST show the new current
+  week; when reopened, it MUST reflect the local date.
+- **FR-008**: A person MUST be able to navigate to the previous and next week, review historical
+  records, and return to the current week. The view MUST display exactly seven days, Monday through
+  Sunday, with habits in rows and interactive completion controls.
+- **FR-009**: A week spanning months MUST have the same seven days, target, and weekly result
+  regardless of which navigation path reaches it. No monthly aggregate is required by the primary
+  dashboard.
 - **FR-010**: The system MUST retain records, applicable targets, and history after weekly rollover,
   closing, and reopening, without automatically deleting data.
 - **FR-011**: A person MUST be able to rename a habit, change its target, and archive or reactivate
@@ -232,43 +227,32 @@ old target and that history remains accessible.
   dashboard MUST reflect valid user edits to these notes and report invalid habit data without
   silently overwriting it.
 - **FR-018**: If a conflicting note change is detected during a dashboard save, the system MUST stop
-  the save, preserve the existing note and pending change for recovery after reopening, and present
-  both for comparison. The person MUST explicitly choose to retry the intent against the latest valid
-  note or discard it; a retry MUST perform a fresh guarded comparison, and another conflict MUST
-  preserve both changes again. If an open editor is unsaved or its state cannot be safely checked,
-  the system MUST preserve the pending intent, explain the issue, and offer a retry after the person
-  saves or closes the editor.
-- **FR-019**: A recovery area MUST list pending, conflicting, uncertain, applied, and discarded
-  records with the habit, date, state, and access to the original and intended change. A person MUST
-  be able to request deletion of selected recovery records; deletion MUST require explicit
-  confirmation that identifies the affected records and warns when recoverable data will be lost.
-  No recovery record may be automatically deleted.
-- **FR-020**: Before changing a habit, the system MUST durably preserve its prior state and intended
-  operation; for creation, the prior state records that the habit did not yet exist. If preservation fails, including due to insufficient space, it MUST leave the habit
-  unchanged and explain the failure. If the outcome of a write is uncertain after interruption or
-  recovery-status failure, it MUST retain the record for inspection and MUST NOT replay it blindly.
-- **FR-021**: Recovery records may contain copies of note content and grow with use. The recovery
-  area MUST communicate this retention and storage implication and allow the explicit deletion in
-  FR-019. Records MUST remain local to the selected vault unless the person independently chooses
-  to synchronize that vault.
+  the save, leave the existing note unchanged, and report the conflict clearly. A repeated explicit
+  action MUST perform a fresh guarded comparison against the latest note; another conflict MUST again
+  preserve the existing note. If an open editor is unsaved or its state cannot be safely checked, no
+  write is attempted and the person is told to save or close the editor before repeating the action.
+- **FR-019**: The plugin MUST NOT create per-edit recovery records or a recovery area. Immediate undo
+  is in-session only. Any `recovery-*` files left by earlier development builds MUST be ignored and
+  left untouched; no automatic cleanup or deletion is performed.
+- **FR-020**: Guarded writes MUST capture the exact note content used to compute an edit, compare it
+  with the current note, and preserve the existing note on mismatch, write failure, or uncertain
+  outcome. The system MUST report the issue and MUST NOT replay a change blindly.
+- **FR-021**: There is no durable journal; the system MUST NOT promise recovery of an unsaved intent
+  after an unexpected app exit. Previously saved note content MUST remain intact.
 - **FR-022**: Any future habit-note format migration MUST preserve the original data in a recoverable
   backup before conversion, require explicit user approval, and report failures without discarding
   the original. Unsupported or unknown format versions MUST be reported and left unchanged.
-- **FR-023**: Error and recovery flows MUST identify the affected habit and issue in text, place
-  focus on the error or recovery dialog when shown, and provide labeled controls operable by keyboard
-  and touch. The recovery area, inspection, resolution, and retention MUST work offline on desktop,
-  iOS, and Android.
+- **FR-023**: Error flows MUST identify the affected habit and issue in text, place focus on an error
+  surface when shown, and provide labeled controls operable by keyboard and touch, offline on
+  desktop, iOS, and Android.
 - **FR-024**: Unmarking a completion and replacing a pending target or archive setting MUST require
-  an explicit user action and preserve the prior state in a recovery record. Discarding a pending
-  intent MUST be explicit and retain its recovery record; deleting a recovery record MUST follow
-  the confirmation rule in FR-019. Permanent deletion of habit notes is outside this feature.
+  an explicit user action. A failed or conflicting write MUST leave the saved note unchanged.
+  Permanent deletion of habit notes is outside this feature.
 
-| Operation | User authorization | Recovery or confirmation |
-|-----------|--------------------|--------------------------|
-| Mark, unmark, rename, or change target/archive state | Explicit action selecting the habit and change | Prior state and intent are retained; the latest unmark has the FR-004 undo window |
-| Retry a conflict or restore a prior state | Explicit selection after inspecting the record | A fresh guarded comparison preserves unrelated changes and reports another conflict |
-| Discard a pending intent | Explicit discard action | The note remains unchanged and the recovery record is retained |
-| Delete recovery records | Explicit selection and confirmation | The confirmation names the records and warns that their recovery data will be lost |
+| Operation | User authorization | Result |
+|-----------|--------------------|--------|
+| Mark, unmark, rename, or change target/archive state | Explicit action selecting the habit and change | The note is guarded; the latest unmark has the FR-004 in-session undo window |
+| Repeat an action after a conflict or failure | Explicit selection after reviewing the note | A fresh guarded comparison preserves concurrent changes and reports another conflict |
 | Migrate a habit-note format | Explicit migration approval | Preserve a recoverable original before conversion; failure leaves it available |
 
 ### Key Entities *(include if feature involves data)*
@@ -279,7 +263,7 @@ old target and that history remains accessible.
   habit per day.
 - **Tracking week**: Monday-to-Sunday interval with the applicable target, number of completed days,
   and result for each habit.
-- **Monthly dashboard**: Selected month, intersecting weeks, monthly totals, and access to history.
+- **Weekly dashboard**: Selected Monday–Sunday week, seven days, habits in rows, weekly targets and results, and navigation to adjacent weeks and history.
 - **Weekly streak**: Number of consecutive evaluable weeks in which the target was met.
 
 ## Success Criteria *(mandatory)*
@@ -291,17 +275,16 @@ old target and that history remains accessible.
 - **SC-002**: In acceptance tests, 100% of weekly streak scenarios, including 4/week, rest days, an
   open week, an unsuccessful week, and retroactive correction, show the expected result.
 - **SC-003**: In acceptance tests, 100% of saved records remain accessible after reopening, weekly
-  rollover, and navigation between months, including weeks that cross a year boundary.
-- **SC-004**: In a manual acceptance scenario, locating and correcting a date in the previous month
+  rollover, and navigation between weeks, including weeks that cross a month or year boundary.
+- **SC-004**: In a manual acceptance scenario, locating and correcting a date in a previous week
   can be completed within one minute using a desktop or mobile device.
-- **SC-005**: In offline tests, 100% of creation, marking, navigation, history review, and recovery
-  flows are completed without an external service.
-- **SC-006**: In acceptance scenarios for detected conflict, interrupted write, failed recovery-status
-  update, and reopening, 100% preserve the last saved note and the previously persisted intent for
-  explicit inspection or resolution without blind replay. In 100% of failed initial-preservation
-  scenarios, the habit remains unchanged and the user receives an error.
+- **SC-005**: In offline tests, 100% of creation, marking, navigation, and history review flows are
+  completed without an external service.
+- **SC-006**: In acceptance scenarios for detected conflict, failed write, editor uncertainty, and
+  reopening, 100% preserve the last saved note, never overwrite a concurrent change, and report the
+  issue clearly. No operation is replayed blindly.
 - **SC-007**: For each of desktop, iOS, and Android, verification records MUST identify results for
-  offline persistence, reopening, and recovery, or state which platform was not verified and why.
+  offline persistence and reopening, or state which platform was not verified and why.
 
 ## Assumptions
 
@@ -311,9 +294,9 @@ old target and that history remains accessible.
   counts once toward the weekly target.
 - The initial default target is daily (7/week), but any value from 1 to 7 can be selected; the
   first week uses the effective target described in FR-005.
-- The dashboard shows all weeks intersecting the selected month as separate seven-day grids and
-  opens on the current month with the current week highlighted; detailed visual styling will be
-  defined during planning, respecting the supplied minimalist reference.
+- The dashboard opens on the current week and displays exactly seven days, Monday through Sunday;
+  adjacent weeks provide history. A monthly grid or month selector is not part of the primary view.
+  Detailed visual styling respects the supplied minimalist references.
 - Habit data is stored in one user-readable and editable Markdown note per habit in the selected
   vault. Accounts,
   built-in synchronization, importing from other

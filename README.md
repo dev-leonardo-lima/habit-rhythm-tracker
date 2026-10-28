@@ -1,17 +1,17 @@
 # Habit Tracker for Obsidian
 
-A local-first Obsidian plugin that shows a monthly dashboard of Monday–Sunday habit tables. Each
-habit is a normal Markdown note you can read and edit, with weekly targets, weekly streaks, history,
-and durable conflict recovery.
+A local-first Obsidian plugin that shows the current week as a compact Monday–Sunday habit grid with
+previous/next week navigation. Each habit is a normal Markdown note you can read and edit, with
+weekly targets, weekly streaks, history, and guarded writes that warn instead of overwriting conflicts.
 
 ## Features
 
 - Create habits with a name and a target from 1 to 7 days per week (default 7).
 - Mark and unmark one completion per habit and local date from creation through today.
-- See weekly progress, the effective target, and weekly status for every week intersecting a month.
+- See weekly progress, the effective target, and weekly status for the selected seven-day week.
 - Track a streak of successful weeks, not consecutive days. Rest days do not break a week.
 - First-week target is reduced to the days remaining through Sunday.
-- Navigate months and weeks, return to the current week, and correct historical records.
+- Navigate to previous and next weeks, return to the current week, and correct historical records.
 - Rename habits, schedule target changes or archives for next week, and reactivate this week.
 - Keep every week's history, including archived weeks, and edit eligible dates in the past.
 - Work offline on desktop and mobile; no account, network request, or external service is used.
@@ -28,18 +28,18 @@ This repository currently builds the plugin manually. Release automation is a se
 5. Run **Habit Tracker: Open habit dashboard** from the command palette or click the check-square
    ribbon icon.
 
-Use an isolated test vault for conflict and recovery testing. Never use a personal production vault
-for fault-injection tests.
+Use an isolated test vault for conflict testing. Never use a personal production vault for
+fault-injection tests.
 
 ## Usage
 
-- The dashboard opens on the current local month and highlights the current week.
+- The dashboard opens on the current local week and highlights today within its seven days.
 - Create a habit in the **New habit** form. The default target is 7 days per week.
 - Check a day to mark it. Uncheck to unmark. Unmarking is explicit and offers an undo until you close
   the dashboard or make another successful change to that habit.
-- Use month and week navigation to review history; **Today** returns to the current week.
-- Archived habits remain in history and in the month totals. Enable **Show archived habits** to see
-  their current week rows.
+- Use previous/next week navigation to review history; **This week** returns to the current week when browsing.
+- Archived habits remain in week history. Enable **Show archived habits** to see their rows when
+  viewing a week in which they are archived.
 - Target changes and archiving take effect next Monday. Reactivation applies in the current week.
 
 ## Storage format
@@ -77,25 +77,24 @@ inside the plugin changes its display name but preserves its stable ID and file 
 - Invalid or unsupported notes are reported in the dashboard and are never overwritten.
 - Duplicate habit IDs are reported for every involved note; none of the duplicates is auto-merged.
 - The plugin detects a saved note changing between its base snapshot and the guarded write. It stops
-  the save and preserves both versions in Recovery.
+  the save, leaves the existing note untouched, and reports the conflict clearly.
 - The plugin cannot guarantee detection of independent sync clients or another program writing
   outside Obsidian's documented `Vault.process` interval. Resolving cross-device sync conflicts
   remains the user's responsibility.
-- If a habit note is open with unsaved or unverifiable editor content, the write is blocked and the
-  intent is retained. Save or close the note, then retry explicitly.
+- If a habit note is open with unsaved or unverifiable editor content, no write is attempted. Save
+  or close the note, then repeat the action.
 
-## Recovery records and storage growth
+## Conflicts and data protection
 
-Before any change, the plugin writes and reads back a recovery note in the configured recovery folder.
-Recovery notes contain the original note content (or the prior absence of a new note) and the intended
-change. Status updates are appended as separate notes; the base record is never rewritten.
+The plugin does not create a recovery journal or copy notes on every edit. Writes use Obsidian's
+protected local read/modify/write with an exact snapshot comparison: if the note changed, the write
+stops and the existing note is preserved. The dashboard reports conflicts and failures in text so
+you can review the note and repeat the action explicitly.
 
-- Records are retained until **you** explicitly delete them. There is no automatic cleanup.
-- The recovery area lists pending, conflict, uncertain, applied, and discarded records and lets you
-  compare the original and intended content.
-- Deleting selected records requires a named confirmation and warns that their recovery data will be
-  lost.
-- Records stay inside the selected vault unless you independently synchronize that vault.
+Existing `recovery-*` notes left by earlier development builds are not read, modified, or deleted
+by the current plugin. There is no automatic cleanup. Immediate undo is available for the latest
+unmark until the dashboard closes or another successful change to that habit occurs; after that,
+the unmark is not promised to be recoverable after an unexpected app exit.
 
 ## Migration safeguards
 
@@ -120,4 +119,4 @@ convention, coverage requirements, and test-vault setup.
 ## Privacy
 
 Habit data stays in your vault. The plugin has no network code, no telemetry, and no external service
-dependency. The only writes are habit notes and recovery records in the folders you configure.
+dependency. The plugin writes only the habit notes in the configured habits folder.

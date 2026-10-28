@@ -1,4 +1,4 @@
-# Research: Weekly and Monthly Habit Dashboard
+# Research: Weekly Habit Dashboard
 
 ## Plugin runtime and build
 
@@ -26,39 +26,39 @@ runtime complexity without being needed for the feature.
 folder. Store the plugin-owned record as a versioned JSON code block enclosed by unique HTML
 comment markers in the note body; preserve every byte outside the owned block. Use `Vault.process`
 with a synchronous callback that compares the current note to the base snapshot and aborts on a
-mismatch; do not rewrite YAML frontmatter. Before processing, persist a unique recovery note with
-the base snapshot and intended operation. Never mutate a habit if recovery persistence fails.
+mismatch; do not rewrite YAML frontmatter. The snapshot used to compute the edit is captured
+explicitly and compared before writing; no recovery journal is created.
 
 **Rationale**: This format is inspectable/editable in Obsidian and avoids rewriting unrelated note
 content. Obsidian documents `Vault.process` as a protected read/modify/write and recommends
-`FileManager.processFrontMatter` for YAML rather than manual rewriting. A persisted intent survives
-reopening when a conflict is detected.
+`FileManager.processFrontMatter` for YAML rather than manual rewriting. A detected mismatch leaves
+the existing note untouched and produces a clear warning.
 
 **Alternatives considered**: Replacing entire notes with `Vault.modify` risks lost edits; manually
-rewriting frontmatter risks changing user properties; in-memory-only recovery does not survive a
-restart. Interoperability with the example plugins' data formats is out of scope.
+rewriting frontmatter risks changing user properties; a per-edit recovery journal adds unnecessary
+complexity for individual use. Interoperability with the example plugins' data formats is out of
+scope.
 
 **Sources**: [Obsidian Vault guide](https://docs.obsidian.md/Plugins/Vault),
 [Plugin guidelines checklist](https://docs.obsidian.md/oo/plugin).
 
-## Conflict, recovery, and concurrent editing
+## Conflict and concurrent editing
 
-**Decision**: Persist operation records in a dedicated recovery folder outside habit discovery.
-On snapshot mismatch, missing or malformed note, or ambiguous dirty editor state, abort and retain
-the note and recovery record, show both the existing content and intended change, and require an
-explicit user choice to retry against the latest valid note or discard the pending operation. Keep
-resolved recovery records; delete only on explicit user action. Treat a crash after a successful
-write but before journal finalization as an uncertain outcome that requires inspection, never blind
-replay. Verify active editor state before writing and fail closed when a safe comparison cannot be
-made.
+**Decision**: Serialize this plugin's writes per habit and verify active editor state before writing.
+Capture the exact note content used to compute the edit, then use `Vault.process` with a synchronous
+snapshot comparison. On mismatch, missing/malformed note, or ambiguous dirty editor state, abort
+without modifying the note and show a clear warning. The person may review the note and repeat the
+action for a fresh guarded comparison. Do not create recovery records or a recovery area. Immediate
+undo is in-session only; no unsaved intent is promised to survive an unexpected app exit.
 
-**Rationale**: The user expressly requires both detected conflicting changes to remain recoverable
-after reopening. `Vault.process` protects its documented local read/write interval, not arbitrary
-external programs, unsaved buffers, or independent devices syncing later. A durable intent plus
-fail-closed handling avoids claiming distributed atomicity.
+**Rationale**: The product is for individual use and does not need a journal per operation. The
+protected local write and snapshot comparison preserve the existing note and concurrent changes;
+`Vault.process` protects its documented local read/write interval, not arbitrary external programs,
+unsaved buffers, or independent devices syncing later.
 
 **Alternatives considered**: Last-writer-wins can lose data; automatic merging changes the user's
-chosen conflict policy; deleting recovery files automatically conflicts with data-retention rules.
+chosen conflict policy; a retained recovery journal adds complexity and storage the user explicitly
+rejected.
 
 **Source**: [Obsidian Vault guide](https://docs.obsidian.md/Plugins/Vault).
 

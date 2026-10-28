@@ -1,15 +1,11 @@
 import { Plugin } from 'obsidian';
 import { DashboardController } from './ui/dashboard-controller';
 import { HabitDashboardView, VIEW_TYPE_HABIT_DASHBOARD } from './ui/dashboard-view';
-import { confirmWithModal } from './ui/confirm-modal';
 import { ObsidianEditorGuard } from './ui/obsidian-editor-guard';
-import { RecoveryModal } from './ui/recovery-view';
 import { HabitTrackerSettingTab, type SettingsHost } from './ui/settings-tab';
 import { GuardedCreator, GuardedWriter } from './storage/guarded-write';
 import { HabitRepository } from './storage/habit-repository';
 import { ObsidianVaultPort } from './storage/obsidian-vault';
-import { RecoveryService } from './storage/recovery-service';
-import { RecoveryStore } from './storage/recovery-store';
 import {
   DEFAULT_SETTINGS,
   resolveSettings,
@@ -39,11 +35,6 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
         void this.activateDashboard();
       },
     });
-    this.addCommand({
-      id: 'open-habit-recovery',
-      name: 'Open habit recovery',
-      callback: () => this.openRecovery(),
-    });
     this.addSettingTab(new HabitTrackerSettingTab(this.app, this));
 
     this.app.workspace.onLayoutReady(() => {
@@ -51,10 +42,7 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
     });
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
-        if (
-          file.path.startsWith(`${this.settings.habitsFolder}/`) ||
-          file.path.startsWith(`${this.settings.recoveryFolder}/`)
-        ) {
+        if (file.path.startsWith(`${this.settings.habitsFolder}/`)) {
           void this.controller?.refresh();
         }
       }),
@@ -96,23 +84,14 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
 
   private configure(): void {
     const vault = new ObsidianVaultPort(this.app.vault);
-    const recoveryStore = new RecoveryStore({ vault, folder: this.settings.recoveryFolder });
     const repository = new HabitRepository(vault, this.settings.habitsFolder);
     const editorGuard = new ObsidianEditorGuard(this.app);
-    const writer = new GuardedWriter({ vault, recoveryStore, editorGuard });
-    const creator = new GuardedCreator({ vault, recoveryStore });
-    const recoveryService = new RecoveryService({
-      vault,
-      store: recoveryStore,
-      writer,
-      creator,
-    });
+    const writer = new GuardedWriter({ vault, editorGuard });
+    const creator = new GuardedCreator({ vault });
     this.controller = new DashboardController({
       repository,
       writer,
       creator,
-      recoveryService,
-      confirm: (message) => confirmWithModal(this.app, message),
     });
   }
 
@@ -126,20 +105,20 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
   async activateDashboard(): Promise<void> {
     const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)[0];
     if (existing) {
-      await this.app.workspace.revealLeaf(existing);
-      return;
+      if (existing.getRoot() === this.app.workspace.rootSplit) {
+        await this.app.workspace.revealLeaf(existing);
+        return;
+      }
+      // A dashboard left in a sidedock or pop-out is moved predictably back to
+      // the main workspace rather than continuing to live in the narrow panel.
+      existing.detach();
     }
-    const leaf =
-      this.app.workspace.getRightLeaf(false) ?? this.app.workspace.getLeaf('tab') ?? null;
+    const leaf = this.app.workspace.getLeaf('tab');
     if (!leaf) {
       return;
     }
     await leaf.setViewState({ type: VIEW_TYPE_HABIT_DASHBOARD, active: true });
     await this.app.workspace.revealLeaf(leaf);
-  }
-
-  openRecovery(): void {
-    new RecoveryModal(this.app, () => this.getController()).open();
   }
 
   private async initializeDashboard(): Promise<void> {

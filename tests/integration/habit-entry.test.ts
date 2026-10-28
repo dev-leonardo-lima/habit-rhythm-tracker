@@ -153,7 +153,6 @@ describe('US1: creating habits and recording completions', () => {
       repository: harness.repository,
       writer: harness.writer,
       creator: harness.creator,
-      recoveryService: harness.recoveryService,
       now: () => now,
     });
     await reopened.load();

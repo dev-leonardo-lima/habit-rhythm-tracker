@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GuardedCreator, GuardedWriter, type EditorGuard } from '../../src/storage/guarded-write';
 import { parseHabitNote } from '../../src/storage/habit-note';
-import { RecoveryStore } from '../../src/storage/recovery-store';
 import { MemoryVault } from '../helpers/memory-vault';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
@@ -10,19 +9,12 @@ const PATH = 'Habits/Gym.md';
 function setup() {
   const vault = new MemoryVault();
   vault.folders.add('Habits');
-  vault.folders.add('Recovery');
-  const store = new RecoveryStore({ vault, folder: 'Recovery' });
-  return {
-    vault,
-    store,
-    writer: new GuardedWriter({ vault, recoveryStore: store }),
-    creator: new GuardedCreator({ vault, recoveryStore: store }),
-  };
+  return { vault, writer: new GuardedWriter({ vault }), creator: new GuardedCreator({ vault }) };
 }
 
 describe('guarded write failure paths', () => {
   it('blocks when editor inspection throws or reports a mismatched clean buffer', async () => {
-    const { vault, store } = setup();
+    const { vault } = setup();
     const habit = makeHabit();
     addHabitNote(vault.files, habit, PATH);
 
@@ -31,17 +23,8 @@ describe('guarded write failure paths', () => {
         throw new Error('editor API unavailable');
       },
     };
-    const throwing = new GuardedWriter({
-      vault,
-      recoveryStore: store,
-      editorGuard: throwingGuard,
-    });
-    const first = await throwing.update(PATH, {
-      kind: 'mark',
-      habit: { ...habit, completions: ['2026-10-27'] },
-      date: '2026-10-27',
-      summary: 'Mark',
-    });
+    const throwing = new GuardedWriter({ vault, editorGuard: throwingGuard });
+    const first = await throwing.update(PATH, { habit, baseContent: vault.files.get(PATH) });
     expect(first.status).toBe('editor-blocked');
     if (first.status === 'editor-blocked') {
       expect(first.reason).toBe('unknown');
@@ -52,143 +35,80 @@ describe('guarded write failure paths', () => {
         return { status: 'clean', content: 'unsaved different content' };
       },
     };
-    const mismatch = new GuardedWriter({
-      vault,
-      recoveryStore: store,
-      editorGuard: mismatchGuard,
-    });
-    const second = await mismatch.update(PATH, {
-      kind: 'mark',
-      habit: { ...habit, completions: ['2026-10-27'] },
-      date: '2026-10-27',
-      summary: 'Mark',
-    });
+    const mismatch = new GuardedWriter({ vault, editorGuard: mismatchGuard });
+    const second = await mismatch.update(PATH, { habit, baseContent: vault.files.get(PATH) });
     expect(second.status).toBe('editor-blocked');
     if (second.status === 'editor-blocked') {
       expect(second.reason).toBe('dirty');
     }
   });
 
-  it('records uncertain when only the applied status write fails', async () => {
-    const { vault, store, writer } = setup();
-    const habit = makeHabit();
-    addHabitNote(vault.files, habit, PATH);
-    let statusWrites = 0;
-    vault.beforeCreate = (path) => {
-      if (path.includes('-status-')) {
-        statusWrites += 1;
-        if (statusWrites === 1) {
-          throw new Error('first status write fails');
-        }
-      }
-    };
-
-    const result = await writer.update(PATH, {
-      kind: 'mark',
-      habit: { ...habit, completions: ['2026-10-27'] },
-      date: '2026-10-27',
-      summary: 'Mark',
-    });
-
-    expect(result.status).toBe('applied');
-    if (result.status !== 'applied') {
-      throw new Error('unexpected result');
-    }
-    expect(result.journalWarning).toContain('uncertain');
-    const listing = await store.list();
-    expect(listing.entries[0]?.state).toBe('uncertain');
-  });
-
-  it('returns the base comparison when the post-conflict read fails', async () => {
-    const { vault, store, writer } = setup();
-    const habit = makeHabit();
-    addHabitNote(vault.files, habit, PATH);
-    vault.beforeProcess = (path) => {
-      if (path === PATH) {
-        vault.files.set(path, `${vault.files.get(path) ?? ''} external`);
-        vault.failNextRead = new Error('read failed');
-      }
-    };
-
-    const result = await writer.update(PATH, {
-      kind: 'mark',
-      habit: { ...habit, completions: ['2026-10-27'] },
-      date: '2026-10-27',
-      summary: 'Mark',
-    });
-
-    expect(result.status).toBe('conflict');
-    if (result.status === 'conflict') {
-      expect(result.currentContent).toContain('external');
-    }
-    expect((await store.list()).entries[0]?.state).toBe('conflict');
-  });
-
-  it('reports a conflict status append warning while retaining the conflict', async () => {
-    const { vault, store, writer } = setup();
-    const habit = makeHabit();
-    addHabitNote(vault.files, habit, PATH);
-    vault.beforeProcess = (path) => {
-      if (path === PATH) {
-        vault.files.set(path, `${vault.files.get(path) ?? ''} external`);
-      }
-    };
-    vault.beforeCreate = (path) => {
-      if (path.includes('-status-')) {
-        throw new Error('status unavailable');
-      }
-    };
-
-    const result = await writer.update(PATH, {
-      kind: 'mark',
-      habit: { ...habit, completions: ['2026-10-27'] },
-      date: '2026-10-27',
-      summary: 'Mark',
-    });
-    expect(result.status).toBe('conflict');
-    if (result.status !== 'conflict') {
-      throw new Error('unexpected result');
-    }
-    expect(result.journalWarning).toContain('could not be recorded');
-    expect((await store.list()).entries[0]?.state).toBe('pending');
-  });
-
-  it('reports the uncertain state when a note write fails and reads also fail', async () => {
+  it('detects a snapshot mismatch and leaves the external note untouched', async () => {
     const { vault, writer } = setup();
     const habit = makeHabit();
     addHabitNote(vault.files, habit, PATH);
-    vault.failNextProcess = new Error('write failed');
-    vault.beforeProcess = () => {
-      vault.failNextRead = new Error('read failed after write');
-    };
+    const base = vault.files.get(PATH) ?? '';
+    const external = base.replace('"name": "Gym"', '"name": "Gym external"');
+    vault.files.set(PATH, external);
 
     const result = await writer.update(PATH, {
-      kind: 'mark',
       habit: { ...habit, completions: ['2026-10-27'] },
-      date: '2026-10-27',
-      summary: 'Mark',
+      baseContent: base,
     });
-    expect(result.status).toBe('uncertain');
-    if (result.status === 'uncertain') {
-      expect(result.content).toBeNull();
-    }
+
+    expect(result.status).toBe('conflict');
+    expect(vault.files.get(PATH)).toBe(external);
+    expect(parseHabitNote(external).habit.completions).toEqual([]);
   });
 
-  it('serializes concurrent updates for the same habit', async () => {
+  it('serializes two queued edits and rejects the stale second snapshot', async () => {
+    const { vault, writer } = setup();
+    const habit = makeHabit();
+    addHabitNote(vault.files, habit, PATH);
+    const base = vault.files.get(PATH) ?? '';
+
+    const first = writer.update(PATH, {
+      habit: { ...habit, completions: ['2026-10-26'] },
+      baseContent: base,
+    });
+    const second = writer.update(PATH, {
+      habit: { ...habit, completions: ['2026-10-27'] },
+      baseContent: base,
+    });
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+    expect(firstResult.status).toBe('applied');
+    expect(secondResult.status).toBe('conflict');
+    expect(parseHabitNote(vault.files.get(PATH) ?? '').habit.completions).toEqual(['2026-10-26']);
+    expect([...vault.files.keys()].filter((path) => path.includes('recovery'))).toEqual([]);
+  });
+
+  it('reports uncertainty on a note write failure and preserves the previous note', async () => {
+    const { vault, writer } = setup();
+    const habit = makeHabit();
+    addHabitNote(vault.files, habit, PATH);
+    const before = vault.files.get(PATH);
+    vault.failNextProcess = new Error('write failed');
+
+    const result = await writer.update(PATH, {
+      habit: { ...habit, completions: ['2026-10-27'] },
+      baseContent: before,
+    });
+
+    expect(result.status).toBe('uncertain');
+    expect(vault.files.get(PATH)).toBe(before);
+  });
+
+  it('serializes updates to the same habit', async () => {
     const { vault, writer } = setup();
     const habit = makeHabit();
     addHabitNote(vault.files, habit, PATH);
     const first = writer.update(PATH, {
-      kind: 'mark',
       habit: { ...habit, completions: ['2026-10-27'] },
-      date: '2026-10-27',
-      summary: 'Mark first',
+      baseContent: vault.files.get(PATH),
     });
     const second = writer.update(PATH, {
-      kind: 'mark',
       habit: { ...habit, completions: ['2026-10-28'] },
-      date: '2026-10-28',
-      summary: 'Mark second',
     });
     expect((await first).status).toBe('applied');
     expect((await second).status).toBe('applied');
@@ -197,51 +117,33 @@ describe('guarded write failure paths', () => {
 });
 
 describe('guarded creation failure paths', () => {
-  it('reports a pre-existing path without creating a recovery record', async () => {
-    const { vault, store, creator } = setup();
+  it('reports a pre-existing path without overwriting it', async () => {
+    const { vault, creator } = setup();
     vault.files.set(PATH, 'existing');
-    const result = await creator.create(PATH, {
-      kind: 'create',
-      habit: makeHabit(),
-      summary: 'Create',
-    });
+    const result = await creator.create(PATH, { habit: makeHabit() });
     expect(result.status).toBe('conflict');
     if (result.status === 'conflict') {
-      expect(result.recoveryPath).toBeNull();
       expect(result.currentContent).toBe('existing');
     }
-    expect((await store.list()).entries).toEqual([]);
+    expect(vault.files.get(PATH)).toBe('existing');
   });
 
   it('fails cleanly when the habits folder cannot be prepared', async () => {
     const { vault, creator } = setup();
     vault.failNextEnsureFolder = new Error('folder unavailable');
-    const result = await creator.create(PATH, {
-      kind: 'create',
-      habit: makeHabit(),
-      summary: 'Create',
-    });
-    expect(result.status).toBe('failed');
+    expect((await creator.create(PATH, { habit: makeHabit() })).status).toBe('failed');
   });
 
-  it('detects a path that appears between journal creation and the second check', async () => {
-    const { vault, store, creator } = setup();
+  it('never overwrites a path that appears after the precheck', async () => {
+    const { vault, creator } = setup();
     vault.beforeCreate = (path) => {
-      if (path.startsWith('Recovery/')) {
+      if (path === PATH) {
         vault.files.set(PATH, 'appeared');
       }
     };
-    const result = await creator.create(PATH, {
-      kind: 'create',
-      habit: makeHabit(),
-      summary: 'Create',
-    });
+    const result = await creator.create(PATH, { habit: makeHabit() });
     expect(result.status).toBe('conflict');
     expect(vault.files.get(PATH)).toBe('appeared');
-    expect((await store.list()).entries[0]?.record.base).toEqual({
-      exists: false,
-      content: null,
-    });
   });
 
   it('reports uncertain when the note write fails without a collision', async () => {
@@ -251,11 +153,7 @@ describe('guarded creation failure paths', () => {
         throw new Error('disk full');
       }
     };
-    const result = await creator.create(PATH, {
-      kind: 'create',
-      habit: makeHabit(),
-      summary: 'Create',
-    });
+    const result = await creator.create(PATH, { habit: makeHabit() });
     expect(result.status).toBe('uncertain');
     expect(vault.files.has(PATH)).toBe(false);
   });
@@ -267,34 +165,18 @@ describe('guarded creation failure paths', () => {
         vault.files.set(path, 'tampered after create');
       }
     };
-    const result = await creator.create(PATH, {
-      kind: 'create',
-      habit: makeHabit(),
-      summary: 'Create',
-    });
+    const result = await creator.create(PATH, { habit: makeHabit() });
     expect(result.status).toBe('uncertain');
     if (result.status === 'uncertain') {
       expect(result.content).toBe('tampered after create');
     }
   });
 
-  it('returns applied with a warning when the creation status cannot be recorded', async () => {
+  it('creates and verifies the habit note without writing recovery files', async () => {
     const { vault, creator } = setup();
-    vault.beforeCreate = (path) => {
-      if (path.includes('-status-')) {
-        throw new Error('status unavailable');
-      }
-    };
-    const result = await creator.create(PATH, {
-      kind: 'create',
-      habit: makeHabit(),
-      summary: 'Create',
-    });
+    const result = await creator.create(PATH, { habit: makeHabit() });
     expect(result.status).toBe('applied');
-    if (result.status !== 'applied') {
-      throw new Error('unexpected result');
-    }
-    expect(result.journalWarning).toContain('pending record is retained');
     expect(parseHabitNote(vault.files.get(PATH) ?? '').habit.name).toBe('Gym');
+    expect([...vault.files.keys()].filter((path) => path.includes('recovery'))).toEqual([]);
   });
 });

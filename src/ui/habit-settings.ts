@@ -8,6 +8,10 @@ export interface HabitSettingsHandlers {
   cancelPendingArchive(habitId: string): void | Promise<unknown>;
 }
 
+export interface HabitSettingsOptions {
+  heading?: boolean;
+}
+
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className?: string,
@@ -27,15 +31,18 @@ export function renderHabitSettings(
   container: HTMLElement,
   habits: HabitSummaryViewModel[],
   handlers: HabitSettingsHandlers,
+  options: HabitSettingsOptions = {},
 ): void {
   const section = el('section', 'habit-tracker-settings');
   section.dataset.testid = 'habit-settings';
-  section.append(el('h2', undefined, 'Manage habits'));
+  if (options.heading !== false) {
+    section.append(el('h2', undefined, 'Manage habits'));
+  }
   section.append(
     el(
       'p',
       'habit-tracker-hint',
-      'Target changes and archiving take effect next Monday. Reactivation applies in the current week. Historical weeks keep their recorded values.',
+      'Target changes and archiving take effect next Monday. Reactivation applies in the current week.',
     ),
   );
   if (habits.length === 0) {
@@ -53,24 +60,27 @@ function renderHabitSettingsItem(
   habit: HabitSummaryViewModel,
   handlers: HabitSettingsHandlers,
 ): HTMLElement {
-  const item = el('article', 'habit-tracker-settings-item');
+  const item = el('details', 'habit-tracker-settings-item');
   item.dataset.habitId = habit.habitId;
-  item.append(el('h3', undefined, habit.name));
-  item.append(
+  const summary = el('summary', 'habit-tracker-settings-summary');
+  summary.append(el('span', 'habit-tracker-settings-name', habit.name));
+  summary.append(
     el(
-      'p',
-      'habit-tracker-hint',
-      `${habit.state === 'archived' ? 'Archived' : 'Active'} · Current streak: ${habit.streak} ${
+      'span',
+      'habit-tracker-settings-meta',
+      `${habit.state === 'archived' ? 'Archived' : `${habit.target ?? '—'}/wk`} · ${habit.streak} ${
         habit.streak === 1 ? 'week' : 'weeks'
-      } · Target this week: ${habit.target ?? '—'}`,
+      }`,
     ),
   );
+  item.append(summary);
 
+  const body = el('div', 'habit-tracker-settings-body');
   const renameForm = el('form', 'habit-tracker-inline-form');
   renameForm.dataset.formKey = `rename:${habit.habitId}`;
   renameForm.noValidate = true;
   const renameLabel = el('label');
-  renameLabel.append(document.createTextNode('Habit name '));
+  renameLabel.append(document.createTextNode('Name'));
   const nameInput = el('input');
   nameInput.type = 'text';
   nameInput.value = habit.name;
@@ -86,12 +96,12 @@ function renderHabitSettingsItem(
     event.preventDefault();
     void handlers.renameHabit(habit.habitId, nameInput.value);
   });
-  item.append(renameForm);
+  body.append(renameForm);
 
   const targetForm = el('form', 'habit-tracker-inline-form');
   targetForm.dataset.formKey = `target:${habit.habitId}`;
   const targetLabel = el('label');
-  targetLabel.append(document.createTextNode('Target from next week '));
+  targetLabel.append(document.createTextNode('Next week'));
   const targetSelect = el('select');
   targetSelect.setAttribute('aria-label', `Weekly target for ${habit.name} from next week`);
   for (let day = 1; day <= 7; day += 1) {
@@ -104,7 +114,7 @@ function renderHabitSettingsItem(
   }
   targetLabel.append(targetSelect);
   targetForm.append(targetLabel);
-  const targetButton = el('button', undefined, 'Schedule target');
+  const targetButton = el('button', undefined, 'Save target');
   targetButton.type = 'submit';
   targetButton.setAttribute('aria-label', `Schedule target for ${habit.name}`);
   targetForm.append(targetButton);
@@ -112,15 +122,11 @@ function renderHabitSettingsItem(
     event.preventDefault();
     void handlers.changeTarget(habit.habitId, Number(targetSelect.value));
   });
-  item.append(targetForm);
+  body.append(targetForm);
 
   if (habit.pendingTarget !== null) {
-    item.append(
-      el(
-        'p',
-        'habit-tracker-hint',
-        `${habit.pendingTarget}-day target scheduled for next week. Scheduling again replaces it.`,
-      ),
+    body.append(
+      el('p', 'habit-tracker-hint', `${habit.pendingTarget}-day target scheduled for next week.`),
     );
   }
 
@@ -147,6 +153,7 @@ function renderHabitSettingsItem(
     });
     stateActions.append(archive);
   }
-  item.append(stateActions);
+  body.append(stateActions);
+  item.append(body);
   return item;
 }

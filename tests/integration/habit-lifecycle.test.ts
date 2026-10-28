@@ -27,10 +27,7 @@ describe('US4: lifecycle changes preserve history', () => {
     expect(note.id).toBe(id);
     expect(note.completions).toEqual(['2026-10-26']);
 
-    const record = view.recovery.find((entry) => entry.kind === 'rename');
-    expect(record?.state).toBe('applied');
-    expect(record?.originalContent).toContain('"name": "Gym"');
-    expect(record?.intendedContent).toContain('"name": "Strength"');
+    expect([...harness.vault.files.keys()].filter((file) => file.includes('recovery'))).toEqual([]);
   });
 
   it('applies target changes next week while retaining the historical target', async () => {
@@ -50,8 +47,11 @@ describe('US4: lifecycle changes preserve history', () => {
     view = harness.controller.getViewModel();
     expect(view.habits[0]?.target).toBe(3);
     expect(view.habits[0]?.pendingTarget).toBeNull();
-    const previousWeek = view.weeks.find((week) => week.week === '2026-10-26');
-    expect(previousWeek?.rows[0]?.target).toBe(4);
+    harness.controller.previousWeek();
+    view = harness.controller.getViewModel();
+    expect(view.weeks[0]?.week).toBe('2026-10-26');
+    expect(view.weeks[0]?.rows[0]?.target).toBe(4);
+    harness.controller.goToCurrent();
 
     await harness.controller.changeTarget(id, 5);
     await harness.controller.changeTarget(id, 6);
@@ -85,17 +85,18 @@ describe('US4: lifecycle changes preserve history', () => {
     expect(archivedWeek?.rows[0]?.outcome).toBe('excluded');
     expect(archivedWeek?.rows[0]?.state).toBe('archived');
 
-    harness.controller.previousMonth();
+    harness.controller.previousWeek();
     view = harness.controller.getViewModel();
-    const historyWeek = view.weeks.find((week) => week.week === '2026-10-26');
-    expect(historyWeek?.rows[0]?.completed).toBe(1);
+    expect(view.weeks[0]?.week).toBe('2026-10-26');
+    expect(view.weeks[0]?.rows[0]?.completed).toBe(1);
 
+    harness.controller.goToCurrent();
     await harness.controller.reactivateHabit(id);
     view = harness.controller.getViewModel();
     expect(view.habits[0]?.state).toBe('active');
     expect(view.habits[0]?.target).toBe(4);
-    const reactivatedWeek = view.weeks.find((week) => week.week === '2026-10-26');
-    expect(reactivatedWeek?.rows[0]?.state).toBe('active');
+    expect(view.weeks[0]?.week).toBe('2026-11-02');
+    expect(view.weeks[0]?.rows[0]?.state).toBe('active');
   });
 
   it('reactivates on Sunday with the full target and earlier current-week dates editable', async () => {
@@ -166,12 +167,14 @@ describe('US4: lifecycle changes preserve history', () => {
 
     const result = await harness.controller.renameHabit(id, 'Strength');
     expect(result?.status).toBe('conflict');
-    const conflict = harness.controller
-      .getViewModel()
-      .recovery.find((entry) => entry.state === 'conflict');
-    expect(conflict?.kind).toBe('rename');
+    expect(harness.controller.getViewModel().message?.text).toContain(
+      'existing note was left unchanged',
+    );
+    const untouched = parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit;
+    expect(untouched.name).toBe('Gym');
+    expect(untouched.completions).toEqual(['2026-10-26']);
 
-    const retried = await harness.controller.retryRecovery(conflict?.operationId ?? '');
+    const retried = await harness.controller.renameHabit(id, 'Strength');
     expect(retried?.status).toBe('applied');
     const note = parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit;
     expect(note.name).toBe('Strength');

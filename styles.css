@@ -1,391 +1,1071 @@
 .habit-tracker-view {
-  padding: 1rem 1.25rem 2rem;
+  --ht-name-width: 240px;
+  --ht-row-height: 58px;
+  --ht-accent-soft: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+  --ht-accent-faint: color-mix(in srgb, var(--interactive-accent) 4%, transparent);
+  --ht-line: color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
+  padding: 20px 24px 32px;
+  color: var(--text-normal);
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-medium);
 }
 
 .habit-tracker-dashboard {
-  color: var(--text-normal);
-  font-size: var(--font-ui-medium);
-  max-width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.habit-tracker-dashboard ::selection {
+  background: var(--ht-accent-soft);
+}
+
+.habit-tracker-dashboard input,
+.habit-tracker-dashboard select {
+  caret-color: var(--interactive-accent);
 }
 
 .habit-tracker-header {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  gap: 10px 18px;
+  margin-bottom: 12px;
 }
 
-.habit-tracker-header h1 {
-  margin: 0;
-  font-size: var(--h2-size);
-}
-
-.habit-tracker-nav,
-.habit-tracker-actions,
-.habit-tracker-controls {
+.habit-tracker-heading {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
   align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  width: 100%;
 }
 
-.habit-tracker-nav button,
+.habit-tracker-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.habit-tracker-week-block {
+  min-width: 0;
+}
+
+.habit-tracker-week-label {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--text-normal);
+}
+
+.habit-tracker-week-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.habit-tracker-week-context {
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.habit-tracker-week-context.is-current {
+  color: var(--interactive-accent);
+}
+
+.habit-tracker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.habit-tracker-icon-button,
+.habit-tracker-text-button,
 .habit-tracker-actions button,
 .habit-tracker-form button,
 .habit-tracker-inline-form button {
-  min-height: 2.25rem;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-s);
-  background: var(--interactive-normal);
-  color: var(--text-normal);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
   cursor: pointer;
+  border-radius: 6px;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
 }
 
-.habit-tracker-nav button:hover,
-.habit-tracker-actions button:hover,
-.habit-tracker-form button:hover,
-.habit-tracker-inline-form button:hover {
-  background: var(--interactive-hover);
+.habit-tracker-icon-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 22px;
+  font-weight: 300;
 }
 
-.habit-tracker-nav button:focus-visible,
+.habit-tracker-text-button,
+.habit-tracker-actions button {
+  padding: 7px 8px;
+}
+
+.habit-tracker-icon-button:hover,
+.habit-tracker-text-button:hover,
+.habit-tracker-actions button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.habit-tracker-icon-button:focus-visible,
+.habit-tracker-text-button:focus-visible,
+.habit-tracker-disclosure-summary:focus-visible,
 .habit-tracker-actions button:focus-visible,
 .habit-tracker-form button:focus-visible,
-.habit-tracker-inline-form button:focus-visible,
-.habit-tracker-checkbox:focus-visible,
 .habit-tracker-form input:focus-visible,
 .habit-tracker-form select:focus-visible,
+.habit-tracker-inline-form button:focus-visible,
 .habit-tracker-inline-form input:focus-visible,
 .habit-tracker-inline-form select:focus-visible {
   outline: 2px solid var(--interactive-accent);
-  outline-offset: 2px;
-}
-
-.habit-tracker-primary {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
-}
-
-.habit-tracker-month {
-  flex-basis: 100%;
-  margin: 0.25rem 0 0;
-  font-size: var(--h3-size);
+  outline-offset: 1px;
 }
 
 .habit-tracker-message {
-  margin: 0.5rem 0 1rem;
-  padding: 0.6rem 0.75rem;
-  border-left: 4px solid var(--interactive-accent);
+  margin: 10px 0 4px;
+  padding: 7px 10px;
+  border: 1px solid var(--ht-line);
+  border-radius: 7px;
   background: var(--background-secondary);
-  border-radius: var(--radius-s);
+  color: var(--text-normal);
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .habit-tracker-message.message-error {
-  border-left-color: var(--text-error);
+  border-color: color-mix(in srgb, var(--text-error) 35%, var(--ht-line));
+  background: color-mix(in srgb, var(--text-error) 7%, var(--background-secondary));
+  color: var(--text-error);
 }
 
 .habit-tracker-message.message-warning {
-  border-left-color: var(--text-warning);
+  border-color: color-mix(in srgb, var(--text-warning) 35%, var(--ht-line));
+  background: color-mix(in srgb, var(--text-warning) 7%, var(--background-secondary));
 }
 
-.habit-tracker-hint,
 .habit-tracker-loading,
-.habit-tracker-empty {
+.habit-tracker-hint {
+  margin: 6px 0;
   color: var(--text-muted);
+  font-size: 10.5px;
+  line-height: 1.45;
 }
 
-.habit-tracker-issues {
-  border: 1px solid var(--text-error);
-  border-radius: var(--radius-s);
-  padding: 0.5rem 0.75rem;
-  margin: 0.75rem 0;
+.habit-tracker-issue-list {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  color: var(--text-error);
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.habit-tracker-undo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.habit-tracker-undo-label {
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+}
+
+.habit-tracker-disclosure {
+  border-top: 1px solid var(--ht-line);
+  margin-top: 10px;
+}
+
+.habit-tracker-disclosure-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.habit-tracker-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.habit-tracker-disclosure-summary::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 140ms ease;
+  flex: 0 0 auto;
+}
+
+.habit-tracker-disclosure[open] > .habit-tracker-disclosure-summary::before {
+  transform: rotate(45deg);
+}
+
+.habit-tracker-disclosure-summary:hover {
+  color: var(--text-normal);
+}
+
+.habit-tracker-disclosure-count {
+  min-width: 15px;
+  padding: 1px 5px;
+  border: 1px solid var(--ht-line);
+  border-radius: 999px;
+  color: var(--text-faint);
+  font-size: 8.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.habit-tracker-disclosure-body {
+  padding: 0 0 13px;
+}
+
+.habit-tracker-header .habit-tracker-disclosure {
+  border-top: 0;
+  margin-top: 0;
+  position: relative;
+}
+
+.habit-tracker-header .habit-tracker-disclosure-summary {
+  padding: 7px 8px;
+  border-radius: 6px;
+}
+
+.habit-tracker-header .habit-tracker-disclosure-summary:hover {
+  background: var(--background-modifier-hover);
+}
+
+.habit-tracker-header .habit-tracker-disclosure-body {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 7px;
+  width: 185px;
+  padding: 9px;
+  border: 1px solid var(--ht-line);
+  border-radius: 8px;
+  background: var(--background-primary);
+  box-shadow: 0 8px 24px color-mix(in srgb, black 22%, transparent);
+}
+
+.habit-tracker-more-row {
+  display: flex;
+  gap: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ht-line);
+}
+
+.habit-tracker-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.habit-tracker-toggle input {
+  accent-color: var(--interactive-accent);
+}
+
+.habit-tracker-grid-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  margin-top: 2px;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-modifier-border) transparent;
+}
+
+.habit-tracker-grid-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.habit-tracker-grid-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.habit-tracker-grid-scroll::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 999px;
+}
+
+.habit-tracker-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+.habit-tracker-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.habit-tracker-name-column {
+  width: var(--ht-name-width);
+}
+
+.habit-tracker-week-column {
+  width: auto;
+}
+
+.habit-tracker-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--background-primary);
+}
+
+.habit-tracker-corner {
+  position: sticky;
+  left: 0;
+  z-index: 5 !important;
+  width: var(--ht-name-width);
+  background: var(--background-primary);
+  border-right: 1px solid var(--ht-line);
+}
+
+.habit-tracker-day-head {
+  height: 38px;
+  padding: 3px 0 4px;
+  border-bottom: 1px solid var(--ht-line);
+  border-left: 1px solid var(--ht-line);
+  color: var(--text-faint);
+  font-size: 8.5px;
+  font-weight: 450;
+  line-height: 1.15;
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.habit-tracker-day-head.is-week-start {
+  border-left: 1px solid var(--ht-line);
+}
+
+.habit-tracker-day-head.is-current-week {
+  background: var(--ht-accent-faint);
+}
+
+.habit-tracker-day-head.is-outside-month {
+  color: var(--text-faint);
+  opacity: 0.6;
+}
+
+.habit-tracker-weekday {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.habit-tracker-date-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.habit-tracker-day-head.is-today .habit-tracker-date-number {
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.habit-tracker-habit-row {
+  height: var(--ht-row-height);
+}
+
+.habit-tracker-habit-cell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: var(--ht-name-width);
+  max-width: var(--ht-name-width);
+  padding: 7px 14px 7px 4px;
+  border-bottom: 1px solid var(--ht-line);
+  border-right: 1px solid var(--ht-line);
+  background: var(--background-primary);
+  text-align: left;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.habit-tracker-habit-row:hover .habit-tracker-habit-cell {
   background: var(--background-secondary);
 }
 
-.habit-tracker-toggle,
-.habit-tracker-field {
-  display: inline-flex;
-  gap: 0.4rem;
-  align-items: center;
+.habit-tracker-habit-name {
+  overflow: hidden;
+  color: var(--text-normal);
+  font-size: 13.5px;
+  font-weight: 560;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.habit-tracker-form,
-.habit-tracker-inline-form {
+.habit-tracker-habit-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem 1rem;
-  align-items: flex-end;
-  margin: 0.75rem 0;
+  gap: 2px 0;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 10px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.habit-tracker-habit-meta span + span::before {
+  content: '·';
+  margin: 0 4px;
+  opacity: 0.65;
+}
+
+.habit-tracker-habit-status {
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-tracker-habit-note {
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--text-accent);
+  font-size: 9.5px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-tracker-habit-row.is-archived .habit-tracker-habit-cell {
+  opacity: 0.55;
+}
+
+.habit-tracker-day-cell {
+  height: var(--ht-row-height);
+  padding: 0;
+  border-bottom: 1px solid var(--ht-line);
+  border-left: 1px solid transparent;
+  vertical-align: middle;
+  transition: background-color 120ms ease;
+}
+
+.habit-tracker-day-cell.is-week-start {
+  border-left-color: var(--ht-line);
+}
+
+.habit-tracker-day-cell.is-current-week {
+  background: var(--ht-accent-faint);
+}
+
+.habit-tracker-day-cell.is-outside-month {
+  background: color-mix(in srgb, var(--background-secondary) 30%, transparent);
+}
+
+.habit-tracker-day-cell:hover {
+  background: var(--background-modifier-hover);
+}
+
+.habit-tracker-day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--ht-row-height);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.habit-tracker-checkbox {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.habit-tracker-checkbox:disabled {
+  cursor: default;
+}
+
+.habit-tracker-day-mark {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 100%;
+  height: 20px;
+  border-radius: 0;
+  background: transparent;
+  transition:
+    background-color 120ms ease,
+    opacity 120ms ease,
+    height 120ms ease;
+}
+
+.habit-tracker-day.is-completed .habit-tracker-day-mark {
+  background: var(--interactive-accent);
+}
+
+.habit-tracker-day.is-single .habit-tracker-day-mark {
+  flex: 1 1 auto;
+  min-width: 100%;
+  width: 100%;
+  height: 20px;
+  border-radius: 10px;
+}
+
+.habit-tracker-day.is-run-start:not(.is-single) .habit-tracker-day-mark {
+  border-radius: 10px 0 0 10px;
+}
+
+.habit-tracker-day.is-run-end:not(.is-single) .habit-tracker-day-mark {
+  border-radius: 0 10px 10px 0;
+}
+
+.habit-tracker-day.is-run-start.is-run-end:not(.is-single) .habit-tracker-day-mark {
+  border-radius: 10px;
+}
+
+.habit-tracker-day-cell.is-available .habit-tracker-day-mark {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--background-modifier-border);
+  opacity: 0.55;
+}
+
+.habit-tracker-day-cell.is-available .habit-tracker-day:hover .habit-tracker-day-mark {
+  width: 14px;
+  height: 14px;
+  background: var(--ht-accent-soft);
+  opacity: 1;
+}
+
+.habit-tracker-day-cell.is-disabled .habit-tracker-day-mark {
+  opacity: 0.4;
+}
+
+.habit-tracker-day:has(.habit-tracker-checkbox:focus-visible) {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -3px;
+}
+
+.habit-tracker-run-count {
+  position: absolute;
+  right: 1px;
+  top: 50%;
+  z-index: 1;
+  color: var(--text-on-accent);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.habit-tracker-empty-state {
+  max-width: 42ch;
+  margin: 30px auto 18px;
+  text-align: center;
+}
+
+.habit-tracker-empty-title {
+  margin: 0;
+  color: var(--text-normal);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.habit-tracker-empty-copy,
+.habit-tracker-empty {
+  margin: 7px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.habit-tracker-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 118px auto;
+  gap: 8px;
+  align-items: end;
+  padding: 9px 0 3px;
 }
 
 .habit-tracker-form h2 {
-  flex-basis: 100%;
-  margin: 0;
-  font-size: var(--h3-size);
+  display: none;
 }
 
 .habit-tracker-field {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  font-size: var(--font-ui-small);
-  color: var(--text-muted);
+  gap: 3px;
+  color: var(--text-faint);
+  font-size: 9.5px;
+  line-height: 1.2;
 }
 
 .habit-tracker-form input,
 .habit-tracker-form select,
 .habit-tracker-inline-form input,
 .habit-tracker-inline-form select {
-  min-height: 2.25rem;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-s);
+  height: 30px;
+  padding: 3px 8px;
+  border: 1px solid var(--ht-line);
+  border-radius: 6px;
   background: var(--background-primary);
   color: var(--text-normal);
+  font-family: inherit;
+  font-size: 11.5px;
 }
 
-.habit-tracker-form-error,
-.habit-tracker-setting-error,
-.habit-tracker-warning {
-  color: var(--text-error);
-  flex-basis: 100%;
-  margin: 0;
-}
-
-.habit-tracker-summary,
-.habit-tracker-weeks,
-.habit-tracker-settings,
-.habit-tracker-recovery,
-.habit-tracker-undo,
-.habit-tracker-create {
-  margin: 1.25rem 0;
-}
-
-.habit-tracker-summary h2,
-.habit-tracker-settings h2,
-.habit-tracker-recovery h2,
-.habit-tracker-undo h2 {
-  margin: 0 0 0.35rem;
-  font-size: var(--h3-size);
-}
-
-.habit-tracker-table-scroll {
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-}
-
-.habit-tracker-week {
-  margin: 0.75rem 0 1.25rem;
-  padding: 0.5rem;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
-  background: var(--background-primary);
-}
-
-.habit-tracker-week.is-current-week {
-  border-color: var(--interactive-accent);
-  box-shadow: inset 0 0 0 1px var(--interactive-accent);
-}
-
-.habit-tracker-week.is-focused-week .habit-tracker-week-heading {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-.habit-tracker-week-heading {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: baseline;
-  margin: 0 0 0.4rem;
-  font-size: var(--font-ui-medium);
-}
-
-.habit-tracker-badge {
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  font-size: var(--font-ui-smaller);
-}
-
-.habit-tracker-week-table,
-.habit-tracker-summary-table {
-  width: 100%;
-  min-width: 46rem;
-  border-collapse: collapse;
-  table-layout: auto;
-}
-
-.habit-tracker-week-table th,
-.habit-tracker-week-table td,
-.habit-tracker-summary-table th,
-.habit-tracker-summary-table td {
-  padding: 0.4rem 0.5rem;
-  border-bottom: 1px solid var(--background-modifier-border);
-  text-align: left;
-  vertical-align: middle;
-}
-
-.habit-tracker-week-table thead th {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
-  white-space: nowrap;
-}
-
-.habit-tracker-day-column span {
-  display: block;
-}
-
-.habit-tracker-date {
-  color: var(--text-normal);
-}
-
-.habit-tracker-habit-column,
-.habit-tracker-habit-name,
-.habit-tracker-day-column:first-of-type {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--background-primary);
-  min-width: 9rem;
-}
-
-.habit-tracker-day-cell {
-  text-align: center;
-  min-width: 2.5rem;
-}
-
-.habit-tracker-day-cell.is-outside-month,
-.habit-tracker-day-column.is-outside-month {
+.habit-tracker-form input::placeholder {
   color: var(--text-faint);
 }
 
-.habit-tracker-day-cell.is-today,
-.habit-tracker-day-column.is-today {
+.habit-tracker-form button {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--interactive-accent);
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 10.5px;
+  font-weight: 550;
+}
+
+.habit-tracker-form button:hover {
+  background: var(--interactive-accent-hover);
+  color: var(--text-on-accent);
+}
+
+.habit-tracker-form-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-error);
+  font-size: 9.5px;
+}
+
+.habit-tracker-settings {
+  padding-top: 2px;
+}
+
+.habit-tracker-settings h2 {
+  margin: 0 0 3px;
+  font-size: 13px;
+}
+
+.habit-tracker-settings-item {
+  border-bottom: 1px solid var(--ht-line);
+}
+
+.habit-tracker-settings-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 2px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 4px;
+}
+
+.habit-tracker-settings-summary::-webkit-details-marker {
+  display: none;
+}
+
+.habit-tracker-settings-summary:hover {
   background: var(--background-modifier-hover);
 }
 
-.habit-tracker-checkbox {
-  width: 1.35rem;
-  height: 1.35rem;
-  cursor: pointer;
-  accent-color: var(--interactive-accent);
+.habit-tracker-settings-name {
+  color: var(--text-normal);
+  font-size: 11.5px;
+  font-weight: 550;
 }
 
-.habit-tracker-checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.habit-tracker-habit-name {
-  font-weight: var(--font-medium);
-}
-
-.habit-tracker-state-label {
-  display: block;
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-  font-weight: normal;
-}
-
-.habit-tracker-progress,
-.habit-tracker-outcome,
-.habit-tracker-streak {
-  white-space: nowrap;
+.habit-tracker-settings-meta {
+  color: var(--text-faint);
+  font-size: 9.5px;
   font-variant-numeric: tabular-nums;
 }
 
-.habit-tracker-outcome {
-  min-width: 8rem;
+.habit-tracker-settings-body {
+  padding: 1px 2px 10px;
 }
 
-.habit-tracker-settings-item,
+.habit-tracker-inline-form {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto;
+  gap: 5px;
+  align-items: end;
+  margin: 6px 0;
+}
+
+.habit-tracker-inline-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.habit-tracker-inline-form input,
+.habit-tracker-inline-form select {
+  height: 28px;
+  font-size: 10.5px;
+}
+
+.habit-tracker-inline-form button,
+.habit-tracker-actions button {
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--ht-line);
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.habit-tracker-inline-form button:hover,
+.habit-tracker-actions button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.habit-tracker-settings-body .habit-tracker-actions {
+  margin-top: 8px;
+}
+
+.habit-tracker-recovery {
+  padding-top: 2px;
+}
+
+.habit-tracker-recovery h2 {
+  margin: 0 0 3px;
+  font-size: 13px;
+}
+
+.habit-tracker-recovery-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .habit-tracker-recovery-item {
-  padding: 0.75rem;
-  margin: 0.6rem 0;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
-  background: var(--background-secondary);
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--ht-line);
 }
 
-.habit-tracker-settings-item h3,
 .habit-tracker-recovery-item h3 {
-  margin: 0 0 0.35rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: baseline;
   justify-content: space-between;
-  font-size: var(--font-ui-medium);
+  gap: 6px 10px;
+  margin: 0;
+  color: var(--text-normal);
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.4;
 }
 
 .habit-tracker-recovery-state {
-  padding: 0.1rem 0.4rem;
-  border-radius: var(--radius-s);
-  border: 1px solid var(--background-modifier-border);
-  font-size: var(--font-ui-smaller);
+  padding: 1px 5px;
+  border: 1px solid var(--ht-line);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 8.5px;
+  font-weight: 450;
+  white-space: nowrap;
 }
 
 .habit-tracker-recovery-state.state-conflict,
 .habit-tracker-recovery-state.state-uncertain {
-  border-color: var(--text-error);
+  border-color: color-mix(in srgb, var(--text-error) 45%, var(--ht-line));
   color: var(--text-error);
 }
 
 .habit-tracker-recovery-state.state-applied {
-  border-color: var(--text-success);
+  border-color: color-mix(in srgb, var(--text-success) 45%, var(--ht-line));
   color: var(--text-success);
 }
 
-.habit-tracker-recovery-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.habit-tracker-recovery-details {
+  margin: 5px 0;
 }
 
-.habit-tracker-recovery-details {
-  margin: 0.4rem 0;
+.habit-tracker-recovery-details summary {
+  color: var(--text-faint);
+  font-size: 9.5px;
+  cursor: pointer;
+}
+
+.habit-tracker-recovery-details h4 {
+  margin: 8px 0 3px;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 500;
 }
 
 .habit-tracker-code {
-  max-height: 14rem;
+  max-height: 150px;
+  margin: 0;
+  padding: 6px 8px;
   overflow: auto;
+  border: 1px solid var(--ht-line);
+  border-radius: 6px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  font-size: 9.5px;
+  line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
-  padding: 0.5rem;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-s);
-  font-size: var(--font-ui-smaller);
+}
+
+.habit-tracker-warning {
+  margin: 4px 0;
+  color: var(--text-error);
+  font-size: 9.5px;
+}
+
+.habit-tracker-recovery-item .habit-tracker-actions {
+  margin-top: 6px;
+}
+
+.habit-tracker-recovery-item .habit-tracker-actions button.mod-warning {
+  color: var(--text-error);
+}
+
+.habit-tracker-outcomes {
+  display: grid;
+  gap: 10px;
+}
+
+.habit-tracker-outcome-week h3 {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 550;
+}
+
+.habit-tracker-outcome-current {
+  margin-left: 7px;
+  color: var(--interactive-accent);
+  font-size: 8.5px;
+  font-weight: 500;
+}
+
+.habit-tracker-outcome-week ul {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.habit-tracker-outcome-week li {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) auto auto;
+  gap: 10px;
+  align-items: baseline;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.habit-tracker-outcome-name {
+  overflow: hidden;
+  color: var(--text-normal);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-tracker-outcome-progress,
+.habit-tracker-outcome-state {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.habit-tracker-outcome-state {
+  color: var(--text-faint);
+  font-size: 9px;
 }
 
 .habit-tracker-recovery-modal .modal-content {
-  max-width: min(56rem, 92vw);
+  max-width: min(700px, 92vw);
 }
 
-@media (max-width: 640px) {
+.habit-tracker-recovery-modal .habit-tracker-recovery {
+  border-top: 0;
+}
+
+@media (max-width: 900px) {
   .habit-tracker-view {
-    padding: 0.75rem;
+    --ht-name-width: 200px;
+    padding: 16px 18px 26px;
   }
 
-  .habit-tracker-nav button,
-  .habit-tracker-actions button,
-  .habit-tracker-form button,
+  .habit-tracker-week-label {
+    font-size: 20px;
+  }
+
+  .habit-tracker-week-nav {
+    gap: 8px;
+  }
+
+  .habit-tracker-week-nav {
+    width: 100%;
+  }
+
+  .habit-tracker-form {
+    grid-template-columns: minmax(130px, 1fr) 108px auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .habit-tracker-view {
+    --ht-name-width: 150px;
+    --ht-row-height: 56px;
+    padding: 12px 12px 22px;
+  }
+
+  .habit-tracker-heading {
+    align-items: flex-start;
+  }
+
+  .habit-tracker-week-nav {
+    width: 100%;
+  }
+
+  .habit-tracker-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .habit-tracker-week-label {
+    font-size: 19px;
+  }
+
+  .habit-tracker-week-nav {
+    gap: 6px;
+  }
+
+  .habit-tracker-icon-button {
+    width: 30px;
+    height: 30px;
+    font-size: 20px;
+  }
+
+  .habit-tracker-habit-cell {
+    padding-right: 7px;
+  }
+
+  .habit-tracker-habit-meta {
+    font-size: 9px;
+  }
+
+  .habit-tracker-habit-status {
+    font-size: 9.5px;
+  }
+
+  .habit-tracker-day-head {
+    height: 34px;
+  }
+
+  .habit-tracker-weekday {
+    font-size: 7px;
+  }
+
+  .habit-tracker-form {
+    grid-template-columns: 1fr;
+  }
+
+  .habit-tracker-form button {
+    width: 100%;
+    height: 34px;
+  }
+
+  .habit-tracker-form input,
+  .habit-tracker-form select {
+    height: 34px;
+  }
+
+  .habit-tracker-inline-form {
+    grid-template-columns: 1fr;
+  }
+
   .habit-tracker-inline-form button {
-    min-height: 2.75rem;
+    min-height: 32px;
   }
 
-  .habit-tracker-week-table,
-  .habit-tracker-summary-table {
-    min-width: 40rem;
+  .habit-tracker-outcome-week li {
+    grid-template-columns: 1fr auto;
   }
 
-  .habit-tracker-habit-column,
-  .habit-tracker-habit-name {
-    min-width: 7.5rem;
+  .habit-tracker-outcome-state {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .habit-tracker-dashboard *,
+  .habit-tracker-dashboard *::before,
+  .habit-tracker-dashboard *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

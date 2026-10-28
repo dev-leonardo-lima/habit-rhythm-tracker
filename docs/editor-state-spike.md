@@ -26,9 +26,8 @@ snapshot before a guarded write:
 5. Any open Markdown leaf whose view or file identity cannot be determined → blocked (`unknown`).
    The plugin cannot prove such a leaf is unrelated, so it fails closed for the whole write.
 
-If a leaf is dirty or its state is unknown, the write is **not attempted**. The recovery record is
-persisted first, the person is told to save or close the editor, and an explicit retry starts a new
-guarded comparison.
+If a leaf is dirty or its state is unknown, the write is **not attempted**. The person is told to
+save or close the editor, and an explicit retry starts a new guarded comparison.
 
 ## Proof-of-concept procedure
 
@@ -39,7 +38,7 @@ To execute the manual proof of concept:
 
 1. Build and install the plugin in an isolated test vault on desktop and on iOS/Android.
 2. Create a habit note; open it in two Markdown leaves. Modify one buffer without saving.
-3. Attempt a dashboard mark. Expected: no write; recovery record retained; message asks to save or
+3. Attempt a dashboard mark. Expected: no write; the note is unchanged; the message asks to save or
    close the editor.
 4. Save both buffers and retry. Expected: a fresh comparison writes only the managed block.
 5. Open a second vault window or sync client and repeat while the note is being edited externally.
@@ -51,9 +50,9 @@ To execute the manual proof of concept:
 ## Results in this environment
 
 - **Desktop Obsidian 1.14.5 (macOS)**: verified in a disposable isolated vault. A modified,
-  unsaved editor buffer blocked the dashboard write and retained a pending recovery record. Two open
-  leaves with different buffers also produced a fail-closed block. After restoring the editor buffer,
-  an explicit retry applied the retained intent.
+  unsaved editor buffer blocked the dashboard write without changing the note. Two open leaves with
+  different buffers also produced a fail-closed block. After restoring the editor buffer, an explicit
+  retry applied the intended change.
 - **iOS**: not verified. No iOS device or simulator was available.
 - **Android**: not verified. No Android device or emulator was available.
 

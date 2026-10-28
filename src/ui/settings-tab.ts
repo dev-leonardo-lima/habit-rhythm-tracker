@@ -22,38 +22,21 @@ export class HabitTrackerSettingTab extends PluginSettingTab {
     containerEl.append(heading);
     const explanation = document.createElement('p');
     explanation.textContent =
-      'Habits and recovery records are stored in separate vault folders. Recovery records contain copies of note content and are retained until you delete them explicitly.';
+      'Habits are discovered in one vault folder. Each habit remains a normal Markdown note that you can read and edit.';
     containerEl.append(explanation);
 
-    this.renderFolderSetting(
-      'Habits folder',
-      'One Markdown note per habit is discovered in this folder.',
-      'habitsFolder',
-    );
-    this.renderFolderSetting(
-      'Recovery folder',
-      'Protected recovery records live here, outside habit discovery. Keep this folder separate from the habits folder.',
-      'recoveryFolder',
-    );
-  }
-
-  private renderFolderSetting(
-    name: string,
-    description: string,
-    field: 'habitsFolder' | 'recoveryFolder',
-  ): void {
     new Setting(this.containerEl)
-      .setName(name)
-      .setDesc(description)
+      .setName('Habits folder')
+      .setDesc('One Markdown note per habit is discovered in this folder.')
       .addText((text) => {
-        text.setValue(this.host.settings[field]);
-        text.setPlaceholder(field === 'habitsFolder' ? 'Habits' : 'Habit tracker recovery');
+        text.setValue(this.host.settings.habitsFolder);
+        text.setPlaceholder('Habits');
         text.onChange(async (value) => {
           this.containerEl
             .querySelectorAll('.habit-tracker-setting-error')
             .forEach((element) => element.remove());
           try {
-            await this.host.updateSettings({ [field]: value });
+            await this.host.updateSettings({ habitsFolder: value });
             text.inputEl.classList.remove('is-invalid');
           } catch (error) {
             text.inputEl.classList.add('is-invalid');

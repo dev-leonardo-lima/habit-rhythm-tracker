@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-28T00:00:00.000Z",
+  "title": "Design System: Habit Tracker",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Theme Violet",
+        "canonical": "hsl(258 88% 66%)",
+        "tonalRamp": [
+          "#211433",
+          "#33205a",
+          "#4a2d85",
+          "#633db0",
+          "#7d4fdb",
+          "#9467ef",
+          "#b495f6",
+          "#d8c7fb"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Deep Ground",
+        "canonical": "#1c1c1c",
+        "tonalRamp": [
+          "#111111",
+          "#1c1c1c",
+          "#282828",
+          "#343434",
+          "#4a4a4a",
+          "#666666",
+          "#999999",
+          "#dadada"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Raised Surface",
+        "canonical": "#282828",
+        "tonalRamp": [
+          "#1c1c1c",
+          "#222222",
+          "#282828",
+          "#303030",
+          "#3a3a3a",
+          "#4a4a4a",
+          "#666666",
+          "#b3b3b3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Week Range",
+        "purpose": "The single selected Monday-Sunday range."
+      },
+      "body": {
+        "displayName": "Interface Body",
+        "purpose": "Forms, messages, and disclosure copy."
+      },
+      "label": {
+        "displayName": "Quiet Metadata",
+        "purpose": "Dates, targets, streaks, outcomes, and state labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "popover-ambient",
+        "value": "0 8px 24px rgba(0, 0, 0, 0.22)",
+        "purpose": "Only the More popover uses elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-standard",
+        "value": "140ms ease",
+        "purpose": "Hover, focus, and disclosure state changes."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "900px"
+      },
+      {
+        "name": "narrow",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Week Navigation",
+      "kind": "nav",
+      "refersTo": "button-ghost",
+      "description": "Quiet previous/next week chevrons around the week range.",
+      "html": "<button class=\"ds-week-nav\" aria-label=\"Previous week\">‹</button>",
+      "css": ".ds-week-nav { width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: #666; font-size: 18px; line-height: 1; cursor: pointer; } .ds-week-nav:hover { background: #282828; color: #dadada; } .ds-week-nav:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
+    },
+    {
+      "name": "Primary Create",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The only filled primary action, used to create a habit.",
+      "html": "<button class=\"ds-primary\">Create habit</button>",
+      "css": ".ds-primary { height: 30px; padding: 0 12px; border: 1px solid #8a5cf5; border-radius: 6px; background: #8a5cf5; color: #1c1c1c; font: 550 10.5px/1 Inter, sans-serif; cursor: pointer; } .ds-primary:hover { background: #9467ef; } .ds-primary:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
+    },
+    {
+      "name": "Day Toggle",
+      "kind": "custom",
+      "refersTo": "day-completed",
+      "description": "Seven interactive day cells; consecutive completions form capsules.",
+      "html": "<label class=\"ds-day\"><input type=\"checkbox\" checked><span class=\"ds-day-mark\"></span><span class=\"ds-day-count\">3</span></label>",
+      "css": ".ds-day { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 48px; cursor: pointer; } .ds-day input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; } .ds-day-mark { display: block; width: 100%; height: 16px; border-radius: 8px; background: #8a5cf5; } .ds-day-count { position: absolute; right: 1px; color: #1c1c1c; font: 650 8px/1 Inter, sans-serif; pointer-events: none; } .ds-day:has(input:focus-visible) { outline: 2px solid #8a5cf5; outline-offset: -3px; }"
+    },
+    {
+      "name": "Habit Meta",
+      "kind": "custom",
+      "refersTo": "button-ghost",
+      "description": "Habit name with target, streak, and weekly outcome in small text.",
+      "html": "<div class=\"ds-habit\"><strong>Exercise</strong><span>4/wk · 2 weeks</span><span>3 / 4 · In progress</span></div>",
+      "css": ".ds-habit { display: grid; gap: 2px; width: 190px; color: #dadada; font-family: Inter, sans-serif; } .ds-habit strong { font-size: 12px; font-weight: 560; line-height: 1.25; } .ds-habit span { color: #666; font-size: 9px; line-height: 1.35; }"
+    },
+    {
+      "name": "Disclosure",
+      "kind": "custom",
+      "refersTo": "button-ghost",
+      "description": "Hairline-top disclosure used for creation and management.",
+      "html": "<details class=\"ds-disclosure\"><summary>Manage habits</summary><div>Habit controls</div></details>",
+      "css": ".ds-disclosure { border-top: 1px solid #333; margin-top: 10px; color: #b3b3b3; font: 11px/1.2 Inter, sans-serif; } .ds-disclosure summary { padding: 9px 2px; cursor: pointer; list-style: none; } .ds-disclosure summary::-webkit-details-marker { display: none; } .ds-disclosure summary::before { content: '›'; display: inline-block; margin-right: 7px; transition: transform 140ms ease; } .ds-disclosure[open] summary::before { transform: rotate(90deg); } .ds-disclosure summary:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Week Strip",
+    "overview": "The dashboard is one week seen as a single quiet strip. It behaves like a studio wall chart: names stay in place, seven dates run across, and consistency appears as connected marks rather than badges or scores. The surrounding Obsidian chrome remains familiar; the plugin earns its character through density, rhythm, and one accent.",
+    "keyCharacteristics": [
+      "One Monday-Sunday week, exactly seven columns, no monthly calendar.",
+      "Habit names left; compact target, streak, and status text underneath.",
+      "Completion runs are continuous capsules with a count at the run end.",
+      "Quiet typographic navigation; advanced controls are progressively disclosed.",
+      "Hairlines and tonal layering instead of cards, shadows, or decorative chrome."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Only the theme accent marks completion, the current day/week, and the primary create action. Everything else is neutral.",
+        "section": "colors"
+      },
+      {
+        "name": "The Theme Ownership Rule",
+        "body": "Runtime colors come from Obsidian variables. The hex values here are a dark-theme reference, not a replacement palette.",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Label Rule",
+        "body": "Metadata is small and muted but never hidden or color-only. Status is always written in words.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do keep one week, exactly seven date columns, and habits in rows.",
+      "Do draw consecutive completions as connected capsules with a run count.",
+      "Do keep target, streak, and weekly outcome visible in words.",
+      "Do use one theme accent for completion/current state and neutral hairlines for structure.",
+      "Do preserve focus, keyboard access, touch targets, and progressive disclosure."
+    ],
+    "donts": [
+      "Don't add a monthly grid, month selector, or all-weeks table as the primary view.",
+      "Don't turn weeks into separate cards or nest cards.",
+      "Don't use color alone for completion, state, or errors.",
+      "Don't hide target, streak, or weekly outcome behind hover-only affordances.",
+      "Don't replace native checkboxes, summaries, or form controls with custom div controls."
+    ]
+  }
+}

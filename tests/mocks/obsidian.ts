@@ -64,8 +64,18 @@ export class WorkspaceLeaf {
     this.state = state;
   }
 
-  async detach(): Promise<void> {
-    this.app.workspace.detachLeavesOfType('*');
+  getRoot(): unknown {
+    return (
+      (this.app.workspace as unknown as { rootSplit?: unknown }).rootSplit ?? this.app.workspace
+    );
+  }
+
+  detach(): void {
+    const workspace = this.app.workspace as unknown as { leaves?: WorkspaceLeaf[] };
+    const index = workspace.leaves?.indexOf(this) ?? -1;
+    if (index >= 0) {
+      workspace.leaves?.splice(index, 1);
+    }
   }
 }
 

@@ -3,7 +3,7 @@
   "name": "Habit Tracker",
   "version": "0.1.0",
   "minAppVersion": "1.6.0",
-  "description": "Track weekly habits in a monthly seven-day dashboard stored in user-editable Markdown notes.",
+  "description": "Track weekly habits in a seven-day dashboard stored in user-editable Markdown notes.",
   "author": "Habit Tracker maintainers",
   "authorUrl": "",
   "isDesktopOnly": false

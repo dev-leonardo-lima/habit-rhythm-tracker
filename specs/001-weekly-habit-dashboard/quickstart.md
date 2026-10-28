@@ -13,7 +13,7 @@ automated tests now exist. See [plan.md](plan.md), [data-model.md](data-model.md
   [validation.md](validation.md).
 - Desktop Obsidian 1.14.5 on macOS passed a smoke verification in an isolated vault covering
   creation, completion, conflict/retry/undo, editor fail-closed behavior, lifecycle changes,
-  unsupported-schema rejection, previous-month correction, deletion confirmation, and restart.
+  unsupported-schema rejection, previous-week correction, deletion confirmation, and restart.
 - iOS and Android remain **unverified**; the reasons and all unverified scenarios are recorded in
   [validation.md](validation.md).
 
@@ -46,44 +46,40 @@ folder following the official sample instructions. Enable the plugin; its manife
    resets. Correct an earlier completion and verify recalculation without changes to other habits.
 3. Create a 4/week habit on Friday. Confirm effective target 3 and success after Friday–Sunday. Test
    7/week similarly and check month/year boundaries, leap day, DST, and a changed device time zone.
-4. Open the month view: every intersecting week has seven labeled dates and future weeks are not
-   started. Navigate to a prior month and correct an eligible date. Verify week-crossing counts,
-   archived-week monthly totals, and exclusion of stored dates made future by a clock reversal.
-   Test rollover while open and after a suspended/reopened app.
+4. The dashboard opens on the current week with exactly seven labeled dates. Navigate to previous
+   and next weeks, return to the current week, and correct an eligible date in a prior week. Verify
+   a week that crosses a month boundary, archived-week history, and exclusion of stored dates made
+   future by a clock reversal. Test rollover while open and after a suspended/reopened app.
 5. Change a target and archive a habit; verify both take effect next week and historical values
    remain. Reactivate a 4/week habit on Sunday: its full target applies, earlier current-week dates
    from creation are editable, and prior archived weeks remain excluded from the streak.
 6. Run the core flows offline on desktop and on actual iOS and Android devices. Check theme
    adaptation, narrow scrolling, touch targets, keyboard navigation, focus, and labels. Record
-   device versions and results for offline persistence, reopening, and recovery in a desktop/iOS/
-   Android matrix, or explicitly record unverified platforms and reasons.
+   device versions and results for offline persistence and reopening in a desktop/iOS/Android
+   matrix, or explicitly record unverified platforms and reasons.
 
-## Integrity and recovery acceptance
+## Integrity and conflict acceptance
 
 1. Add unrelated frontmatter and prose to a habit note. Mark and unmark a completion; verify all
    content outside the managed block is unchanged. Undo the latest unmark before closure or the
-   next successful change, then separately reopen and inspect its retained record for guarded
-   restoration after the immediate undo window.
-2. Force journal creation and read-back failures, note write failure, invalid managed block, and a
-   duplicate ID across two notes. Confirm a clear error, both duplicate notes intact, and no silent
-   overwrite. Simulate a path appearing after the creation precheck; confirm it is never overwritten
-   and a failed journal operation creates no habit note.
+   next successful change, then close the dashboard and verify the note remains correct. No
+   recovery of an unsaved intent after an unexpected exit is promised.
+2. Force a note write failure, invalid managed block, and a duplicate ID across two notes. Confirm a
+   clear error, both duplicate notes intact, and no silent overwrite. Simulate a path appearing after
+   the creation precheck; confirm it is never overwritten.
 3. In a test fixture, change the underlying note between snapshot and guarded write. Confirm the
-   note is not overwritten, the recovery note retains the intended edit, and the conflict remains
-   visible after closing/reopening. Explicitly retry or discard and verify the chosen outcome.
-4. Simulate interruption during initial journal creation, during a status-record write, and after a
-   note write but before status update. Confirm the last complete snapshot and intent remain
-   inspectable, ambiguous outcomes are uncertain, and no operation is blindly replayed. Document
-   editor-state proof-of-concept results for multiple open views, dirty/unknown buffers, supported
-   app versions and platforms; verify unverifiable state blocks edits and offers an explicit retry.
-5. Inspect pending, conflict, uncertain, applied and discarded recovery records. Confirm the UI
-   explains copied content and storage growth; deletion identifies selected records, warns of lost
-   recoverability, and requires explicit confirmation. Confirm full-storage failures block edits.
-6. Exercise error and recovery dialogs with keyboard and touch, including focus and text labels.
-   Use invalid and unsupported format fixtures to confirm no rewrite. For any future migration,
-   verify explicit approval, preservation of a recoverable original, and failure recovery.
-7. Record independent offline sync conflicts as outside guaranteed detection and verify that valid
+   existing note is not overwritten and a clear conflict warning is shown. Review the note and repeat
+   the action explicitly to verify a fresh guarded comparison. Confirm no recovery file is created.
+4. Document editor-state proof-of-concept results for multiple open views, dirty/unknown buffers,
+   supported app versions and platforms; verify unverifiable state blocks edits and asks the person
+   to save or close the editor. Confirm the note is unchanged.
+5. Exercise error surfaces with keyboard and touch, including focus and text labels. Use invalid and
+   unsupported format fixtures to confirm no rewrite. For any future migration, verify explicit
+   approval, preservation of a recoverable original, and failure recovery.
+6. Record independent offline sync conflicts as outside guaranteed detection and verify that valid
    external note edits observed by the plugin refresh the view.
+7. Confirm existing `recovery-*` files from earlier development builds are ignored and not modified
+   by the plugin. Deletion, if desired, is a manual vault action outside the plugin.
 
 For SC-001 and SC-004, record the elapsed time and result of the manual acceptance scenarios;
 the developer may perform them without recruiting additional participants.

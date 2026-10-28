@@ -1,4 +1,4 @@
-# Data Model: Weekly and Monthly Habit Dashboard
+# Data Model: Weekly Habit Dashboard
 
 ## Local date and week
 
@@ -6,10 +6,10 @@
   comes from the device's current local time zone. Stored dates remain unchanged when the time zone
   changes. Use calendar arithmetic across DST, leap years, and month/year boundaries.
 - **Week key**: the local date of the Monday starting a seven-day Monday–Sunday week. A week
-  intersecting two months is one week with one target and result in both views.
+  intersecting two months remains one seven-day interval with one target and result.
 - Future stored dates caused by device clock/time-zone changes are retained, not reported as corrupt;
-  they remain visible as noninteractive future records and are excluded from weekly and monthly
-  counts until the local date reaches them.
+  they remain visible as noninteractive future records and are excluded from weekly progress and
+  streak evaluation until the local date reaches them.
 
 ## Habit note
 
@@ -49,8 +49,8 @@
 
 - **Completion**: at most one mark per habit and local date. The user may explicitly mark/unmark
   dates from creation through today. The latest unmark per habit can be undone until the dashboard
-  closes or another change to that habit succeeds. Afterward, its retained recovery record permits
-  explicit guarded restoration until explicitly deleted; no silent deletion or blind replay occurs.
+  closes or another change to that habit succeeds. After that window, no recovery of the unmark is
+  promised after an unexpected app exit.
 - **Weekly outcome**: derive distinct completed days whose dates are within the week, not after
   today, and on/after creation; compare with the effective target. The current week is `successful`
   once the target is met, otherwise `in progress`; a past evaluable week is `successful` or
@@ -59,33 +59,18 @@
 - **Streak**: count consecutive successful evaluable weeks backward, skipping archived weeks. An
   open current week below target neither counts nor resets the prior streak. A past unsuccessful
   evaluable week ends the streak. Recompute affected results when records or settings change.
-- **Monthly total**: count distinct completed dates belonging to the selected calendar month that
-  are not after today, including completions in archived weeks. Outside-month cells in a crossing
-  week affect that week but not the monthly total; future-dated stored marks are preserved and
-  visible but do not count until their date arrives.
 
-## Recovery record
+## Guarded writes
 
-- **Fields**: unique operation ID, habit ID/path, base note snapshot, intended change, creation
-  timestamp, and state (`pending`, `conflict`, `applied`, `discarded`, or `uncertain`). Recovery
-  notes are stored separately from habit discovery and are retained until explicit user deletion.
-- **Transitions**: persist and read back `pending` before attempting a note update or creation; if
-  preservation or verification fails, abort. For creation, record prior absence and reject a target
-  path that appears before creation. A guarded update succeeds → `applied`; snapshot mismatch →
-  `conflict`; an uncertain write or crash before finalization → `uncertain` after restart. Preserve
-  the initial base snapshot and intent unchanged; append and verify separate status records so a
-  failed, missing, invalid, or partial status update leaves the previous complete record recoverable.
-  No automatic replay of uncertain work.
-- **Resolution**: show the existing note and pending intent; the user may explicitly retry against
-  the latest valid note or discard the pending operation. A retry uses a new guarded comparison;
-  another conflict again retains both versions. Discard changes the record state but retains its
-  content. An unverified open editor blocks the write with instructions to save or close it before
-  an explicit retry. Concurrent actions on the same habit are serialized locally.
-- **Visibility and retention**: the recovery area lists all states with habit, date, original state,
-  and intended change. The user is told that records contain copies and accumulate in the vault.
-  Deletion of selected records requires explicit confirmation and a warning about lost recovery data;
-  no automatic cleanup. Insufficient space to preserve an intent aborts the habit change with an
-  error. Recovery inspection, resolution and retention work offline on each supported platform.
+- **Snapshot**: capture the exact note content used to compute an edit. A guarded update compares it
+  with the current note and stops on mismatch. Creation uses create-if-absent and fails on a path
+  collision without overwriting the existing note.
+- **Failure**: a conflict, editor block, write failure, or uncertain outcome leaves the previously
+  saved note intact and reports the issue. The person may review the note and repeat the action with
+  a fresh guarded comparison; nothing is replayed blindly after an unexpected exit.
+- **No journal**: the plugin does not create per-edit recovery records or a recovery area. Immediate
+  undo is in-session only. Existing `recovery-*` files from earlier development builds are ignored
+  and left untouched; no automatic cleanup or deletion is performed.
 - **Migration**: before an approved format migration, preserve the original in a recoverable backup.
   Failed migration leaves the original available; unknown or unsupported versions are reported and
   never rewritten.

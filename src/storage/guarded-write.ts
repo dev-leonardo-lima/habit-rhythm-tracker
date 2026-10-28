@@ -1,7 +1,5 @@
-import type { Habit, LocalDate, RecoveryRecord } from '../domain/types';
+import type { Habit, LocalDate } from '../domain/types';
 import { renderHabitNote, replaceHabitBlock } from './habit-note';
-import { newOperationId } from './recovery-record';
-import type { RecoveryStore } from './recovery-store';
 import type { VaultPort } from './vault-port';
 
 export type EditorInspectionStatus = 'none' | 'clean' | 'dirty' | 'unknown';
@@ -22,14 +20,11 @@ export const NoEditorGuard: EditorGuard = {
 };
 
 export interface WriteIntent {
-  kind: RecoveryRecord['intent']['kind'];
   habit: Habit;
   date?: LocalDate;
-  summary: string;
   /**
-   * Exact note content from which this intent was computed. When present, the
-   * writer journals this snapshot and fails closed if the note no longer matches,
-   * so an external edit between the intent read and the guarded write is preserved.
+   * Exact note content from which this edit was computed. The writer refuses to
+   * proceed when the note no longer matches, leaving concurrent edits untouched.
    */
   baseContent?: string;
 }
@@ -37,45 +32,31 @@ export interface WriteIntent {
 export type WriteResult =
   | {
       status: 'applied';
-      recoveryPath: string;
       content: string;
-      journalWarning?: string;
     }
   | {
       status: 'conflict';
-      recoveryPath: string | null;
       reason: 'snapshot-mismatch' | 'path-exists';
       baseContent: string | null;
       currentContent: string | null;
-      journalWarning?: string;
     }
   | {
       status: 'editor-blocked';
-      recoveryPath: string;
       reason: 'dirty' | 'unknown';
     }
   | {
-      status: 'recovery-failed';
-      error: string;
-    }
-  | {
       status: 'uncertain';
-      recoveryPath: string;
       error: string;
       content: string | null;
     }
   | {
       status: 'failed';
       error: string;
-      recoveryPath?: string;
     };
 
 export interface GuardedWriterOptions {
   vault: VaultPort;
-  recoveryStore: RecoveryStore;
   editorGuard?: EditorGuard;
-  now?: () => Date;
-  random?: () => number;
 }
 
 class SnapshotMismatch extends Error {
@@ -91,18 +72,12 @@ function errorMessage(error: unknown): string {
 
 export class GuardedWriter {
   protected readonly vault: VaultPort;
-  protected readonly recoveryStore: RecoveryStore;
   protected readonly editorGuard: EditorGuard;
-  protected readonly now: () => Date;
-  protected readonly random: () => number;
   private readonly queues = new Map<string, Promise<unknown>>();
 
   constructor(options: GuardedWriterOptions) {
     this.vault = options.vault;
-    this.recoveryStore = options.recoveryStore;
     this.editorGuard = options.editorGuard ?? NoEditorGuard;
-    this.now = options.now ?? (() => new Date());
-    this.random = options.random ?? Math.random;
   }
 
   update(path: string, intent: WriteIntent): Promise<WriteResult> {
@@ -117,31 +92,6 @@ export class GuardedWriter {
       next.catch(() => undefined),
     );
     return next;
-  }
-
-  protected buildRecord(
-    path: string,
-    intent: WriteIntent,
-    base: RecoveryRecord['base'],
-  ): RecoveryRecord {
-    const record: RecoveryRecord = {
-      schemaVersion: 1,
-      operationId: newOperationId(this.now(), this.random),
-      habitId: intent.habit.id,
-      habitPath: path,
-      base,
-      intent: {
-        kind: intent.kind,
-        habit: intent.habit,
-        summary: intent.summary,
-      },
-      createdAt: this.now().toISOString(),
-      state: 'pending',
-    };
-    if (intent.date !== undefined) {
-      record.intent.date = intent.date;
-    }
-    return record;
   }
 
   private async doUpdate(path: string, intent: WriteIntent): Promise<WriteResult> {
@@ -159,39 +109,23 @@ export class GuardedWriter {
       }
     }
 
-    const record = this.buildRecord(path, intent, { exists: true, content: baseContent });
-    let recoveryPath: string;
-    try {
-      recoveryPath = await this.recoveryStore.saveInitial(record);
-    } catch (error) {
-      return { status: 'recovery-failed', error: errorMessage(error) };
-    }
-
     if (intent.baseContent !== undefined) {
       let currentContent: string;
       try {
         currentContent = await this.vault.read(path);
       } catch (error) {
-        await this.tryAppend(record.operationId, 'uncertain');
         return {
           status: 'failed',
-          error: `Could not verify the habit note against the recorded snapshot: ${errorMessage(error)}`,
-          recoveryPath,
+          error: `Could not verify the habit note against the captured snapshot: ${errorMessage(error)}`,
         };
       }
       if (currentContent !== baseContent) {
-        const journalWarning = await this.tryAppend(record.operationId, 'conflict');
-        const result: WriteResult = {
+        return {
           status: 'conflict',
-          recoveryPath,
           reason: 'snapshot-mismatch',
           baseContent,
           currentContent,
         };
-        if (journalWarning) {
-          result.journalWarning = journalWarning;
-        }
-        return result;
       }
     }
 
@@ -199,21 +133,17 @@ export class GuardedWriter {
     try {
       inspection = await this.editorGuard.inspect(path);
     } catch {
-      return {
-        status: 'editor-blocked',
-        recoveryPath,
-        reason: 'unknown',
-      };
+      return { status: 'editor-blocked', reason: 'unknown' };
     }
     if (inspection.status === 'dirty' || inspection.status === 'unknown') {
-      return { status: 'editor-blocked', recoveryPath, reason: inspection.status };
+      return { status: 'editor-blocked', reason: inspection.status };
     }
     if (
       inspection.status === 'clean' &&
       inspection.content !== undefined &&
       inspection.content !== baseContent
     ) {
-      return { status: 'editor-blocked', recoveryPath, reason: 'dirty' };
+      return { status: 'editor-blocked', reason: 'dirty' };
     }
 
     try {
@@ -223,16 +153,7 @@ export class GuardedWriter {
         }
         return replaceHabitBlock(current, intent.habit);
       });
-      const journalWarning = await this.recordTerminalState(
-        recoveryPath,
-        record.operationId,
-        'applied',
-      );
-      const result: WriteResult = { status: 'applied', recoveryPath, content };
-      if (journalWarning) {
-        result.journalWarning = journalWarning;
-      }
-      return result;
+      return { status: 'applied', content };
     } catch (error) {
       if (error instanceof SnapshotMismatch) {
         let currentContent: string | null = error.current;
@@ -241,18 +162,12 @@ export class GuardedWriter {
         } catch {
           // The mismatch content remains the best available comparison.
         }
-        const journalWarning = await this.tryAppend(record.operationId, 'conflict');
-        const result: WriteResult = {
+        return {
           status: 'conflict',
-          recoveryPath,
           reason: 'snapshot-mismatch',
           baseContent,
           currentContent,
         };
-        if (journalWarning) {
-          result.journalWarning = journalWarning;
-        }
-        return result;
       }
 
       let content: string | null;
@@ -261,46 +176,11 @@ export class GuardedWriter {
       } catch {
         content = null;
       }
-      await this.tryAppend(record.operationId, 'uncertain');
       return {
         status: 'uncertain',
-        recoveryPath,
         error: `The write outcome could not be verified: ${errorMessage(error)}`,
         content,
       };
-    }
-  }
-
-  protected async recordTerminalState(
-    _recoveryPath: string,
-    operationId: string,
-    state: RecoveryRecord['state'],
-  ): Promise<string | undefined> {
-    try {
-      await this.recoveryStore.appendStatus(operationId, state);
-      return undefined;
-    } catch (error) {
-      try {
-        await this.recoveryStore.appendStatus(operationId, 'uncertain', {
-          failedState: state,
-          error: errorMessage(error),
-        });
-        return 'The change was saved, but its recovery status could not be recorded; the retained record is marked uncertain.';
-      } catch {
-        return 'The change was saved, but its recovery status could not be recorded; the pending record is retained for inspection.';
-      }
-    }
-  }
-
-  protected async tryAppend(
-    operationId: string,
-    state: RecoveryRecord['state'],
-  ): Promise<string | undefined> {
-    try {
-      await this.recoveryStore.appendStatus(operationId, state);
-      return undefined;
-    } catch (error) {
-      return `The recovery status could not be recorded: ${errorMessage(error)}`;
     }
   }
 }
@@ -332,40 +212,10 @@ export class GuardedCreator extends GuardedWriter {
       }
       return {
         status: 'conflict',
-        recoveryPath: null,
         reason: 'path-exists',
         baseContent: null,
         currentContent,
       };
-    }
-
-    const record = this.buildRecord(path, intent, { exists: false, content: null });
-    let recoveryPath: string;
-    try {
-      recoveryPath = await this.recoveryStore.saveInitial(record);
-    } catch (error) {
-      return { status: 'recovery-failed', error: errorMessage(error) };
-    }
-
-    if (this.vault.exists(path)) {
-      let currentContent: string | null;
-      try {
-        currentContent = await this.vault.read(path);
-      } catch {
-        currentContent = null;
-      }
-      const journalWarning = await this.tryAppend(record.operationId, 'conflict');
-      const result: WriteResult = {
-        status: 'conflict',
-        recoveryPath,
-        reason: 'path-exists',
-        baseContent: null,
-        currentContent,
-      };
-      if (journalWarning) {
-        result.journalWarning = journalWarning;
-      }
-      return result;
     }
 
     const expected = renderHabitNote(intent.habit);
@@ -379,23 +229,15 @@ export class GuardedCreator extends GuardedWriter {
         } catch {
           currentContent = null;
         }
-        const journalWarning = await this.tryAppend(record.operationId, 'conflict');
-        const result: WriteResult = {
+        return {
           status: 'conflict',
-          recoveryPath,
           reason: 'path-exists',
           baseContent: null,
           currentContent,
         };
-        if (journalWarning) {
-          result.journalWarning = journalWarning;
-        }
-        return result;
       }
-      await this.tryAppend(record.operationId, 'uncertain');
       return {
         status: 'uncertain',
-        recoveryPath,
         error: `The habit could not be created: ${errorMessage(error)}`,
         content: null,
       };
@@ -408,24 +250,12 @@ export class GuardedCreator extends GuardedWriter {
       savedContent = null;
     }
     if (savedContent !== expected) {
-      await this.tryAppend(record.operationId, 'uncertain');
       return {
         status: 'uncertain',
-        recoveryPath,
         error: 'The created note could not be verified after writing',
         content: savedContent,
       };
     }
-
-    const journalWarning = await this.recordTerminalState(
-      recoveryPath,
-      record.operationId,
-      'applied',
-    );
-    const result: WriteResult = { status: 'applied', recoveryPath, content: savedContent };
-    if (journalWarning) {
-      result.journalWarning = journalWarning;
-    }
-    return result;
+    return { status: 'applied', content: savedContent };
   }
 }

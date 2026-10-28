@@ -29,8 +29,7 @@ plugin owns exactly one body block between `<!-- habit-tracker:start -->` and
 - `states`: nonempty array ordered by Monday week, with one entry per week. Values are `active` or
   `archived`. The first entry must be `active` in the creation week.
 - `completions`: distinct valid local dates, none before `created`. Dates after today are retained
-  after a device clock moves backward but do not count toward progress or monthly totals until they
-  arrive.
+  after a device clock moves backward but do not count toward progress until they arrive.
 
 All content outside the managed block, including YAML frontmatter and arbitrary prose, belongs to the
 user and is preserved byte-for-byte. The plugin never reconstructs the whole note; it replaces only
@@ -38,8 +37,8 @@ the managed block.
 
 ## Discovery and validation
 
-- Only Markdown notes in the configured habits folder are discovered. The recovery folder is
-  separate and is never treated as habit data.
+- Only Markdown notes in the configured habits folder are discovered. Recovery files left by older
+  development builds are ignored and never treated as habit data.
 - A note with missing, duplicated, or out-of-order markers is reported with a visible error and is
   not overwritten.
 - Malformed JSON, an unknown schema version, an invalid record, or a duplicate habit ID is reported.
@@ -49,27 +48,21 @@ the managed block.
 - An unsupported schema version is rejected visibly. The note remains unchanged; no automatic
   migration or rewrite occurs.
 
-## Recovery records
+## Guarded writes and conflicts
 
-Recovery notes live in the configured recovery folder and use separate `habit-recovery` markers.
-They are not habit notes and are not discovered as habits. Fields include:
+There is no per-edit recovery journal. Before changing a note, the plugin captures the exact content
+used to compute the edit. The write uses Obsidian's protected local read/modify/write and compares
+the current note with that captured snapshot. If another edit changed the note, the write stops,
+leaves the existing note untouched, and reports a conflict in the dashboard. The person can review
+the note and repeat the action explicitly.
 
-- unique `operationId`;
-- `habitId` and `habitPath`;
-- `base`: the original note content, or `{ "exists": false, "content": null }` for a creation;
-- `intent`: the operation kind, the full intended habit record, an affected date when applicable, and
-  a human-readable summary;
-- `createdAt` and the initial `pending` state.
+A dirty or unverifiable editor state blocks the write. The plugin does not promise to recover an
+unsaved intent after an unexpected app exit; previously saved note content remains intact. Immediate
+undo is available for the latest unmark until the dashboard closes or another successful change to
+that habit occurs.
 
-The base record is immutable. Status changes (`pending`, `conflict`, `applied`, `discarded`,
-`uncertain`) are appended as separate uniquely named notes, for example
-`recovery-<operationId>-status-1.md`, and verified after writing. Missing, malformed, or partial
-status records are surfaced as uncertain and the last complete base snapshot remains inspectable.
-No record is replayed automatically.
-
-Recovery records contain copies of note content and grow with use. They are retained until the user
-selects and explicitly deletes them. Deletion requires confirmation that names the records and warns
-that recoverability will be lost. No automatic cleanup is performed.
+Existing `recovery-*` notes from earlier development builds are preserved and ignored unless the
+person deletes them outside the plugin. The plugin does not read, modify, or clean them up.
 
 ## Migration policy
 
@@ -79,11 +72,11 @@ A future migration must:
 
 1. Require explicit user approval before conversion.
 2. Preserve a recoverable copy of the original note and record in the vault before conversion.
-3. Verify the migrated content and status records.
+3. Verify the migrated content.
 4. Leave the original available and reported if conversion or verification fails.
 5. Never interpret an unknown version as the current schema.
 
-Migration code and its verification must be reviewed together with the recovery-retention rules. A
+Migration code and its verification must be reviewed together with the guarded-write rules. A
 migration must not delete the original automatically after success; deletion remains explicit.
 
 ## Synchronization boundary

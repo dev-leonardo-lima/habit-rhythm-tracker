@@ -1,0 +1,316 @@
+import type {
+  DashboardViewModel,
+  HabitCellViewModel,
+  HabitRowViewModel,
+  HabitSummaryViewModel,
+  WeekViewModel,
+} from './dashboard-controller';
+
+export interface MonthDashboardHandlers {
+  toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
+}
+
+interface DecoratedCell {
+  cell: HabitCellViewModel;
+  runStart: boolean;
+  runEnd: boolean;
+  runCount: number;
+}
+
+function el<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  className?: string,
+  text?: string,
+): HTMLElementTagNameMap[K] {
+  const element = document.createElement(tag);
+  if (className) {
+    element.className = className;
+  }
+  if (text !== undefined) {
+    element.textContent = text;
+  }
+  return element;
+}
+
+function decorateRun(cells: HabitCellViewModel[]): DecoratedCell[] {
+  const decorated: DecoratedCell[] = cells.map((cell) => ({
+    cell,
+    runStart: false,
+    runEnd: false,
+    runCount: 0,
+  }));
+  let index = 0;
+  while (index < decorated.length) {
+    if (!decorated[index]?.cell.completed) {
+      index += 1;
+      continue;
+    }
+    let end = index;
+    while (end + 1 < decorated.length && decorated[end + 1]?.cell.completed) {
+      end += 1;
+    }
+    const count = end - index + 1;
+    for (let cursor = index; cursor <= end; cursor += 1) {
+      const item = decorated[cursor];
+      if (item) {
+        item.runStart = cursor === index;
+        item.runEnd = cursor === end;
+        item.runCount = count;
+      }
+    }
+    index = end + 1;
+  }
+  return decorated;
+}
+
+function placeholderCells(week: WeekViewModel): HabitCellViewModel[] {
+  return week.days.map((day) => ({
+    date: day.date,
+    completed: false,
+    disabled: true,
+    reason: 'not tracked this week',
+    ariaLabel: `${day.weekday} ${day.date}, not tracked this week`,
+    inSelectedMonth: day.inSelectedMonth,
+    isToday: day.isToday,
+  }));
+}
+
+function summaryFallback(
+  habitId: string,
+  firstRow: HabitRowViewModel | undefined,
+): HabitSummaryViewModel {
+  return {
+    habitId,
+    path: firstRow?.path ?? '',
+    name: firstRow?.name ?? 'Habit',
+    created: firstRow?.created ?? '',
+    state: firstRow?.state ?? 'active',
+    target: firstRow?.target ?? null,
+    streak: firstRow?.streak ?? 0,
+    monthlyTotal: firstRow?.monthlyTotal ?? 0,
+    pendingArchive: firstRow?.pendingArchive ?? false,
+    pendingTarget: firstRow?.pendingTarget ?? null,
+    canReactivate: firstRow?.canReactivate ?? false,
+  };
+}
+
+function habitRows(viewModel: DashboardViewModel): Array<{
+  summary: HabitSummaryViewModel;
+  rowsByWeek: Map<string, HabitRowViewModel>;
+}> {
+  const summaries = new Map(viewModel.habits.map((habit) => [habit.habitId, habit]));
+  const byId = new Map<
+    string,
+    { summary: HabitSummaryViewModel; rowsByWeek: Map<string, HabitRowViewModel> }
+  >();
+  for (const week of viewModel.weeks) {
+    for (const row of week.rows) {
+      const existing = byId.get(row.habitId);
+      if (existing) {
+        existing.rowsByWeek.set(week.week, row);
+      } else {
+        byId.set(row.habitId, {
+          summary: summaries.get(row.habitId) ?? summaryFallback(row.habitId, row),
+          rowsByWeek: new Map([[week.week, row]]),
+        });
+      }
+    }
+  }
+  return [...byId.values()].sort((left, right) =>
+    left.summary.name.localeCompare(right.summary.name),
+  );
+}
+
+function nameCell(
+  summary: HabitSummaryViewModel,
+  selectedRow: HabitRowViewModel | undefined,
+): HTMLTableCellElement {
+  const cell = el('th', 'habit-tracker-habit-cell');
+  cell.scope = 'row';
+  cell.append(el('div', 'habit-tracker-habit-name', summary.name));
+
+  const meta = el('div', 'habit-tracker-habit-meta');
+  meta.append(el('span', undefined, `${selectedRow?.target ?? summary.target ?? '—'}/wk`));
+  meta.append(
+    el('span', undefined, `${summary.streak} ${summary.streak === 1 ? 'week' : 'weeks'}`),
+  );
+  cell.append(meta);
+
+  if (summary.pendingTarget !== null) {
+    cell.append(
+      el('div', 'habit-tracker-habit-note', `${summary.pendingTarget}/wk from next week`),
+    );
+  } else if (summary.pendingArchive) {
+    cell.append(el('div', 'habit-tracker-habit-note', 'Archive next week'));
+  }
+
+  if (selectedRow) {
+    cell.append(
+      el(
+        'div',
+        'habit-tracker-habit-status',
+        `${selectedRow.completed} / ${selectedRow.target ?? '—'} · ${selectedRow.outcomeText}`,
+      ),
+    );
+  } else if (summary.state === 'archived') {
+    cell.append(el('div', 'habit-tracker-habit-status', 'Archived'));
+  }
+  return cell;
+}
+
+function dayCell(
+  decorated: DecoratedCell,
+  habitId: string,
+  week: WeekViewModel,
+  index: number,
+  handlers: MonthDashboardHandlers,
+  currentWeek: string,
+): HTMLTableCellElement {
+  const { cell } = decorated;
+  const td = el('td', 'habit-tracker-day-cell');
+  if (!cell.inSelectedMonth) {
+    td.classList.add('is-outside-month');
+  }
+  if (cell.completed) {
+    td.classList.add('is-completed');
+  }
+  if (cell.isToday) {
+    td.classList.add('is-today');
+  }
+  if (cell.disabled) {
+    td.classList.add('is-disabled');
+  }
+  if (week.week === currentWeek) {
+    td.classList.add('is-current-week');
+  }
+  if (index === 0) {
+    td.classList.add('is-week-start');
+  }
+  if (!cell.completed && !cell.disabled) {
+    td.classList.add('is-available');
+  }
+
+  const label = el('label', 'habit-tracker-day');
+  label.dataset.date = cell.date;
+  label.dataset.habitId = habitId;
+  label.dataset.runStart = String(decorated.runStart);
+  label.dataset.runEnd = String(decorated.runEnd);
+  if (cell.completed) {
+    label.classList.add('is-completed');
+  }
+  if (decorated.runStart) {
+    label.classList.add('is-run-start');
+  }
+  if (decorated.runEnd) {
+    label.classList.add('is-run-end');
+  }
+  if (decorated.runCount === 1) {
+    label.classList.add('is-single');
+  }
+
+  const checkbox = el('input', 'habit-tracker-checkbox');
+  checkbox.type = 'checkbox';
+  checkbox.checked = cell.completed;
+  checkbox.disabled = cell.disabled;
+  checkbox.dataset.habitId = habitId;
+  checkbox.dataset.date = cell.date;
+  checkbox.setAttribute('aria-label', cell.ariaLabel);
+  if (cell.reason !== 'available') {
+    checkbox.title = cell.reason;
+  }
+  checkbox.addEventListener('change', () => {
+    void handlers.toggleCompletion(habitId, cell.date, checkbox.checked);
+  });
+  label.append(checkbox);
+
+  const mark = el('span', 'habit-tracker-day-mark');
+  mark.setAttribute('aria-hidden', 'true');
+  label.append(mark);
+
+  if (decorated.runEnd && decorated.runCount > 1) {
+    const count = el('span', 'habit-tracker-run-count', String(decorated.runCount));
+    count.setAttribute('aria-hidden', 'true');
+    label.append(count);
+  }
+  td.append(label);
+  return td;
+}
+
+export function renderHabitGrid(
+  container: HTMLElement,
+  viewModel: DashboardViewModel,
+  handlers: MonthDashboardHandlers,
+): void {
+  const week = viewModel.weeks[0];
+  if (!week) {
+    container.append(el('p', 'habit-tracker-empty', 'No week to display.'));
+    return;
+  }
+  const rows = habitRows(viewModel);
+  if (rows.length === 0) {
+    container.append(
+      el('p', 'habit-tracker-empty', 'No habits yet. Create one to start tracking this week.'),
+    );
+    return;
+  }
+
+  const table = el('table', 'habit-tracker-grid');
+  table.dataset.testid = 'week-table';
+  table.dataset.week = week.week;
+  table.setAttribute('aria-label', `Habits for the week of ${week.label}`);
+  table.append(
+    el('caption', 'habit-tracker-visually-hidden', `Habits for the week of ${week.label}`),
+  );
+
+  const colgroup = el('colgroup');
+  colgroup.append(el('col', 'habit-tracker-name-column'));
+  for (let index = 0; index < 7; index += 1) {
+    colgroup.append(el('col', 'habit-tracker-week-column'));
+  }
+  table.append(colgroup);
+
+  const thead = el('thead');
+  const dayRow = el('tr', 'habit-tracker-day-row');
+  dayRow.append(el('th', 'habit-tracker-corner'));
+  week.days.forEach((day, index) => {
+    const th = el('th', 'habit-tracker-day-head');
+    th.scope = 'col';
+    if (day.isToday) {
+      th.classList.add('is-today');
+      th.setAttribute('aria-current', 'date');
+    }
+    if (!day.inSelectedMonth) {
+      th.classList.add('is-outside-month');
+    }
+    if (week.week === viewModel.currentWeek) {
+      th.classList.add('is-current-week');
+    }
+    if (index === 0) {
+      th.classList.add('is-week-start');
+    }
+    th.append(el('span', 'habit-tracker-weekday', day.weekdayShort));
+    th.append(el('span', 'habit-tracker-date-number', day.date.slice(-2)));
+    dayRow.append(th);
+  });
+  thead.append(dayRow);
+  table.append(thead);
+
+  const tbody = el('tbody');
+  for (const { summary, rowsByWeek } of rows) {
+    const row = el('tr', 'habit-tracker-habit-row');
+    row.dataset.habitId = summary.habitId;
+    if (summary.state === 'archived') {
+      row.classList.add('is-archived');
+    }
+    const selectedRow = rowsByWeek.get(week.week);
+    row.append(nameCell(summary, selectedRow));
+    const cells = selectedRow?.cells ?? placeholderCells(week);
+    const decorated = decorateRun(cells);
+    decorated.forEach((item, index) => {
+      row.append(dayCell(item, summary.habitId, week, index, handlers, viewModel.currentWeek));
+    });
+    tbody.append(row);
+  }
+  table.append(tbody);
+  container.append(table);
+}

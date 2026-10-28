@@ -33,10 +33,10 @@ fails the command.
 
 ## Tests
 
-- `tests/unit/` covers local dates, note codecs, weekly targets, streaks, month views, settings, and
-  recovery-record validation.
-- `tests/integration/` covers repository discovery, guarded writes and creation, durable recovery,
-  undo, conflicts, lifecycle changes, month navigation, UI rendering, and plugin lifecycle.
+- `tests/unit/` covers local dates, note codecs, weekly targets, streaks, week views, settings, and
+  guarded-write result validation.
+- `tests/integration/` covers repository discovery, guarded writes and creation,
+  undo, conflicts, lifecycle changes, week navigation, UI rendering, and plugin lifecycle.
 - `tests/mocks/obsidian.ts` provides the minimal Obsidian runtime used by Vitest; production builds
   use the real `obsidian` package as an external dependency.
 - Fixtures are synthetic. Tests never read or write a personal vault.
@@ -49,9 +49,8 @@ mkdir -p "<vault>/.obsidian/plugins/habit-tracker"
 cp main.js manifest.json styles.css "<vault>/.obsidian/plugins/habit-tracker/"
 ```
 
-Enable the plugin and open the dashboard from the command palette or ribbon. The default folders are
-`Habits` and `Habit tracker recovery`; change them in **Settings → Habit Tracker**. The folders must
-be separate and must not contain one another.
+Enable the plugin and open the dashboard from the command palette or ribbon. The default folder is
+`Habits`; change it in **Settings → Habit Tracker**.
 
 ## Conventional Commits
 
@@ -72,8 +71,8 @@ Examples:
 ```text
 feat(ui): add weekly habit dashboard
 fix(storage): retain conflicts after reopening
-docs: document recovery retention and deletion
-test(recovery): cover interrupted status writes
+docs: document guarded writes and conflict warnings
+test(storage): cover guarded conflicts and failed writes
 ```
 
 Release version selection is an explicit developer action. Do not infer a release from commit types
@@ -88,6 +87,6 @@ inputs that release automation can consume. Do not implement the 002 pipeline he
 ## Manual verification
 
 Use [specs/001-weekly-habit-dashboard/quickstart.md](specs/001-weekly-habit-dashboard/quickstart.md)
-for functional, conflict, and recovery scenarios. Record actual desktop/iOS/Android results or the
+for functional and conflict scenarios. Record actual desktop/iOS/Android results or the
 unverified platform and reason in
 [specs/001-weekly-habit-dashboard/validation.md](specs/001-weekly-habit-dashboard/validation.md).

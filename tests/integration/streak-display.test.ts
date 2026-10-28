@@ -41,13 +41,10 @@ describe('US2: dashboard progress and streak display', () => {
     const container = document.createElement('div');
     render(harness, container);
 
-    const current = container.querySelector('.habit-tracker-week.is-current-week');
-    expect(current?.textContent).toContain('0 / 4');
-    expect(current?.textContent).toContain('In progress');
-    expect(current?.textContent).toContain('2 weeks');
-    expect(container.querySelector('[data-testid="habit-summary"]')?.textContent).toContain(
-      '2 weeks',
-    );
+    const row = container.querySelector('.habit-tracker-habit-row');
+    expect(row?.textContent).toContain('0 / 4');
+    expect(row?.textContent).toContain('In progress');
+    expect(row?.textContent).toContain('2 weeks');
   });
 
   it('updates progress and streak immediately after the target is reached', async () => {
@@ -78,14 +75,12 @@ describe('US2: dashboard progress and streak display', () => {
     const id = harness.controller.getViewModel().habits[0]?.habitId ?? '';
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.querySelector('.habit-tracker-week.is-current-week')?.textContent).toContain(
-      '3 / 4',
-    );
+    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain('3 / 4');
 
     await harness.controller.toggleCompletion(id, '2026-10-22', true);
     render(harness, container);
 
-    const current = container.querySelector('.habit-tracker-week.is-current-week');
+    const current = container.querySelector('.habit-tracker-habit-row');
     expect(current?.textContent).toContain('4 / 4');
     expect(current?.textContent).toContain('Successful');
     expect(current?.textContent).toContain('3 weeks');
@@ -115,15 +110,12 @@ describe('US2: dashboard progress and streak display', () => {
     const id = harness.controller.getViewModel().habits[0]?.habitId ?? '';
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.querySelector('.habit-tracker-week.is-current-week')?.textContent).toContain(
-      '0 weeks',
-    );
+    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain('0 weeks');
 
     await harness.controller.toggleCompletion(id, '2026-10-18', true);
     render(harness, container);
 
-    const current = container.querySelector('.habit-tracker-week.is-current-week');
+    const current = container.querySelector('.habit-tracker-habit-row');
     expect(current?.textContent).toContain('2 weeks');
-    expect(container.textContent).toContain('Successful');
   });
 });

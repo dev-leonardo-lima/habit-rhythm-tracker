@@ -1,11 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Modal, type WorkspaceLeaf } from 'obsidian';
+import type { WorkspaceLeaf } from 'obsidian';
 import HabitTrackerPlugin from '../../src/main';
 import { DashboardController } from '../../src/ui/dashboard-controller';
 import { HabitDashboardView, VIEW_TYPE_HABIT_DASHBOARD } from '../../src/ui/dashboard-view';
-import { RecoveryModal } from '../../src/ui/recovery-view';
 import { HabitTrackerSettingTab } from '../../src/ui/settings-tab';
-import { confirmWithModal } from '../../src/ui/confirm-modal';
 import { createHarness, localNoon } from '../helpers/controller-harness';
 import { createFakeApp } from '../helpers/fake-obsidian-app';
 
@@ -20,8 +18,6 @@ type MockPlugin = HabitTrackerPlugin & {
 };
 
 type MockLeaf = WorkspaceLeaf & { state?: { type: string; active?: boolean } | null };
-
-type MockModal = RecoveryModal & { isOpen: boolean };
 
 const manifest = {
   id: 'habit-tracker',
@@ -38,7 +34,7 @@ describe('plugin lifecycle and Obsidian views', () => {
   it('registers commands, ribbon, view, settings and refresh listeners', async () => {
     const { app, workspace, vault } = createFakeApp();
     const plugin = new HabitTrackerPlugin(app, manifest as never) as MockPlugin;
-    plugin.loadedData = { habitsFolder: 'Habits', recoveryFolder: 'Recovery' };
+    plugin.loadedData = { habitsFolder: 'Habits' };
     const intervalSpy = vi.spyOn(window, 'setInterval').mockReturnValue(1 as never);
     const loadSpy = vi.spyOn(DashboardController.prototype, 'load').mockResolvedValue();
     const refreshClockSpy = vi
@@ -47,11 +43,8 @@ describe('plugin lifecycle and Obsidian views', () => {
     const refreshSpy = vi.spyOn(DashboardController.prototype, 'refresh').mockResolvedValue();
 
     await plugin.onload();
-    expect(plugin.settings).toEqual({ habitsFolder: 'Habits', recoveryFolder: 'Recovery' });
-    expect(plugin.commands.map((command) => command.id)).toEqual([
-      'open-habit-dashboard',
-      'open-habit-recovery',
-    ]);
+    expect(plugin.settings).toEqual({ habitsFolder: 'Habits' });
+    expect(plugin.commands.map((command) => command.id)).toEqual(['open-habit-dashboard']);
     expect(plugin.ribbons[0]?.title).toBe('Open habit dashboard');
     expect(plugin.viewFactories[0]?.type).toBe(VIEW_TYPE_HABIT_DASHBOARD);
     expect(plugin.settingTabs).toHaveLength(1);
@@ -83,9 +76,6 @@ describe('plugin lifecycle and Obsidian views', () => {
     await commands[0]?.callback();
     expect(workspace.leaves.length).toBe(existingLeafCount);
 
-    commands[1]?.callback();
-    expect(document.body.textContent).toBeDefined();
-
     const leaf = workspace.leaves[0];
     if (!leaf) {
       throw new Error('missing leaf');
@@ -113,10 +103,29 @@ describe('plugin lifecycle and Obsidian views', () => {
     await plugin.activateDashboard();
   });
 
+  it('moves an existing sidebar dashboard into a main tab predictably', async () => {
+    const { app, workspace } = createFakeApp();
+    const plugin = new HabitTrackerPlugin(app, manifest as never) as MockPlugin;
+    plugin.loadedData = { habitsFolder: 'Habits' };
+    vi.spyOn(window, 'setInterval').mockReturnValue(1 as never);
+    await plugin.onload();
+
+    const sidebarLeaf = workspace.addLeaf();
+    (sidebarLeaf as MockLeaf).state = { type: VIEW_TYPE_HABIT_DASHBOARD };
+    (sidebarLeaf as unknown as { getRoot: () => unknown }).getRoot = () => ({});
+
+    await plugin.activateDashboard();
+
+    expect(workspace.leaves).not.toContain(sidebarLeaf);
+    const leaves = workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD);
+    expect(leaves).toHaveLength(1);
+    expect((leaves[0] as MockLeaf).state?.type).toBe(VIEW_TYPE_HABIT_DASHBOARD);
+  });
+
   it('updates settings only when both folders remain separate', async () => {
     const { app, workspace } = createFakeApp();
     const plugin = new HabitTrackerPlugin(app, manifest as never) as MockPlugin;
-    plugin.loadedData = { habitsFolder: 'Habits', recoveryFolder: 'Recovery' };
+    plugin.loadedData = { habitsFolder: 'Habits' };
     vi.spyOn(window, 'setInterval').mockReturnValue(1 as never);
     await plugin.onload();
     const leaf = workspace.addLeaf();
@@ -131,16 +140,16 @@ describe('plugin lifecycle and Obsidian views', () => {
     expect(rebind).toHaveBeenCalled();
     expect(loadSpy).toHaveBeenCalled();
 
-    await expect(plugin.updateSettings({ recoveryFolder: 'Health/Recovery' })).rejects.toThrow(
-      'must be separate',
+    await expect(plugin.updateSettings({ habitsFolder: '' })).rejects.toThrow(
+      'Enter a vault folder name',
     );
-    expect(plugin.settings.recoveryFolder).toBe('Recovery');
+    expect(plugin.settings.habitsFolder).toBe('Health');
   });
 
   it('renders and validates the settings tab', async () => {
     const { app } = createFakeApp();
     const plugin = new HabitTrackerPlugin(app, manifest as never) as MockPlugin;
-    plugin.loadedData = { habitsFolder: 'Habits', recoveryFolder: 'Recovery' };
+    plugin.loadedData = { habitsFolder: 'Habits' };
     vi.spyOn(window, 'setInterval').mockReturnValue(1 as never);
     await plugin.onload();
     const spy = vi.spyOn(plugin, 'updateSettings');
@@ -148,7 +157,7 @@ describe('plugin lifecycle and Obsidian views', () => {
     tab.display();
 
     const inputs = [...tab.containerEl.querySelectorAll('input')];
-    expect(inputs).toHaveLength(2);
+    expect(inputs).toHaveLength(1);
     expect(inputs[0]?.value).toBe('Habits');
     inputs[0]!.value = 'Health';
     inputs[0]!.dispatchEvent(new Event('input'));
@@ -157,13 +166,13 @@ describe('plugin lifecycle and Obsidian views', () => {
     expect(plugin.settings.habitsFolder).toBe('Health');
 
     const restore = vi.spyOn(plugin, 'updateSettings');
-    restore.mockRejectedValueOnce(new Error('The habit and recovery folders must be separate'));
-    inputs[1]!.value = 'Health';
-    inputs[1]!.dispatchEvent(new Event('input'));
+    restore.mockRejectedValueOnce(new Error('Enter a vault folder name'));
+    inputs[0]!.value = '';
+    inputs[0]!.dispatchEvent(new Event('input'));
     await flush();
-    expect(inputs[1]?.classList.contains('is-invalid')).toBe(true);
+    expect(inputs[0]?.classList.contains('is-invalid')).toBe(true);
     expect(tab.containerEl.querySelector('[role="alert"]')?.textContent).toContain(
-      'must be separate',
+      'Enter a vault folder name',
     );
   });
 
@@ -181,21 +190,21 @@ describe('plugin lifecycle and Obsidian views', () => {
     expect(view.getViewType()).toBe(VIEW_TYPE_HABIT_DASHBOARD);
     expect(view.getDisplayText()).toBe('Habit dashboard');
     expect(view.getIcon()).toBe('check-square');
-    expect(view.contentEl.textContent).toContain('Habit tracker');
-    expect(view.contentEl.querySelector('[data-testid="month-label"]')?.textContent).toBe(
-      'October 2026',
+    expect(view.contentEl.textContent).toContain('26 Oct – 1 Nov 2026');
+    expect(view.contentEl.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '26 Oct – 1 Nov 2026',
     );
 
-    harness.controller.nextMonth();
-    expect(view.contentEl.querySelector('[data-testid="month-label"]')?.textContent).toBe(
-      'November 2026',
+    harness.controller.nextWeek();
+    expect(view.contentEl.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '2 Nov – 8 Nov 2026',
     );
 
     await harness.controller.toggleCompletion(id, '2026-10-28', true);
     await harness.controller.toggleCompletion(id, '2026-10-28', false);
     expect(harness.controller.canUndo(id)).toBe(true);
     view.rebind();
-    expect(view.contentEl.textContent).toContain('Undo unmark');
+    expect(view.contentEl.textContent).toContain('Undo 2026-10-28');
 
     await view.onClose();
     expect(harness.controller.canUndo(id)).toBe(false);
@@ -207,71 +216,7 @@ describe('plugin lifecycle and Obsidian views', () => {
     await rebound.onOpen();
     provider.current = other.controller;
     rebound.rebind();
-    expect(rebound.contentEl.textContent).toContain('Habit tracker');
+    expect(rebound.contentEl.textContent).toContain('26 Oct – 1 Nov 2026');
     await rebound.onClose();
-  });
-
-  it('renders and focuses the recovery modal, refreshing on record changes', async () => {
-    const now = localNoon(2026, 10, 26);
-    const harness = createHarness({ now: () => now });
-    await harness.controller.load();
-    await harness.controller.createHabit('Gym', 7);
-    const id = harness.controller.getViewModel().habits[0]?.habitId ?? '';
-    await harness.controller.toggleCompletion(id, '2026-10-26', true);
-    await harness.controller.toggleCompletion(id, '2026-10-26', false);
-    const { app } = createFakeApp();
-    const modal = new RecoveryModal(app, () => harness.controller) as MockModal;
-    document.body.append(modal.modalEl);
-    modal.open();
-    expect(modal.titleEl.textContent).toBe('Habit recovery');
-    expect(modal.contentEl.textContent).toContain('Recovery');
-    expect(modal.contentEl.textContent).toContain('Unmark 2026-10-26 for Gym');
-    expect(document.activeElement).toBe(modal.contentEl);
-
-    await harness.controller.refresh();
-    expect(modal.contentEl.querySelectorAll('[data-operation-id]').length).toBeGreaterThan(0);
-    modal.close();
-    expect(modal.isOpen).toBe(false);
-    modal.modalEl.remove();
-  });
-
-  it('confirms deletions only on an explicit choice', async () => {
-    const { app } = createFakeApp();
-    let opened: Modal | null = null;
-    vi.spyOn(Modal.prototype, 'open').mockImplementation(function (this: Modal) {
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      opened = this;
-      this.onOpen();
-    });
-
-    const canceled = confirmWithModal(app, 'Delete record op-1?');
-    const modal = opened as Modal | null;
-    if (!modal) {
-      throw new Error('modal did not open');
-    }
-    modal.contentEl.querySelector<HTMLButtonElement>('[aria-label="Cancel deletion"]')?.click();
-    await expect(canceled).resolves.toBe(false);
-
-    opened = null;
-    const accepted = confirmWithModal(app, 'Delete record op-1?');
-    const second = opened as Modal | null;
-    if (!second) {
-      throw new Error('modal did not reopen');
-    }
-    second.contentEl
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Confirm deletion of selected recovery records"]',
-      )
-      ?.click();
-    await expect(accepted).resolves.toBe(true);
-
-    opened = null;
-    const closed = confirmWithModal(app, 'Delete record op-1?');
-    const third = opened as Modal | null;
-    if (!third) {
-      throw new Error('modal did not reopen');
-    }
-    third.close();
-    await expect(closed).resolves.toBe(false);
   });
 });

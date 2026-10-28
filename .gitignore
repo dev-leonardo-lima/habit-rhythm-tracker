@@ -11,6 +11,12 @@ test-vault/
 .env.*
 !.env.example
 
+# Impeccable review captures and generated mocks
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/build/
+.impeccable/config.local.json
+
 # Editor and operating-system files
 .DS_Store
 Thumbs.db

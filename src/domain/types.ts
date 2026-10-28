@@ -42,46 +42,6 @@ export interface Habit {
 export type WeekOutcome =
   'not-started' | 'in-progress' | 'successful' | 'unsuccessful' | 'excluded';
 
-export type RecoveryState = 'pending' | 'conflict' | 'applied' | 'discarded' | 'uncertain';
-
-export type OperationKind =
-  'create' | 'mark' | 'unmark' | 'rename' | 'target' | 'archive' | 'reactivate' | 'restore';
-
-export interface HabitSnapshot {
-  exists: boolean;
-  content: string | null;
-}
-
-export interface RecoveryIntent {
-  kind: OperationKind;
-  /** Full habit record intended after the operation. */
-  habit: Habit;
-  /** Date affected by a mark/unmark/restore operation. */
-  date?: LocalDate;
-  /** Human-readable description shown in the recovery area. */
-  summary: string;
-}
-
-export interface RecoveryRecord {
-  schemaVersion: 1;
-  operationId: string;
-  habitId: string;
-  habitPath: string;
-  base: HabitSnapshot;
-  intent: RecoveryIntent;
-  createdAt: string;
-  state: RecoveryState;
-}
-
-export interface RecoveryStatusRecord {
-  schemaVersion: 1;
-  operationId: string;
-  sequence: number;
-  state: RecoveryState;
-  recordedAt: string;
-  detail?: Record<string, unknown>;
-}
-
 export interface NoteIssue {
   path: string;
   code: string;

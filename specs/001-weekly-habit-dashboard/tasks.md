@@ -2,7 +2,7 @@
 description: "Dependency-ordered implementation tasks for the weekly and monthly habit dashboard"
 ---
 
-# Tasks: Weekly and Monthly Habit Dashboard
+# Tasks: Weekly Habit Dashboard
 
 **Input**: `specs/001-weekly-habit-dashboard/plan.md`, `spec.md`, `research.md`, `data-model.md`,
 `contracts/habit-note.md`, `contracts/dashboard.md`, and `quickstart.md`.
@@ -122,7 +122,7 @@ weekly tables, correct a past date, and reopen after rollover with all records p
 ### Implementation
 
 - [X] T040 [US3] Implement month-intersecting week enumeration and monthly totals in `src/domain/month-view.ts`; count past/current archived completions in their month and retain but exclude future-dated saved marks until their dates arrive.
-- [X] T041 [US3] Render all intersecting weeks as separate seven-column tables, including adjacent-month dates and noninteractive future marks, in `src/ui/month-dashboard.ts`.
+- [X] T041 [US3] Render all intersecting weeks as separate seven-column tables, including adjacent-month dates and noninteractive future marks, in `src/ui/week-dashboard.ts`.
 - [X] T042 [US3] Add month/week navigation, return-to-current, date/zone change and app-resume refresh, and lifecycle cleanup in `src/ui/calendar-controller.ts`.
 - [X] T043 [US3] Integrate monthly tables, historical corrections, archived-history access, totals, and rollover with the dashboard in `src/ui/dashboard-controller.ts` and `src/ui/dashboard-view.ts`.
 - [X] T044 [P] [US3] Add theme-aware responsive table, focus, and narrow-screen scrolling rules in `styles.css`.
@@ -209,3 +209,29 @@ integration require US1 and US2.
 - [X] T060 Make editor-state inspection fail closed when an open Markdown leaf cannot be identified or safely inspected in `src/ui/obsidian-editor-guard.ts`, and document any supported-API limitations in `docs/editor-state-spike.md`; add tests for missing views, missing file identities, and multiple leaves in `tests/unit/editor-guard.test.ts` per FR-018 and plan: editor-state protection (partial).
 - [X] T061 Preserve keyboard focus and unsaved form input across routine dashboard updates in `src/ui/dashboard-renderer.ts` and related view/controller code, while retaining required error-dialog focus; add interaction tests for repeated keyboard use and timed refresh in `tests/integration/ui-components.test.ts` per FR-014 and FR-023 (partial).
 - [X] T062 Perform and record developer-executed manual timing for creating a 4/week habit and correcting a prior-month date in `specs/001-weekly-habit-dashboard/validation.md`, including elapsed time and environment; do not treat scripted UI latency alone as a manual result per SC-001, SC-004, and T056 (partial).
+
+## Phase 9: Weekly Primary View Convergence
+
+**Decision (2026-10-28)**: the current week is the primary dashboard. This supersedes the monthly
+dashboard organization in T038–T044 and T059; the weekly target, streak, history, recovery, and
+integrity rules remain unchanged.
+
+- [X] T063 Update `spec.md`, `plan.md`, `data-model.md`, `contracts/dashboard.md`, `quickstart.md`, and `README.md` to describe a seven-day weekly dashboard with previous/next/current week navigation and no monthly primary grid.
+- [X] T064 Replace the monthly grid with a single Monday–Sunday week in `src/ui/week-dashboard.ts`, `src/ui/dashboard-renderer.ts`, and `src/ui/dashboard-controller.ts`; open on the current week and keep history reachable one week at a time.
+- [X] T065 Update week dashboard tests for seven-day rendering, previous/next/current navigation, rollover, historical edits, future marks, and archived weeks in `tests/integration/week-dashboard.test.ts` and related integration tests.
+- [X] T066 Verify the weekly view in Obsidian desktop as a central tab and at narrow widths; record results and any remaining limitations in `specs/001-weekly-habit-dashboard/validation.md`.
+- [X] T067 Preserve weekly targets, streaks, historical corrections, recovery inspection, undo, data integrity, and main-tab reopen behavior while removing the month-primary controls.
+
+## Phase 10: Remove Per-Operation Recovery Journal
+
+**Decision (2026-10-28)**: per-operation recovery/journal is removed from the product. This
+supersedes the journal and recovery-area requirements in T010, T016–T020, T024, T029–T032, T046–T047,
+T051, T057–T058, and the related spec/plan/contract sections. Only synthetic development/test vault
+recovery data was deleted; personal vaults were not touched.
+
+- [X] T068 Remove the recovery area, recovery command/modal, recovery view model, recovery settings, and per-edit recovery record creation from `src/`.
+- [X] T069 Simplify guarded writes and creation to snapshot comparison, create-if-absent, explicit conflict/failure warnings, and in-session unmark undo without a journal.
+- [X] T070 Remove legacy recovery modules and tests, and update guarded-write, lifecycle, repository, settings, plugin, and UI tests.
+- [X] T071 Update `spec.md`, `plan.md`, `data-model.md`, contracts, quickstart, README, development/data-format docs, PRODUCT.md, and DESIGN.md to remove recovery obligations and document the no-journal behavior.
+- [X] T072 Delete recovery files/folders from the project's synthetic development/test vaults only, with explicit user authorization; leave personal vaults and unrelated files untouched.
+- [X] T073 Verify the weekly dashboard in Obsidian desktop, keyboard operation, and narrow widths after the visual scale/spacing refinements; record results and remaining platform limitations in `validation.md`.

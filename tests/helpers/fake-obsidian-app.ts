@@ -106,6 +106,7 @@ export class FakeWorkspace {
   readonly leaves: WorkspaceLeaf[] = [];
   layoutReady = false;
   layoutReadyCallbacks: Array<() => void> = [];
+  readonly rootSplit = this;
 
   getLeavesOfType(type: string): WorkspaceLeaf[] {
     return this.leaves.filter((leaf) => (leaf as LeafWithState).state?.type === type);

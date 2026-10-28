@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SETTINGS,
   SettingsValidationError,
-  foldersOverlap,
   resolveSettings,
   validateFolder,
   validateSettings,
@@ -10,52 +9,29 @@ import {
 
 describe('settings validation', () => {
   it('normalizes folder names and rejects empty or parent segments', () => {
-    expect(validateFolder('  Habits/Health  ', 'habitsFolder')).toBe('Habits/Health');
-    expect(validateFolder('Habits\\Health', 'habitsFolder')).toBe('Habits/Health');
-    expect(validateFolder('Habits//Health', 'habitsFolder')).toBe('Habits/Health');
-    expect(() => validateFolder('   ', 'habitsFolder')).toThrow(SettingsValidationError);
-    expect(() => validateFolder('Habits/../Private', 'recoveryFolder')).toThrow(
-      'Folder names cannot contain',
-    );
-    expect(() => validateFolder('Habits/./Nested', 'recoveryFolder')).toThrow(
-      'Folder names cannot contain',
-    );
+    expect(validateFolder('  Habits/Health  ')).toBe('Habits/Health');
+    expect(validateFolder('Habits\\Health')).toBe('Habits/Health');
+    expect(validateFolder('Habits//Health')).toBe('Habits/Health');
+    expect(() => validateFolder('   ')).toThrow(SettingsValidationError);
+    expect(() => validateFolder('Habits/../Private')).toThrow('Folder names cannot contain');
+    expect(() => validateFolder('Habits/./Nested')).toThrow('Folder names cannot contain');
   });
 
-  it('rejects overlapping habit and recovery folders', () => {
-    expect(foldersOverlap('Habits', 'Habits')).toBe(true);
-    expect(foldersOverlap('Habits', 'Habits/Recovery')).toBe(true);
-    expect(foldersOverlap('Habits/Recovery', 'Habits')).toBe(true);
-    expect(foldersOverlap('Habits', 'Habit tracker recovery')).toBe(false);
-    expect(() =>
-      validateSettings({ habitsFolder: 'Habits', recoveryFolder: 'Habits/Recovery' }),
-    ).toThrow('must be separate');
-    expect(() =>
-      validateSettings({ habitsFolder: 'Journal/Habits', recoveryFolder: 'Journal' }),
-    ).toThrow('must be separate');
+  it('returns normalized valid settings and ignores legacy recovery fields', () => {
+    expect(validateSettings({ habitsFolder: ' Habits ' })).toEqual({ habitsFolder: 'Habits' });
+    expect(
+      resolveSettings({
+        habitsFolder: 'Habits',
+        recoveryFolder: 'Habit tracker recovery',
+      }),
+    ).toEqual({ habitsFolder: 'Habits' });
   });
 
-  it('returns normalized valid settings', () => {
-    expect(validateSettings({ habitsFolder: ' Habits ', recoveryFolder: ' Recovery ' })).toEqual({
-      habitsFolder: 'Habits',
-      recoveryFolder: 'Recovery',
-    });
-  });
-
-  it('resolves defaults for missing, malformed or unsafe persisted data', () => {
+  it('resolves defaults for missing or malformed persisted data', () => {
     expect(resolveSettings(null)).toEqual(DEFAULT_SETTINGS);
     expect(resolveSettings('nope')).toEqual(DEFAULT_SETTINGS);
     expect(resolveSettings({})).toEqual(DEFAULT_SETTINGS);
-    expect(resolveSettings({ habitsFolder: 'Habits', recoveryFolder: 'Recovery' })).toEqual({
-      habitsFolder: 'Habits',
-      recoveryFolder: 'Recovery',
-    });
-    expect(resolveSettings({ habitsFolder: 42, recoveryFolder: 'Recovery' })).toEqual({
-      habitsFolder: DEFAULT_SETTINGS.habitsFolder,
-      recoveryFolder: 'Recovery',
-    });
-    expect(resolveSettings({ habitsFolder: 'Habits', recoveryFolder: 'Habits/Recovery' })).toEqual(
-      DEFAULT_SETTINGS,
-    );
+    expect(resolveSettings({ habitsFolder: 42 })).toEqual(DEFAULT_SETTINGS);
+    expect(resolveSettings({ habitsFolder: 'Habits' })).toEqual({ habitsFolder: 'Habits' });
   });
 });

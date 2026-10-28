@@ -16,7 +16,15 @@ export interface HabitFormHandlers {
   createHabit(name: string, target: number): void | Promise<unknown>;
 }
 
-export function renderHabitForm(container: HTMLElement, handlers: HabitFormHandlers): void {
+export interface HabitFormOptions {
+  heading?: boolean;
+}
+
+export function renderHabitForm(
+  container: HTMLElement,
+  handlers: HabitFormHandlers,
+  options: HabitFormOptions = {},
+): void {
   formCounter += 1;
   const form = document.createElement('form');
   form.className = 'habit-tracker-form habit-tracker-create-form';
@@ -25,9 +33,11 @@ export function renderHabitForm(container: HTMLElement, handlers: HabitFormHandl
   form.setAttribute('aria-label', 'Create a habit');
   form.noValidate = true;
 
-  const heading = document.createElement('h2');
-  heading.textContent = 'New habit';
-  form.append(heading);
+  if (options.heading !== false) {
+    const heading = document.createElement('h2');
+    heading.textContent = 'New habit';
+    form.append(heading);
+  }
 
   const nameLabel = document.createElement('label');
   nameLabel.className = 'habit-tracker-field';

@@ -1,15 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DashboardHandlers } from '../../src/ui/dashboard-renderer';
-import type {
-  DashboardViewModel,
-  HabitSummaryViewModel,
-  RecoveryViewModel,
-} from '../../src/ui/dashboard-controller';
+import type { DashboardViewModel, HabitSummaryViewModel } from '../../src/ui/dashboard-controller';
 import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { renderHabitForm, parseHabitForm } from '../../src/ui/habit-form';
 import { renderHabitSettings } from '../../src/ui/habit-settings';
-import { renderMonthSummary, renderMonthWeeks } from '../../src/ui/month-dashboard';
-import { focusRecoveryContainer, renderRecoveryList } from '../../src/ui/recovery-renderer';
+import { renderHabitGrid } from '../../src/ui/week-dashboard';
 import {
   formatTimestamp,
   monthLabel,
@@ -32,10 +27,6 @@ function handlers(): DashboardHandlers {
     archiveHabit: vi.fn(),
     reactivateHabit: vi.fn(),
     cancelPendingArchive: vi.fn(),
-    retryRecovery: vi.fn(),
-    discardRecovery: vi.fn(),
-    restoreRecovery: vi.fn(),
-    deleteRecovery: vi.fn(),
     previousMonth: vi.fn(),
     nextMonth: vi.fn(),
     previousWeek: vi.fn(),
@@ -63,30 +54,6 @@ function summary(overrides: Partial<HabitSummaryViewModel> = {}): HabitSummaryVi
   };
 }
 
-function recovery(overrides: Partial<RecoveryViewModel> = {}): RecoveryViewModel {
-  return {
-    operationId: 'op-1',
-    habitId: 'habit-1',
-    habitName: 'Gym',
-    path: 'Habits/Gym.md',
-    kind: 'unmark',
-    date: '2026-10-26',
-    state: 'conflict',
-    stateLabel: 'Conflict',
-    createdAt: '2026-10-28T10:00:00.000Z',
-    summary: 'Unmark 2026-10-26 for Gym',
-    originalContent: 'original',
-    intendedContent: 'intended',
-    currentContent: 'current',
-    warnings: [],
-    canRetry: true,
-    canDiscard: true,
-    canRestore: true,
-    canDelete: true,
-    ...overrides,
-  };
-}
-
 function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewModel {
   return {
     today: '2026-10-28',
@@ -98,10 +65,8 @@ function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
     showArchived: false,
     message: null,
     issues: [],
-    recoveryIssues: [],
     weeks: [],
     habits: [],
-    recovery: [],
     undo: [],
     formResetVersion: 0,
     ...overrides,
@@ -183,79 +148,10 @@ describe('UI components', () => {
     expect(callbacks.cancelPendingArchive).toHaveBeenCalledWith('habit-3');
   });
 
-  it('renders recovery actions, warnings and focus targets', () => {
-    const container = document.createElement('div');
-    const callbacks = {
-      retryRecovery: vi.fn(),
-      discardRecovery: vi.fn(),
-      restoreRecovery: vi.fn(),
-      deleteRecovery: vi.fn(),
-    };
-    renderRecoveryList(
-      container,
-      [
-        recovery({ warnings: ['missing-status:1'] }),
-        recovery({
-          operationId: 'op-2',
-          state: 'applied',
-          stateLabel: 'Applied',
-          canRetry: false,
-          canDiscard: false,
-          canRestore: false,
-        }),
-      ],
-      callbacks,
-    );
-
-    expect(container.textContent).toContain('grow as you use the plugin');
-    expect(container.textContent).toContain('Warnings: missing-status:1');
-    container
-      .querySelector('button[aria-label="Retry recovery record Unmark 2026-10-26 for Gym"]')
-      ?.dispatchEvent(new Event('click'));
-    container
-      .querySelector(
-        'button[aria-label="Restore completion for recovery record Unmark 2026-10-26 for Gym"]',
-      )
-      ?.dispatchEvent(new Event('click'));
-    container
-      .querySelector('button[aria-label="Discard recovery record Unmark 2026-10-26 for Gym"]')
-      ?.dispatchEvent(new Event('click'));
-    container
-      .querySelector('button[aria-label="Delete recovery record Unmark 2026-10-26 for Gym"]')
-      ?.dispatchEvent(new Event('click'));
-
-    expect(callbacks.retryRecovery).toHaveBeenCalledWith('op-1');
-    expect(callbacks.restoreRecovery).toHaveBeenCalledWith('op-1');
-    expect(callbacks.discardRecovery).toHaveBeenCalledWith('op-1');
-    expect(callbacks.deleteRecovery).toHaveBeenCalledWith(['op-1']);
-
-    const applied = container.querySelector('[data-operation-id="op-2"]');
-    expect(applied?.querySelector('button[aria-label^="Retry"]')).toBeNull();
-
-    document.body.append(container);
-    focusRecoveryContainer(container);
-    expect(container.tabIndex).toBe(-1);
-    expect(document.activeElement).toBe(container);
-    container.remove();
-  });
-
-  it('renders empty recovery and month states', () => {
-    const recoveryContainer = document.createElement('div');
-    renderRecoveryList(recoveryContainer, [], {
-      retryRecovery: vi.fn(),
-      discardRecovery: vi.fn(),
-      restoreRecovery: vi.fn(),
-      deleteRecovery: vi.fn(),
-    });
-    expect(recoveryContainer.textContent).toContain('No recovery records');
-
-    const months = document.createElement('div');
-    renderMonthWeeks(months, [], { toggleCompletion: vi.fn() });
-    expect(months.textContent).toContain('No weeks to display');
-
-    const summaryContainer = document.createElement('div');
-    renderMonthSummary(summaryContainer, viewModel());
-    expect(summaryContainer.textContent).toContain('No habits yet');
+  it('renders an empty week state', () => {
+    const weeks = document.createElement('div');
+    renderHabitGrid(weeks, viewModel({ weeks: [] }), { toggleCompletion: vi.fn() });
+    expect(weeks.textContent).toContain('No week to display');
   });
 
   it('renders dashboard messages, issues, undo controls and navigation handlers', () => {
@@ -268,9 +164,6 @@ describe('UI components', () => {
         showArchived: true,
         message: { kind: 'error', text: 'Conflict detected' },
         issues: [{ path: 'Habits/Bad.md', code: 'missing-markers', message: 'Missing markers' }],
-        recoveryIssues: [
-          { path: 'Recovery/bad.md', code: 'invalid-recovery', message: 'Invalid record' },
-        ],
         habits: [summary()],
         undo: [{ habitId: 'habit-1', date: '2026-10-27' }],
       }),
@@ -282,18 +175,17 @@ describe('UI components', () => {
     expect(message?.getAttribute('role')).toBe('alert');
     expect(container.textContent).toContain('Loading habits…');
     expect(container.textContent).toContain('Habits/Bad.md');
-    expect(container.textContent).toContain('Recovery/bad.md');
     expect(
       (container.querySelector('input[aria-label="Show archived habits"]') as HTMLInputElement)
         .checked,
     ).toBe(true);
 
-    container.querySelector('button[aria-label="Next month"]')?.dispatchEvent(new Event('click'));
+    container.querySelector('button[aria-label="Next week"]')?.dispatchEvent(new Event('click'));
     container
       .querySelector('button[aria-label="Return to the current week"]')
       ?.dispatchEvent(new Event('click'));
     container
-      .querySelector('button[aria-label="Refresh habits and recovery records"]')
+      .querySelector('button[aria-label="Refresh habits"]')
       ?.dispatchEvent(new Event('click'));
     container
       .querySelector('button[aria-label="Undo unmark of 2026-10-27 for Gym"]')
@@ -304,7 +196,7 @@ describe('UI components', () => {
     archivedToggle.checked = false;
     archivedToggle.dispatchEvent(new Event('change'));
 
-    expect(callbacks.nextMonth).toHaveBeenCalled();
+    expect(callbacks.nextWeek).toHaveBeenCalled();
     expect(callbacks.goToCurrent).toHaveBeenCalled();
     expect(callbacks.refresh).toHaveBeenCalled();
     expect(callbacks.undoUnmark).toHaveBeenCalledWith('habit-1');
@@ -322,6 +214,13 @@ describe('UI components', () => {
     const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
     const unsubscribe = harness.controller.subscribe(render);
     render();
+    const createDetails = container.querySelector<HTMLDetailsElement>(
+      '[data-disclosure-key="create"]',
+    );
+    if (!createDetails) {
+      throw new Error('missing create panel');
+    }
+    createDetails.open = true;
 
     const name = container.querySelector<HTMLInputElement>(
       '[data-testid="create-habit-form"] input',

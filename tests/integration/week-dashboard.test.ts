@@ -3,6 +3,7 @@ import { parseHabitNote, replaceHabitBlock } from '../../src/storage/habit-note'
 import { DashboardController } from '../../src/ui/dashboard-controller';
 import { createDashboardHandlers } from '../../src/ui/controller-handlers';
 import { renderDashboard } from '../../src/ui/dashboard-renderer';
+import { renderHabitGrid } from '../../src/ui/week-dashboard';
 import { createHarness, localNoon } from '../helpers/controller-harness';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
@@ -14,83 +15,84 @@ function render(harness: ReturnType<typeof createHarness>, container: HTMLElemen
   );
 }
 
-describe('US3: month navigation, history and rollover', () => {
-  it('navigates months and weeks and returns to the current week', async () => {
+describe('US3: week navigation and history', () => {
+  it('opens on the current week with seven days and navigates between weeks', async () => {
     const now = localNoon(2026, 10, 28);
     const harness = createHarness({ now: () => now });
     addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
     await harness.controller.load();
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.querySelector('[data-testid="month-label"]')?.textContent).toBe(
-      'October 2026',
-    );
-    expect(container.querySelectorAll('[data-testid="week-table"]')).toHaveLength(5);
 
-    harness.controller.nextMonth();
-    render(harness, container);
-    expect(container.querySelector('[data-testid="month-label"]')?.textContent).toBe(
-      'November 2026',
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '26 Oct – 1 Nov 2026',
     );
-    expect(container.querySelectorAll('[data-testid="week-table"]')).toHaveLength(6);
+    expect(container.querySelectorAll('[data-testid="week-table"]')).toHaveLength(1);
+    expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
+    expect(container.querySelectorAll('.habit-tracker-habit-row')).toHaveLength(1);
 
-    harness.controller.previousMonth();
     harness.controller.nextWeek();
+    render(harness, container);
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '2 Nov – 8 Nov 2026',
+    );
+    expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
     expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
-    expect(harness.controller.getViewModel().focusedWeek).toBe('2026-11-02');
-    render(harness, container);
-    expect(
-      container.querySelector('.habit-tracker-week.is-focused-week')?.getAttribute('data-week'),
-    ).toBe('2026-11-02');
 
-    harness.controller.goToCurrent();
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-10');
-    expect(harness.controller.getViewModel().focusedWeek).toBe('2026-10-26');
+    harness.controller.previousWeek();
     render(harness, container);
-    expect(
-      container.querySelector('.habit-tracker-week.is-current-week')?.getAttribute('data-week'),
-    ).toBe('2026-10-26');
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '26 Oct – 1 Nov 2026',
+    );
+
+    harness.controller.previousWeek();
+    render(harness, container);
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '19 Oct – 25 Oct 2026',
+    );
+    container
+      .querySelector('button[aria-label="Return to the current week"]')
+      ?.dispatchEvent(new Event('click'));
+    render(harness, container);
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '26 Oct – 1 Nov 2026',
+    );
   });
 
-  it('follows the local date into a new month and week while open', async () => {
+  it('follows a weekly rollover while open and returns to the current week', async () => {
     let now = localNoon(2026, 10, 31);
     const harness = createHarness({ now: () => now });
     addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
     await harness.controller.load();
     const container = document.createElement('div');
     render(harness, container);
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-10');
 
     now = localNoon(2026, 11, 2);
     const change = await harness.controller.refreshClock();
     expect(change).toEqual({ dateChanged: true, weekChanged: true });
 
     render(harness, container);
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
-    expect(harness.controller.getViewModel().currentWeek).toBe('2026-11-02');
-    expect(container.querySelector('[data-testid="month-label"]')?.textContent).toBe(
-      'November 2026',
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '2 Nov – 8 Nov 2026',
     );
-    const current = container.querySelector('.habit-tracker-week.is-current-week');
-    expect(current?.getAttribute('data-week')).toBe('2026-11-02');
-    expect(current?.textContent).toContain('Current week');
+    expect(container.textContent).toContain('This week');
+    expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
   });
 
-  it('returns to the current month on a weekly rollover while browsing history', async () => {
+  it('returns to the current week on rollover while browsing history', async () => {
     let now = localNoon(2026, 10, 31);
     const harness = createHarness({ now: () => now });
     addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
     await harness.controller.load();
-    harness.controller.previousMonth();
-    harness.controller.previousMonth();
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-08');
+    harness.controller.previousWeek();
+    harness.controller.previousWeek();
+    expect(harness.controller.getViewModel().focusedWeek).toBe('2026-10-12');
 
     now = localNoon(2026, 11, 2);
     await harness.controller.refreshClock();
 
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
     expect(harness.controller.getViewModel().focusedWeek).toBe('2026-11-02');
-    expect(harness.controller.getViewModel().today).toBe('2026-11-02');
+    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
   });
 
   it('refreshes observed external edits after a suspend/resume', async () => {
@@ -112,14 +114,13 @@ describe('US3: month navigation, history and rollover', () => {
     await harness.controller.refreshClock();
 
     const view = harness.controller.getViewModel();
-    const current = view.weeks.find((week) => week.week === view.currentWeek);
-    expect(current?.rows[0]?.completed).toBe(1);
-    expect(current?.rows[0]?.cells.find((cell) => cell.date === '2026-10-27')?.completed).toBe(
-      true,
-    );
+    expect(view.weeks[0]?.rows[0]?.completed).toBe(1);
+    expect(
+      view.weeks[0]?.rows[0]?.cells.find((cell) => cell.date === '2026-10-27')?.completed,
+    ).toBe(true);
   });
 
-  it('persists a historical correction and updates the selected month total', async () => {
+  it('persists a historical correction in the displayed week', async () => {
     const now = localNoon(2026, 10, 28);
     const harness = createHarness({ now: () => now });
     addHabitNote(
@@ -129,30 +130,74 @@ describe('US3: month navigation, history and rollover', () => {
     );
     await harness.controller.load();
     const id = harness.controller.getViewModel().habits[0]?.habitId ?? '';
-    harness.controller.previousMonth();
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-09');
-    expect(harness.controller.getViewModel().habits[0]?.monthlyTotal).toBe(0);
+    for (let index = 0; index < 4; index += 1) {
+      harness.controller.previousWeek();
+    }
+    expect(harness.controller.getViewModel().focusedWeek).toBe('2026-09-28');
 
     const result = await harness.controller.toggleCompletion(id, '2026-09-30', true);
     expect(result?.status).toBe('applied');
     const view = harness.controller.getViewModel();
     expect(view.habits[0]?.monthlyTotal).toBe(1);
-    expect(view.weeks.find((week) => week.week === '2026-09-28')?.rows[0]?.completed).toBe(1);
+    expect(view.weeks[0]?.rows[0]?.completed).toBe(1);
 
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.querySelector('[data-testid="habit-summary"]')?.textContent).toContain('1');
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '28 Sep – 4 Oct 2026',
+    );
+    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain('1 / 4');
+    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain(
+      'Missed target',
+    );
     const reopened = new DashboardController({
       repository: harness.repository,
       writer: harness.writer,
       creator: harness.creator,
-      recoveryService: harness.recoveryService,
       now: () => now,
     });
     await reopened.load();
     expect(
       parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit.completions,
     ).toEqual(['2026-09-30']);
+  });
+
+  it('covers the compact grid edge states without a monthly view', async () => {
+    const now = localNoon(2026, 10, 28);
+    const harness = createHarness({ now: () => now });
+    await harness.controller.load();
+    await harness.controller.createHabit('Gym', 4);
+    const view = harness.controller.getViewModel();
+    const habit = view.habits[0];
+    const week = view.weeks[0];
+    if (!habit || !week) {
+      throw new Error('missing week fixture');
+    }
+    const handlers = { toggleCompletion: () => undefined };
+
+    const noRows = document.createElement('div');
+    renderHabitGrid(noRows, { ...view, habits: [habit], weeks: [{ ...week, rows: [] }] }, handlers);
+    expect(noRows.textContent).toContain('No habits yet');
+
+    const fallback = document.createElement('div');
+    renderHabitGrid(fallback, { ...view, habits: [], weeks: [week] }, handlers);
+    expect(fallback.textContent).toContain('Gym');
+
+    const pending = document.createElement('div');
+    renderHabitGrid(
+      pending,
+      { ...view, habits: [{ ...habit, pendingTarget: 3 }], weeks: [week] },
+      handlers,
+    );
+    expect(pending.textContent).toContain('3/wk from next week');
+
+    const pendingArchive = document.createElement('div');
+    renderHabitGrid(
+      pendingArchive,
+      { ...view, habits: [{ ...habit, pendingTarget: null, pendingArchive: true }], weeks: [week] },
+      handlers,
+    );
+    expect(pendingArchive.textContent).toContain('Archive next week');
   });
 
   it('keeps a future-dated saved mark visible but excluded until its date arrives', async () => {
@@ -164,7 +209,7 @@ describe('US3: month navigation, history and rollover', () => {
       'Habits/Gym.md',
     );
     await harness.controller.load();
-    harness.controller.nextMonth();
+    harness.controller.nextWeek();
     const container = document.createElement('div');
     render(harness, container);
     const cell = container.querySelector<HTMLInputElement>(
@@ -172,7 +217,6 @@ describe('US3: month navigation, history and rollover', () => {
     );
     expect(cell?.checked).toBe(true);
     expect(cell?.disabled).toBe(true);
-    expect(harness.controller.getViewModel().habits[0]?.monthlyTotal).toBe(0);
 
     now = localNoon(2026, 11, 2);
     await harness.controller.refreshClock();
@@ -185,7 +229,7 @@ describe('US3: month navigation, history and rollover', () => {
     expect(harness.controller.getViewModel().habits[0]?.monthlyTotal).toBe(1);
   });
 
-  it('shows archived-week history and counts it in the month total', async () => {
+  it('shows archived-week history and its excluded weekly state', async () => {
     const now = localNoon(2026, 10, 28);
     const harness = createHarness({ now: () => now });
     addHabitNote(
@@ -202,11 +246,16 @@ describe('US3: month navigation, history and rollover', () => {
       'Habits/Archived habit.md',
     );
     await harness.controller.load();
+    for (let index = 0; index < 3; index += 1) {
+      harness.controller.previousWeek();
+    }
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.textContent).toContain('Archived habit');
-    expect(container.querySelector('[data-testid="habit-summary"]')?.textContent).toContain('1');
-    const archivedWeek = container.querySelector('.habit-tracker-week[data-week="2026-10-05"]');
-    expect(archivedWeek?.textContent).toContain('Archived week (excluded)');
+    expect(container.querySelector('[data-testid="week-label"]')?.textContent).toBe(
+      '5 Oct – 11 Oct 2026',
+    );
+    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain(
+      'Archived week (excluded)',
+    );
   });
 });

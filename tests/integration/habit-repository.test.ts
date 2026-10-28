@@ -5,7 +5,6 @@ import {
   sanitizeHabitFileName,
 } from '../../src/storage/habit-repository';
 import { GuardedCreator } from '../../src/storage/guarded-create';
-import { RecoveryStore } from '../../src/storage/recovery-store';
 import { parseHabitNote, renderHabitNote } from '../../src/storage/habit-note';
 import { MemoryVault } from '../helpers/memory-vault';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
@@ -98,15 +97,12 @@ describe('habit repository and protected creation', () => {
 
   it('never overwrites an existing note during guarded creation', async () => {
     const vault = new MemoryVault();
-    const store = new RecoveryStore({ vault, folder: 'Recovery' });
-    const creator = new GuardedCreator({ vault, recoveryStore: store });
+    const creator = new GuardedCreator({ vault });
     const existing = 'Existing note, do not touch';
     vault.files.set('Habits/Gym.md', existing);
 
     const result = await creator.create('Habits/Gym.md', {
-      kind: 'create',
       habit: makeHabit({ name: 'Gym' }),
-      summary: 'Create Gym',
     });
 
     expect(result.status).toBe('conflict');
@@ -115,8 +111,7 @@ describe('habit repository and protected creation', () => {
 
   it('fails without overwriting when a path appears after the initial precheck', async () => {
     const vault = new MemoryVault();
-    const store = new RecoveryStore({ vault, folder: 'Recovery' });
-    const creator = new GuardedCreator({ vault, recoveryStore: store });
+    const creator = new GuardedCreator({ vault });
     const competitor = 'Created by another program';
     vault.beforeCreate = (path) => {
       if (path === 'Habits/Gym.md') {
@@ -125,17 +120,10 @@ describe('habit repository and protected creation', () => {
     };
 
     const result = await creator.create('Habits/Gym.md', {
-      kind: 'create',
       habit: makeHabit({ name: 'Gym' }),
-      summary: 'Create Gym',
     });
 
     expect(result.status).toBe('conflict');
     expect(vault.files.get('Habits/Gym.md')).toBe(competitor);
-
-    const listing = await store.list();
-    expect(listing.entries).toHaveLength(1);
-    expect(listing.entries[0]?.record.base).toEqual({ exists: false, content: null });
-    expect(listing.entries[0]?.record.intent.habit.name).toBe('Gym');
   });
 });

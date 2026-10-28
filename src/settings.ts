@@ -2,25 +2,23 @@ import { normalizeFolder } from './storage/habit-repository';
 
 export interface HabitTrackerSettings {
   habitsFolder: string;
-  recoveryFolder: string;
 }
 
 export const DEFAULT_SETTINGS: HabitTrackerSettings = {
   habitsFolder: 'Habits',
-  recoveryFolder: 'Habit tracker recovery',
 };
 
 export class SettingsValidationError extends Error {
-  readonly field: 'habitsFolder' | 'recoveryFolder' | 'overlap';
+  readonly field: 'habitsFolder';
 
-  constructor(field: 'habitsFolder' | 'recoveryFolder' | 'overlap', message: string) {
+  constructor(field: 'habitsFolder', message: string) {
     super(message);
     this.name = 'SettingsValidationError';
     this.field = field;
   }
 }
 
-export function validateFolder(folder: string, field: 'habitsFolder' | 'recoveryFolder'): string {
+export function validateFolder(folder: string, field: 'habitsFolder' = 'habitsFolder'): string {
   const normalized = normalizeFolder(folder);
   if (!normalized) {
     throw new SettingsValidationError(field, 'Enter a vault folder name');
@@ -32,20 +30,8 @@ export function validateFolder(folder: string, field: 'habitsFolder' | 'recovery
   return normalized;
 }
 
-export function foldersOverlap(left: string, right: string): boolean {
-  return left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`);
-}
-
 export function validateSettings(input: HabitTrackerSettings): HabitTrackerSettings {
-  const habitsFolder = validateFolder(input.habitsFolder, 'habitsFolder');
-  const recoveryFolder = validateFolder(input.recoveryFolder, 'recoveryFolder');
-  if (foldersOverlap(habitsFolder, recoveryFolder)) {
-    throw new SettingsValidationError(
-      'overlap',
-      'The habit and recovery folders must be separate and must not contain one another',
-    );
-  }
-  return { habitsFolder, recoveryFolder };
+  return { habitsFolder: validateFolder(input.habitsFolder) };
 }
 
 /**
@@ -60,10 +46,6 @@ export function resolveSettings(data: unknown): HabitTrackerSettings {
   const candidate: HabitTrackerSettings = {
     habitsFolder:
       typeof record.habitsFolder === 'string' ? record.habitsFolder : DEFAULT_SETTINGS.habitsFolder,
-    recoveryFolder:
-      typeof record.recoveryFolder === 'string'
-        ? record.recoveryFolder
-        : DEFAULT_SETTINGS.recoveryFolder,
   };
   try {
     return validateSettings(candidate);

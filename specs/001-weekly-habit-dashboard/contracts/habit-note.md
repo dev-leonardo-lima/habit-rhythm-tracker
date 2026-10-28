@@ -1,4 +1,4 @@
-# Contract: Habit Notes and Recovery
+# Contract: Habit Notes and Guarded Writes
 
 ## User-visible Markdown format
 
@@ -33,34 +33,26 @@ block in the note body between these literal markers; the JSON object is user-re
 - Creation must use a unique vault path; an existing note is never overwritten. Note moves and
   display-name changes preserve identity and all records.
 
-## Guarded change and recovery
+## Guarded change and conflict
 
-1. Capture the base note and requested change (or record the absence of a note for creation).
-   Persist and read back a complete, unique, human-readable recovery note outside the habit discovery
-   folder **before** touching the habit. If creation or verification of the recovery note fails,
-   abort with an error and leave the habit unchanged. For a new habit, create its target note only
-   after recovery preservation; if the path already exists or appears concurrently, fail without
-   overwriting it and retain the recovery intent.
-2. Serialize this plugin's writes per habit. Check active editor content/dirty state; if the plugin
-   cannot establish a safe comparison, stop and preserve the intent rather than write blindly.
-3. Use Obsidian `Vault.process` with a synchronous comparison of its current content with the base.
-   On equality, transform only the managed block; on mismatch, abort without modifying the note.
-4. Preserve the initial recovery note unchanged when recording success or conflict. Append a
-   separately named, unique status record and verify its content after writing. A failed, partial,
-   missing, or invalid status record must not overwrite the base snapshot or intent; after reopening,
-   expose the previous complete recovery record and flag the outcome as uncertain for inspection,
-   never blind replay. Retain incomplete records for explicit user review or deletion. If the editor
-   is dirty or its state cannot be safely checked, retain the intent and instruct the user to save or
-   close the editor before explicitly retrying.
-5. For a detected conflict, show the current note and pending change for comparison and ask for an
-   explicit retry against the latest valid note or discard. A retry repeats the guard; a subsequent
-   conflict retains both again. Discard changes status but preserves the record and its content.
-6. A recovery area lists each pending, conflict, uncertain, applied and discarded record with its
-   habit, date, original snapshot and intent. It explains that snapshots accumulate in the vault.
-   Explicit deletion of selected records requires confirmation naming them and warning of lost
-   recoverability. A preservation failure, including insufficient space, aborts the note change.
-   Inspection and resolution operate offline on desktop, iOS and Android.
-7. Any future format migration requires explicit user approval and a recoverable copy of the
+1. Capture the exact note content from which the requested change was computed, or the prior absence
+   of a note for creation. No recovery journal or per-edit copy is created.
+2. Serialize this plugin's writes per habit. Check active editor content and dirty state; if a safe
+   comparison cannot be established, do not write and tell the person to save or close the editor.
+3. For an update, use Obsidian `Vault.process` with a synchronous comparison of its current content
+   with the captured snapshot. On equality, transform only the managed block. On mismatch, abort
+   without modifying the note and report the conflict clearly.
+4. For creation, use a create-if-absent operation and fail on a path collision, including a note that
+   appears after the initial path check. Never overwrite the existing note.
+5. A conflict, editor block, failed write, or uncertain outcome leaves the previously saved note
+   intact and reports the issue in text. The person may review the note and repeat the action, which
+   performs a fresh guarded comparison. Nothing is replayed blindly.
+6. Immediate undo is available for the latest unmark in-session until the dashboard closes or another
+   successful change to that habit occurs. No unsaved intent is promised to survive an unexpected
+   app exit.
+7. Existing `recovery-*` files from earlier development builds are ignored and left untouched. The
+   plugin does not read, modify, append to, or automatically delete them.
+8. Any future format migration requires explicit user approval and a recoverable copy of the
    original before conversion; failure leaves the original available. Unknown schema versions are
    reported and left unchanged. No automatic cleanup or permanent habit deletion is in scope.
 
