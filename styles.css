@@ -398,9 +398,8 @@
   border-left: 1px solid var(--ht-line);
 }
 
-.habit-tracker-day-head.is-current-week .habit-tracker-weekday,
-.habit-tracker-day-head.is-current-week:not(.is-today) .habit-tracker-date-number {
-  color: var(--interactive-accent);
+.habit-tracker-day-head.is-current-week {
+  background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
 }
 
 .habit-tracker-day-head.is-outside-month {
