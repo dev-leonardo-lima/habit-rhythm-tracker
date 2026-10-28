@@ -400,7 +400,7 @@
 }
 
 .habit-tracker-day-head.is-current-week {
-  background: var(--ht-accent-faint);
+  background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
 }
 
 .habit-tracker-day-head.is-outside-month {
@@ -519,10 +519,6 @@
 
 .habit-tracker-day-cell.is-week-start {
   border-left-color: var(--ht-line);
-}
-
-.habit-tracker-day-cell.is-current-week {
-  background: var(--ht-accent-faint);
 }
 
 .habit-tracker-day-cell.is-outside-month {

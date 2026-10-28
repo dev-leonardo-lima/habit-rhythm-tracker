@@ -157,6 +157,11 @@
         "name": "The Quiet Label Rule",
         "body": "Metadata is small and muted but never hidden or color-only. Status is always written in words.",
         "section": "typography"
+      },
+      {
+        "name": "The Header-Only Week Marker",
+        "body": "Current-week tint is limited to the seven day headers and the This week context label. Body cells keep the ground tone so completion marks stay dominant.",
+        "section": "layout"
       }
     ],
     "dos": [
