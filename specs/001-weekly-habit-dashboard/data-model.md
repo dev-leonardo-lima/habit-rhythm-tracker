@@ -50,9 +50,8 @@
 ## Completion and weekly outcome
 
 - **Completion**: at most one mark per habit and local date. The user may explicitly mark/unmark
-  dates from creation through today. The latest unmark per habit can be undone until the dashboard
-  closes or another change to that habit succeeds. After that window, no recovery of the unmark is
-  promised after an unexpected app exit.
+  dates from creation through today. An eligible unmarked date can be marked again directly. No
+  recovery of an unsaved intent is promised after an unexpected app exit.
 - **Weekly outcome**: derive distinct completed days whose dates are within the week, not after
   today, and on/after creation; compare with the effective target. The current week is `successful`
   once the target is met, otherwise `in progress`; a past evaluable week is `successful` or
@@ -70,8 +69,8 @@
 - **Failure**: a conflict, editor block, write failure, or uncertain outcome leaves the previously
   saved note intact and reports the issue. The person may review the note and repeat the action with
   a fresh guarded comparison; nothing is replayed blindly after an unexpected exit.
-- **No journal**: the plugin does not create per-edit recovery records or a recovery area. Immediate
-  undo is in-session only. Existing `recovery-*` files from earlier development builds are ignored
+- **No journal**: the plugin does not create per-edit recovery records or a recovery area. Existing
+  `recovery-*` files from earlier development builds are ignored
   and left untouched; no automatic cleanup or deletion is performed.
 - **Migration**: before an approved format migration, preserve the original in a recoverable backup.
   Failed migration leaves the original available; unknown or unsupported versions are reported and

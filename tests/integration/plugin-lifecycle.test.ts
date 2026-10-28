@@ -176,7 +176,7 @@ describe('plugin lifecycle and Obsidian views', () => {
     );
   });
 
-  it('opens a dashboard view, re-renders on changes and clears undo on close', async () => {
+  it('opens a dashboard view, re-renders on changes and unsubscribes on close', async () => {
     const now = localNoon(2026, 10, 28);
     const harness = createHarness({ now: () => now });
     await harness.controller.load();
@@ -202,12 +202,14 @@ describe('plugin lifecycle and Obsidian views', () => {
 
     await harness.controller.toggleCompletion(id, '2026-10-28', true);
     await harness.controller.toggleCompletion(id, '2026-10-28', false);
-    expect(harness.controller.canUndo(id)).toBe(true);
     view.rebind();
-    expect(view.contentEl.textContent).toContain('Undo 2026-10-28');
+    expect(view.contentEl.textContent).not.toContain('Undo 2026-10-28');
 
     await view.onClose();
-    expect(harness.controller.canUndo(id)).toBe(false);
+    harness.controller.previousWeek();
+    expect(
+      view.contentEl.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label'),
+    ).toBe('2 Nov – 8 Nov 2026');
 
     const other = createHarness({ now: () => now, vault: harness.vault });
     await other.controller.load();

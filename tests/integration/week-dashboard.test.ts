@@ -30,6 +30,10 @@ describe('US3: week navigation and history', () => {
     expect(container.querySelectorAll('[data-testid="week-table"]')).toHaveLength(1);
     expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
     expect(container.querySelectorAll('.habit-tracker-gutter-head')).toHaveLength(1);
+    expect(container.querySelector('.habit-tracker-gutter-head')?.classList).toContain(
+      'is-current-week',
+    );
+    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('This week');
     expect(container.querySelectorAll('.habit-tracker-gutter-cell')).toHaveLength(1);
     expect(container.querySelectorAll('.habit-tracker-habit-row')[0]?.children).toHaveLength(9);
     expect(container.querySelectorAll('.habit-tracker-habit-row')).toHaveLength(1);
@@ -41,6 +45,11 @@ describe('US3: week navigation and history', () => {
     );
     expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
     expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
+    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('');
+    expect(container.querySelector('.habit-tracker-week-meta button')).toBeNull();
+    expect(container.querySelector('.habit-tracker-gutter-head')?.classList).not.toContain(
+      'is-current-week',
+    );
 
     harness.controller.previousWeek();
     render(harness, container);
@@ -53,9 +62,8 @@ describe('US3: week navigation and history', () => {
     expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '19 Oct – 25 Oct 2026',
     );
-    container
-      .querySelector('button[aria-label="Return to the current week"]')
-      ?.dispatchEvent(new Event('click'));
+    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('');
+    harness.controller.nextWeek();
     render(harness, container);
     expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '26 Oct – 1 Nov 2026',
@@ -253,7 +261,49 @@ describe('US3: week navigation and history', () => {
     ).toBeUndefined();
   });
 
-  it('keeps successful routine changes quiet while exposing undo', async () => {
+  it('shows weekly progress without counting future marks and caps the visual rail at the target', async () => {
+    const now = localNoon(2026, 10, 30);
+    const harness = createHarness({ now: () => now });
+    addHabitNote(
+      harness.vault.files,
+      makeHabit({
+        name: 'Gym',
+        completions: ['2026-10-26', '2026-10-27', '2026-11-01'],
+      }),
+      'Habits/Gym.md',
+    );
+    await harness.controller.load();
+    const container = document.createElement('div');
+    render(harness, container);
+    const fill = () => container.querySelector<HTMLElement>('.habit-tracker-progress-fill');
+    expect(fill()?.style.width).toBe('50%');
+    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toContain('2 / 4');
+
+    const habitId = harness.controller.getViewModel().habits[0]?.habitId ?? '';
+    for (const date of ['2026-10-28', '2026-10-29', '2026-10-30']) {
+      await harness.controller.toggleCompletion(habitId, date, true);
+    }
+    render(harness, container);
+    expect(fill()?.style.width).toBe('100%');
+    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toContain('5 / 4');
+  });
+
+  it('preserves the horizontal position of the week when the dashboard refreshes', async () => {
+    const harness = createHarness({ now: () => localNoon(2026, 10, 28) });
+    addHabitNote(harness.vault.files, makeHabit(), 'Habits/Gym.md');
+    await harness.controller.load();
+    const container = document.createElement('div');
+    render(harness, container);
+    const scroll = container.querySelector<HTMLElement>('.habit-tracker-grid-scroll');
+    if (!scroll) {
+      throw new Error('missing week scroll container');
+    }
+    scroll.scrollLeft = 42;
+    render(harness, container);
+    expect(container.querySelector<HTMLElement>('.habit-tracker-grid-scroll')?.scrollLeft).toBe(42);
+  });
+
+  it('keeps successful changes quiet and lets a date be marked again after unmarking', async () => {
     const now = localNoon(2026, 10, 28);
     const harness = createHarness({ now: () => now });
     await harness.controller.load();
@@ -272,9 +322,17 @@ describe('US3: week navigation and history', () => {
     );
     render(harness, container);
     expect(container.querySelector('[data-testid="status-message"]')).toBeNull();
+    expect(container.querySelector('.habit-tracker-undo')).toBeNull();
+    expect((await harness.controller.toggleCompletion(id, '2026-10-28', true))?.status).toBe(
+      'applied',
+    );
+    render(harness, container);
     expect(
-      container.querySelector('button[aria-label^="Undo unmark of 2026-10-28"]'),
-    ).not.toBeNull();
+      container.querySelector<HTMLInputElement>('input[data-date="2026-10-28"]')?.checked,
+    ).toBe(true);
+    expect(
+      parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit.completions,
+    ).toContain('2026-10-28');
   });
 
   it('keeps a future-dated saved mark visible but excluded until its date arrives', async () => {
@@ -334,5 +392,6 @@ describe('US3: week navigation and history', () => {
     expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain(
       'Archived week (excluded)',
     );
+    expect(container.querySelector('.habit-tracker-progress')).toBeNull();
   });
 });

@@ -48,8 +48,8 @@ scope.
 Capture the exact note content used to compute the edit, then use `Vault.process` with a synchronous
 snapshot comparison. On mismatch, missing/malformed note, or ambiguous dirty editor state, abort
 without modifying the note and show a clear warning. The person may review the note and repeat the
-action for a fresh guarded comparison. Do not create recovery records or a recovery area. Immediate
-undo is in-session only; no unsaved intent is promised to survive an unexpected app exit.
+action for a fresh guarded comparison. Do not create recovery records or a recovery area. An eligible
+unmarked date can be marked again directly; no unsaved intent is promised to survive an unexpected app exit.
 
 **Rationale**: The product is for individual use and does not need a journal per operation. The
 protected local write and snapshot comparison preserve the existing note and concurrent changes;
@@ -80,9 +80,9 @@ user's date; storing calculated streaks as authoritative risks stale results aft
 ## Dashboard and accessibility
 
 **Decision**: Register an Obsidian `ItemView`, accessible through a command and ribbon action, using
-native DOM controls and theme variables. Render all month-intersecting weeks as separate seven-column
-habit tables; provide explicit month/week navigation, a current-week shortcut, visible progress and
-streak labels, keyboard-operable labeled checkboxes, and horizontal scrolling on narrow displays.
+native DOM controls and theme variables. Render one seven-day week at a time; provide previous/next
+week navigation, visible progress and streak labels, and keyboard-operable labeled checkboxes. On
+narrow displays, place the habit details above the days with horizontal scrolling if needed.
 Use the local clock to refresh at a date/zone change and on resume; register and clean up listeners
 and timers with the view/plugin lifecycle.
 

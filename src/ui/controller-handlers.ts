@@ -6,7 +6,6 @@ export function createDashboardHandlers(controller: DashboardController): Dashbo
     createHabit: (name, target) => controller.createHabit(name, target),
     toggleCompletion: (habitId, date, completed) =>
       controller.toggleCompletion(habitId, date, completed),
-    undoUnmark: (habitId) => controller.undoLastUnmark(habitId),
     renameHabit: (habitId, name) => controller.renameHabit(habitId, name),
     changeColor: (habitId, color) => controller.changeColor(habitId, color),
     changeTarget: (habitId, target) => controller.changeTarget(habitId, target),
@@ -17,6 +16,5 @@ export function createDashboardHandlers(controller: DashboardController): Dashbo
     nextMonth: () => controller.nextMonth(),
     previousWeek: () => controller.previousWeek(),
     nextWeek: () => controller.nextWeek(),
-    goToCurrent: () => controller.goToCurrent(),
   };
 }

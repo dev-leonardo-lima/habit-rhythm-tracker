@@ -4,6 +4,9 @@ description: "Dependency-ordered implementation tasks for the weekly and monthly
 
 # Tasks: Weekly Habit Dashboard
 
+**Historical record**: Completed tasks below describe the decisions at the time they were carried
+out. The current specification supersedes earlier undo controls and the return-to-current shortcut.
+
 **Input**: `specs/001-weekly-habit-dashboard/plan.md`, `spec.md`, `research.md`, `data-model.md`,
 `contracts/habit-note.md`, `contracts/dashboard.md`, and `quickstart.md`.
 

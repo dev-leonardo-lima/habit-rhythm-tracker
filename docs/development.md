@@ -36,7 +36,7 @@ fails the command.
 - `tests/unit/` covers local dates, note codecs, weekly targets, streaks, week views, settings, and
   guarded-write result validation.
 - `tests/integration/` covers repository discovery, guarded writes and creation,
-  undo, conflicts, lifecycle changes, week navigation, UI rendering, and plugin lifecycle.
+  repeated marking, conflicts, lifecycle changes, week navigation, UI rendering, and plugin lifecycle.
 - `tests/mocks/obsidian.ts` provides the minimal Obsidian runtime used by Vitest; production builds
   use the real `obsidian` package as an external dependency.
 - Fixtures are synthetic. Tests never read or write a personal vault.

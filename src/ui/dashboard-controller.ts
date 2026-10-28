@@ -37,7 +37,6 @@ import {
   weekdayName,
   weekdayShort,
 } from './text';
-import { UndoController } from './undo-controller';
 
 export type MessageKind = 'info' | 'warning' | 'error';
 
@@ -128,7 +127,6 @@ export interface DashboardViewModel {
   issues: NoteIssue[];
   weeks: WeekViewModel[];
   habits: HabitSummaryViewModel[];
-  undo: Array<{ habitId: string; date: LocalDate }>;
   formResetVersion: number;
 }
 
@@ -152,7 +150,6 @@ export class DashboardController {
   private readonly now: () => Date;
   private readonly notify: ((message: string) => void) | null;
   private readonly calendar: CalendarController;
-  private readonly undo: UndoController;
   private readonly listeners = new Set<() => void>();
   private discovered: Array<{ path: string; habit: Habit }> = [];
   private pathById = new Map<string, string>();
@@ -168,7 +165,6 @@ export class DashboardController {
     this.now = options.now ?? (() => new Date());
     this.notify = options.notify ?? null;
     this.calendar = new CalendarController(todayLocalDate(this.now()));
-    this.undo = new UndoController(() => this.now().getTime());
   }
 
   subscribe(listener: () => void): () => void {
@@ -256,10 +252,6 @@ export class DashboardController {
       issues: this.issues,
       weeks,
       habits: summaries,
-      undo: this.undo.activeEntries().map((entry) => ({
-        habitId: entry.habitId,
-        date: entry.date,
-      })),
       formResetVersion: this.formResetVersion,
     };
   }
@@ -404,20 +396,6 @@ export class DashboardController {
     this.emit();
   }
 
-  closeDashboard(): void {
-    this.undo.clearAll();
-    this.emit();
-  }
-
-  canUndo(habitId: string): boolean {
-    return this.undo.peek(habitId) !== null;
-  }
-
-  getUndo(habitId: string): { date: LocalDate } | null {
-    const entry = this.undo.peek(habitId);
-    return entry ? { date: entry.date } : null;
-  }
-
   async createHabit(name: string, target = 7): Promise<WriteResult | null> {
     let habit: Habit;
     try {
@@ -431,7 +409,7 @@ export class DashboardController {
     if (result.status === 'applied') {
       this.formResetVersion += 1;
     }
-    await this.handleWriteResult(result, habit.id, null);
+    await this.handleWriteResult(result);
     return result;
   }
 
@@ -466,46 +444,7 @@ export class DashboardController {
       date,
       baseContent: fresh.content,
     });
-    await this.handleWriteResult(result, habitId, desired ? null : date);
-    return result;
-  }
-
-  async undoLastUnmark(habitId: string): Promise<WriteResult | null> {
-    const entry = this.undo.peek(habitId);
-    if (!entry) {
-      this.setMessage('warning', 'There is no recent unmark to undo for this habit.');
-      return null;
-    }
-    let fresh: DiscoveredHabit;
-    try {
-      fresh = await this.loadFresh(habitId);
-    } catch (error) {
-      this.setMessage('error', error instanceof Error ? error.message : String(error));
-      return null;
-    }
-    if (fresh.habit.completions.includes(entry.date)) {
-      this.undo.clearHabit(habitId);
-      await this.refresh();
-      return null;
-    }
-    let updated: Habit;
-    try {
-      updated = markCompletion(fresh.habit, entry.date, this.calendar.today);
-    } catch (error) {
-      this.setMessage('error', error instanceof Error ? error.message : String(error));
-      return null;
-    }
-    const result = await this.writer.update(fresh.path, {
-      habit: updated,
-      date: entry.date,
-      baseContent: fresh.content,
-    });
-    if (result.status === 'applied') {
-      this.undo.clearHabit(habitId);
-      await this.handleWriteResult(result, habitId, null);
-    } else {
-      await this.handleWriteResult(result, habitId, null);
-    }
+    await this.handleWriteResult(result);
     return result;
   }
 
@@ -559,23 +498,12 @@ export class DashboardController {
       habit: updated,
       baseContent: fresh.content,
     });
-    await this.handleWriteResult(result, habitId, null);
+    await this.handleWriteResult(result);
     return result;
   }
 
-  private async handleWriteResult(
-    result: WriteResult,
-    habitId: string | null,
-    unmarkDate: LocalDate | null,
-  ): Promise<void> {
+  private async handleWriteResult(result: WriteResult): Promise<void> {
     if (result.status === 'applied') {
-      if (habitId) {
-        if (unmarkDate) {
-          this.undo.recordUnmark(habitId, unmarkDate);
-        } else {
-          this.undo.clearHabit(habitId);
-        }
-      }
       this.message = null;
       await this.refresh();
       return;

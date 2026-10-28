@@ -39,7 +39,6 @@ export class HabitDashboardView extends ItemView {
   override async onClose(): Promise<void> {
     this.unsubscribe?.();
     this.unsubscribe = null;
-    this.controller.closeDashboard();
   }
 
   /** Re-subscribes after settings validation rebuilds the controller stack. */

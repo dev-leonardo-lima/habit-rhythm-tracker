@@ -19,7 +19,7 @@ weekly calculations, data protection, and recovery before implementation.
 
 ## Requirement Clarity
 
-- [x] CHK006 Is the duration and scope of the promised undo action defined, including what happens after closing the view or application? [Clarity, Spec §FR-004, Gap]
+- [x] CHK006 Is direct re-marking of an eligible unmarked date defined, together with the boundary for unsaved changes? [Clarity, Spec §FR-004, FR-021]
 - [x] CHK007 Is the distinction between a configured weekly target and an effective first-week target clear for every creation date? [Clarity, Spec §FR-005]
 - [x] CHK008 Are the exact conditions for an in-progress, successful, unsuccessful, or excluded week specified? [Clarity, Spec §FR-005–FR-006, Plan §Phase 0/1 design decisions]
 - [x] CHK009 Is the meaning of consecutive evaluable weeks clear when archived weeks occur between successful weeks? [Clarity, Spec §FR-006, Ambiguity]
@@ -31,7 +31,7 @@ weekly calculations, data protection, and recovery before implementation.
 - [x] CHK012 Do the first-week examples and progress requirements consistently apply the reduced target when a habit starts late in the week? [Consistency, Spec §User Story 1, FR-005]
 - [x] CHK013 Are current streak rules consistent between the user stories, functional requirements, and archived-week assumptions? [Consistency, Spec §User Story 2, FR-006, Data Model §Active/archive history]
 - [x] CHK014 Are target changes, scheduled archiving, and reactivation consistent about which weeks remain affected and how prior results are preserved? [Consistency, Spec §FR-011, Data Model §Target history, §Active/archive history]
-- [x] CHK015 Are requirements for explicit deletion, unmarking, undo, and retained recovery records consistent with the project constitution? [Consistency, Spec §FR-004, FR-016, Constitution §I]
+- [x] CHK015 Are explicit deletion, unmarking, re-marking, and guarded-write requirements consistent with the project constitution? [Consistency, Spec §FR-004, FR-016, Constitution §I]
 - [x] CHK016 Are the spec and plan consistent about the boundary between detected local conflicts and independently synchronized offline changes? [Consistency, Spec §FR-018, Plan §Constitution Check]
 
 ## Acceptance Criteria Quality

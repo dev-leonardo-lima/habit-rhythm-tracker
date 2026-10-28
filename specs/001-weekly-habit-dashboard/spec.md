@@ -19,6 +19,8 @@ successful weeks, automatic rollover, and persistent history.
 - Q: How should the notes that store habits be organized? → A: One Markdown note per habit, containing its target and history.
 - Q: What should happen when a habit note changes while a dashboard edit is being saved? → A: Stop the save, leave the changed note untouched, and warn the person to review it and repeat the action explicitly.
 - Q: What is the primary time frame of the dashboard? → A: The current week, displayed as exactly seven days; previous and next weeks are reachable through navigation. A monthly grid is not the primary view.
+- Q: How should a completion be restored after unmarking? → A: Mark the same date again; no separate undo control is shown.
+- Q: How should the header behave away from the current week? → A: Hide the “This week” label and any return button while keeping its space so the layout does not shift; navigate using the arrows.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -40,8 +42,7 @@ the dashboard; all four records and 4/4 progress remain visible.
 2. **Given** an active habit, **When** the person marks a date up to and including today, **Then**
    the cell shows completion and weekly progress increases once for that date.
 3. **Given** a marked completion, **When** the person explicitly unmarks it, **Then** it no longer
-   counts and the latest unmark for that habit can be undone until the dashboard closes or another
-   change to that habit succeeds. After that window, no recovery of the unmark is promised.
+   counts. The person can mark the same eligible date again, without a separate undo control.
 4. **Given** a future date or a date before the habit was created, **When** the person attempts to
    mark it, **Then** the action is prevented and history remains unchanged.
 5. **Given** a habit with a target of four days is created on Friday, **When** the person completes
@@ -120,6 +121,9 @@ and verify that the current week is shown on reopen and old records remain acces
    remains visible while the archived week is excluded from the streak.
 8. **Given** a selected week, **When** its header is displayed, **Then** the year appears as a smaller
    label centered above the date range. A week crossing a year boundary shows both years.
+9. **Given** a historical or future week, **When** its header is displayed, **Then** the “This week”
+   label and any return button are absent while the header retains its layout. The arrows navigate
+   back to the current week.
 
 ---
 
@@ -188,10 +192,9 @@ old target and that history remains accessible.
   habit-name column from the first day while headers and body cells remain aligned.
 - **FR-003**: A person MUST be able to mark and unmark a completion per habit and date, from the
   creation date through today, including in past weeks; future dates MUST remain unavailable.
-- **FR-004**: Unmarking MUST be an explicit action and immediately offer undo for the latest
-  unmark of that habit until the dashboard closes or another change to that habit succeeds. After
-  that window, the unmark is not promised to be recoverable after an unexpected app exit. The
-  system MUST report failures and preserve previously saved data.
+- **FR-004**: Unmarking MUST be an explicit action. A person MUST be able to mark the same eligible
+  date again without a separate undo control. The system MUST report failures and preserve previously
+  saved data.
 - **FR-005**: The dashboard MUST show, for each habit, distinct completed days in the week, the
   effective target, and whether the week is not started, in progress, successful, ended without
   meeting the target, or excluded because it is archived. A wholly future week is not started. In
@@ -207,8 +210,8 @@ old target and that history remains accessible.
   update the current date and week while open. When a new week begins, it MUST show the new current
   week; when reopened, it MUST reflect the local date.
 - **FR-008**: A person MUST be able to navigate to the previous and next week, review historical
-  records, and return to the current week. The view MUST display exactly seven days, Monday through
-  Sunday, with habits in rows and interactive completion controls.
+  records, and return to the current week using the arrows. The view MUST display exactly seven days,
+  Monday through Sunday, with habits in rows and interactive completion controls.
 - **FR-009**: A week spanning months MUST have the same seven days, target, and weekly result
   regardless of which navigation path reaches it. No monthly aggregate is required by the primary
   dashboard.
@@ -238,8 +241,8 @@ old target and that history remains accessible.
   action MUST perform a fresh guarded comparison against the latest note; another conflict MUST again
   preserve the existing note. If an open editor is unsaved or its state cannot be safely checked, no
   write is attempted and the person is told to save or close the editor before repeating the action.
-- **FR-019**: The plugin MUST NOT create per-edit recovery records or a recovery area. Immediate undo
-  is in-session only. Any `recovery-*` files left by earlier development builds MUST be ignored and
+- **FR-019**: The plugin MUST NOT create per-edit recovery records or a recovery area. Any
+  `recovery-*` files left by earlier development builds MUST be ignored and
   left untouched; no automatic cleanup or deletion is performed.
 - **FR-020**: Guarded writes MUST capture the exact note content used to compute an edit, compare it
   with the current note, and preserve the existing note on mismatch, write failure, or uncertain
@@ -261,18 +264,21 @@ old target and that history remains accessible.
   is absent or invalid, the theme accent MUST be used.
 - **FR-026**: The week header MUST be centered as a group with previous/next arrows beside it, the
   year as a smaller label above the date range, and no habit count. A week crossing a year boundary
-  MUST show both years without ambiguity. Completion runs MUST NOT display count labels inside the
-  bars; weekly progress remains available as text.
+  MUST show both years without ambiguity. “This week” MUST appear only for the current week; other
+  weeks reserve its space without showing a button. The current-week tint MUST extend across the
+  gutter immediately before the first day. Today MUST be indicated by a thin outline around its day
+  header instead of a filled date circle. Completion runs MUST NOT display count labels inside
+  the bars; weekly progress remains available as text.
 - **FR-027**: Routine successful changes MUST NOT add a persistent success banner. Errors and
-  conflicts MUST remain visible in text and receive focus when appropriate; the latest unmark MUST
-  keep its in-session undo control.
+  conflicts MUST remain visible in text and receive focus when appropriate; unmarking MUST NOT add
+  a separate undo control.
 - **FR-028**: The dashboard MUST NOT require a More menu or manual refresh control. Refresh MUST
   remain automatic, archived habits MUST remain available through Manage habits, and the New habit
   form MUST stay visible in a compact row without a disclosure.
 
 | Operation | User authorization | Result |
 |-----------|--------------------|--------|
-| Mark, unmark, rename, or change target/archive state | Explicit action selecting the habit and change | The note is guarded; the latest unmark has the FR-004 in-session undo window |
+| Mark, unmark, rename, or change target/archive state | Explicit action selecting the habit and change | The note is guarded; an eligible unmarked date can be marked again |
 | Repeat an action after a conflict or failure | Explicit selection after reviewing the note | A fresh guarded comparison preserves concurrent changes and reports another conflict |
 | Migrate a habit-note format | Explicit migration approval | Preserve a recoverable original before conversion; failure leaves it available |
 

@@ -6,6 +6,12 @@
 Desktop smoke verification used Obsidian 1.14.5 in a disposable isolated test vault; the user's vault
 configuration was restored afterward.
 
+**Later UI revision**: The separate undo and return-to-current controls were removed after the
+recorded smoke checks below. An eligible date can be marked again, and week navigation uses the
+arrows. The current revision was checked in the isolated desktop vault for stable header spacing,
+the current-week gutter tint, and the absence of those controls. Earlier references below describe
+the original verification, not features retained in the current interface.
+
 ## Automated gates
 
 | Gate                                   | Result | Evidence                                                                 |
@@ -14,7 +20,7 @@ configuration was restored afterward.
 | `npm run typecheck`                    | PASS   | Strict TypeScript, including tests.                                      |
 | `npm run lint`                         | PASS   | ESLint flat config.                                                      |
 | `npm run format:check`                 | PASS   | Prettier check after formatting maintained files.                        |
-| `npm test -- --coverage`               | PASS   | 20 files, 125 tests; 91.02% lines and 81.49% branches (minimum 80% each). |
+| `npm test -- --coverage`               | PASS   | 19 files, 126 tests; 92.56% lines and 83.33% branches (minimum 80% each). |
 | `npm run build`                        | PASS   | esbuild production bundle produced `main.js`.                            |
 | Manifest minimum version and mobile    | PASS   | `manifest.json` sets `isDesktopOnly: false`, `minAppVersion: 1.6.0`.     |
 | Impeccable mechanical detector         | ADVISORY | Type-scale and radius advisories only; no blocking anti-patterns.       |
@@ -53,7 +59,7 @@ manual guide, but they do **not** replace real Obsidian device verification.
 | Header is centered, omits the habit count, and keeps both years for crossings        | `tests/integration/ui-components.test.ts`, `tests/integration/week-dashboard.test.ts`                    | PASS (automated)                        |
 | Gutter separates the name column and first day with aligned header/body columns       | `tests/integration/week-dashboard.test.ts`                                                               | PASS (automated DOM)                    |
 | Circular color swatch applies on change; Use theme color resets it                   | `tests/integration/ui-components.test.ts`, `tests/integration/week-dashboard.test.ts`                    | PASS (automated)                        |
-| Routine successes are quiet; the unmark undo control remains available               | `tests/integration/week-dashboard.test.ts`                                                               | PASS (automated)                        |
+| Routine successes are quiet; an unmarked date can be marked again                   | `tests/integration/week-dashboard.test.ts`                                                               | PASS (automated)                        |
 | Errors/conflicts remain visible and focused while success banners are omitted        | `tests/integration/ui-components.test.ts`, `tests/integration/habit-lifecycle.test.ts`                    | PASS (automated)                        |
 
 ## Desktop Obsidian smoke verification

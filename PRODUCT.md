@@ -41,13 +41,12 @@ without gamification or decorative dashboards.
 
 ## Capabilities and Constraints
 
-- Create habits, mark/unmark eligible days, undo the latest unmark, and correct historical dates.
+- Create habits, mark/unmark eligible days, re-mark them directly, and correct historical dates.
 - Choose or remove an optional completion color per habit; absence uses the theme accent.
 - Weekly progress, effective targets, current streaks, archived weeks, and future stored dates must
   remain visible and truthful through week navigation.
 - Target and archive changes take effect next week; reactivation applies in the current week.
-- The latest unmark must remain undoable in-session; concurrent edits and failures must be reported
-  without overwriting the existing note.
+- Concurrent edits and failures must be reported without overwriting the existing note.
 - Keyboard, touch, focus, text labels, and Obsidian theme variables are required.
 - Never drop unrelated note content or delete habit data without explicit user action.
 

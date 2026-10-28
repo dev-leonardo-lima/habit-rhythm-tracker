@@ -36,9 +36,9 @@ fault-injection tests.
 
 - The dashboard opens on the current local week, centered with today highlighted in its seven days.
 - Create a habit in the always-visible **New habit** row. The default target is 7 days per week.
-- Check a day to mark it. Uncheck to unmark. Unmarking is explicit and offers an undo until you close
-  the dashboard or make another successful change to that habit.
-- Use previous/next week navigation to review history; **This week** returns to the current week when browsing.
+- Check a day to mark it. Uncheck to unmark; select the same day again to restore a mark.
+- Use previous/next week navigation to review history and return to the current week. **This week**
+  appears only when the current week is displayed.
 - Archived habits remain available in **Manage habits**; archived weeks with history remain visible
   in the grid.
 - The header shows the year above the week range; a week crossing a new year names both years. It
@@ -100,9 +100,8 @@ stops and the existing note is preserved. The dashboard reports conflicts and fa
 you can review the note and repeat the action explicitly.
 
 Existing `recovery-*` notes left by earlier development builds are not read, modified, or deleted
-by the current plugin. There is no automatic cleanup. Immediate undo is available for the latest
-unmark until the dashboard closes or another successful change to that habit occurs; after that,
-the unmark is not promised to be recoverable after an unexpected app exit.
+by the current plugin. There is no automatic cleanup. An unmarked day can be marked again directly;
+unsaved changes are not promised to survive an unexpected app exit.
 
 ## Migration safeguards
 

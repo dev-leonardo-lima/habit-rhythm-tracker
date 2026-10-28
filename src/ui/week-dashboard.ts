@@ -124,12 +124,17 @@ function nameCell(
 ): HTMLTableCellElement {
   const cell = el('th', 'habit-tracker-habit-cell');
   cell.scope = 'row';
+  cell.setAttribute('role', 'rowheader');
   cell.append(el('div', 'habit-tracker-habit-name', summary.name));
 
   const meta = el('div', 'habit-tracker-habit-meta');
   meta.append(el('span', undefined, `${selectedRow?.target ?? summary.target ?? '—'}/wk`));
   meta.append(
-    el('span', undefined, `${summary.streak} ${summary.streak === 1 ? 'week' : 'weeks'}`),
+    el(
+      'span',
+      undefined,
+      `Current streak: ${summary.streak} ${summary.streak === 1 ? 'week' : 'weeks'}`,
+    ),
   );
   cell.append(meta);
 
@@ -149,6 +154,20 @@ function nameCell(
         `${selectedRow.completed} / ${selectedRow.target ?? '—'} · ${selectedRow.outcomeText}`,
       ),
     );
+    if (
+      selectedRow.target !== null &&
+      selectedRow.outcome !== 'excluded' &&
+      selectedRow.outcome !== 'not-started'
+    ) {
+      // The count and outcome above are the accessible source of truth. The
+      // rail only gives the same information a quick visual representation.
+      const progress = el('span', 'habit-tracker-progress');
+      progress.setAttribute('aria-hidden', 'true');
+      const fill = el('span', 'habit-tracker-progress-fill');
+      fill.style.width = `${Math.min(100, (selectedRow.completed / selectedRow.target) * 100)}%`;
+      progress.append(fill);
+      cell.append(progress);
+    }
   } else if (summary.state === 'archived') {
     cell.append(el('div', 'habit-tracker-habit-status', 'Archived'));
   }
@@ -165,6 +184,7 @@ function dayCell(
 ): HTMLTableCellElement {
   const { cell } = decorated;
   const td = el('td', 'habit-tracker-day-cell');
+  td.setAttribute('role', 'cell');
   if (!cell.inSelectedMonth) {
     td.classList.add('is-outside-month');
   }
@@ -249,6 +269,9 @@ export function renderHabitGrid(
   table.dataset.testid = 'week-table';
   table.dataset.week = week.week;
   table.setAttribute('aria-label', `Habits for the week of ${week.label}`);
+  // Explicit roles retain the table structure when the narrow layout changes
+  // the CSS display of its rows in WebKit-based mobile clients.
+  table.setAttribute('role', 'table');
   table.append(
     el('caption', 'habit-tracker-visually-hidden', `Habits for the week of ${week.label}`),
   );
@@ -262,14 +285,23 @@ export function renderHabitGrid(
   table.append(colgroup);
 
   const thead = el('thead');
+  thead.setAttribute('role', 'rowgroup');
   const dayRow = el('tr', 'habit-tracker-day-row');
-  dayRow.append(el('th', 'habit-tracker-corner'));
+  dayRow.setAttribute('role', 'row');
+  const corner = el('th', 'habit-tracker-corner', 'Habit');
+  corner.scope = 'col';
+  corner.setAttribute('role', 'columnheader');
+  dayRow.append(corner);
   const gutterHead = el('th', 'habit-tracker-gutter-head');
   gutterHead.setAttribute('aria-hidden', 'true');
+  if (week.week === viewModel.currentWeek) {
+    gutterHead.classList.add('is-current-week');
+  }
   dayRow.append(gutterHead);
   week.days.forEach((day, index) => {
     const th = el('th', 'habit-tracker-day-head');
     th.scope = 'col';
+    th.setAttribute('role', 'columnheader');
     if (day.isToday) {
       th.classList.add('is-today');
       th.setAttribute('aria-current', 'date');
@@ -291,8 +323,10 @@ export function renderHabitGrid(
   table.append(thead);
 
   const tbody = el('tbody');
+  tbody.setAttribute('role', 'rowgroup');
   for (const { summary, rowsByWeek } of rows) {
     const row = el('tr', 'habit-tracker-habit-row');
+    row.setAttribute('role', 'row');
     row.dataset.habitId = summary.habitId;
     if (summary.color) {
       row.style.setProperty('--ht-habit-color', summary.color);
@@ -313,5 +347,7 @@ export function renderHabitGrid(
     tbody.append(row);
   }
   table.append(tbody);
-  container.append(table);
+  const scroll = el('div', 'habit-tracker-grid-scroll');
+  scroll.append(table);
+  container.append(scroll);
 }

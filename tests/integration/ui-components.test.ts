@@ -23,7 +23,6 @@ function handlers(): DashboardHandlers {
   return {
     createHabit: vi.fn(),
     toggleCompletion: vi.fn(),
-    undoUnmark: vi.fn(),
     renameHabit: vi.fn(),
     changeColor: vi.fn(),
     changeTarget: vi.fn(),
@@ -34,7 +33,6 @@ function handlers(): DashboardHandlers {
     nextMonth: vi.fn(),
     previousWeek: vi.fn(),
     nextWeek: vi.fn(),
-    goToCurrent: vi.fn(),
   };
 }
 
@@ -68,7 +66,6 @@ function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
     issues: [],
     weeks: [],
     habits: [],
-    undo: [],
     formResetVersion: 0,
     ...overrides,
   };
@@ -190,7 +187,7 @@ describe('UI components', () => {
     expect(weeks.textContent).toContain('No week to display');
   });
 
-  it('renders dashboard messages, issues, undo controls and navigation handlers', () => {
+  it('renders dashboard messages, issues and navigation handlers', () => {
     const container = document.createElement('div');
     const callbacks = handlers();
     renderDashboard(
@@ -200,7 +197,6 @@ describe('UI components', () => {
         message: { kind: 'error', text: 'Conflict detected' },
         issues: [{ path: 'Habits/Bad.md', code: 'missing-markers', message: 'Missing markers' }],
         habits: [summary()],
-        undo: [{ habitId: 'habit-1', date: '2026-10-27' }],
       }),
       callbacks,
     );
@@ -219,16 +215,7 @@ describe('UI components', () => {
     expect(container.querySelector('[data-testid="create-habit-form"]')).not.toBeNull();
 
     container.querySelector('button[aria-label="Next week"]')?.dispatchEvent(new Event('click'));
-    container
-      .querySelector('button[aria-label="Return to the current week"]')
-      ?.dispatchEvent(new Event('click'));
-    container
-      .querySelector('button[aria-label="Undo unmark of 2026-10-27 for Gym"]')
-      ?.dispatchEvent(new Event('click'));
-
     expect(callbacks.nextWeek).toHaveBeenCalled();
-    expect(callbacks.goToCurrent).toHaveBeenCalled();
-    expect(callbacks.undoUnmark).toHaveBeenCalledWith('habit-1');
   });
 
   it('preserves keyboard focus and unsaved form input across routine refreshes', async () => {

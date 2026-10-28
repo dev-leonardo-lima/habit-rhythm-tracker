@@ -86,7 +86,8 @@ relationships with their own values.
 
 - One Monday–Sunday week, exactly seven columns, no monthly calendar.
 - Habit names left; compact target, streak, and status text underneath.
-- Completion runs are continuous capsules without count labels; progress stays textual.
+- Completion runs are continuous capsules without count labels; each habit also has textual
+  progress and a small visual progress rail.
 - The year is a small centered label above the week range; crossing years name both.
 - Quiet typographic navigation; advanced controls are progressively disclosed.
 - Hairlines and tonal layering instead of cards, shadows, or decorative chrome.
@@ -98,7 +99,7 @@ that carries completion and current-week meaning.
 
 ### Primary
 
-- **Theme Violet** (`#8a5cf5` reference): default completion runs, current-day ring, current-week
+- **Theme Violet** (`#8a5cf5` reference): default completion runs, current-day header outline, current-week
   marker, and primary create action. The live value is `var(--interactive-accent)`; the accent is
   never used for decoration.
 - **Habit Color** (optional per-habit `#rrggbb`): applies only to that habit's completion marks.
@@ -147,29 +148,30 @@ always written in words.
 
 ## Layout
 
-The dashboard is a centered strip up to 1080px inside the main Obsidian tab. The week header is a
+The dashboard is a centered strip up to 1200px inside the main Obsidian tab. The week header is a
 centered group: small previous/next arrows around the year label and range, with the current-week
 context directly beneath. It shows no habit count. The grid uses a fixed habit column (240px), a
-10px gutter, and seven fluid day columns; the full week fits without horizontal scrolling. Rows are
-58px high, with a 20px week context row and a 38px date row.
+10px gutter, and seven fluid day columns. A subtle border groups the table, while row separators and
+the column header retain the shape of an Obsidian table.
 
 The always-visible New habit row sits above the grid, separated by a hairline. Only Manage habits is
-a disclosure below the grid; details expand in place. On narrow widths the header stays centered,
-the habit column narrows to 156px then 124px, the gutter narrows to 8px, and all seven days still fit
-by sharing the remaining width. No modal is used for creation or management.
+a disclosure below the grid; details expand in place. In a narrow workspace pane or phone-sized
+view, each habit's details sit above its seven days, which remain aligned with the weekday header.
+Each day has a 44px minimum hit area; very narrow views scroll horizontally if needed. No modal is
+used for creation or management.
 
 ## Elevation & Depth
 
-The system is flat. Depth comes from tonal surfaces and hairlines only. The week grid has no card
-shell and no popovers; table boundaries are single-pixel lines. Routine controls stay in place, and
+The system is flat. Depth comes from tonal surfaces and hairlines only. A single border frames the
+week grid; table boundaries are single-pixel lines. Routine controls stay in place, and
 successful changes do not raise a banner.
 
 ## Shapes
 
 Corners are restrained: 6px for fields and buttons, 7px for message surfaces, and full pills for
 state labels. Completion runs are the signature shape: adjacent completed days share a continuous
-26px capsule with 13px rounded ends, and an isolated completed day is the same full-cell capsule.
-Empty days keep a small centered hint. Hover and focus highlights use the same capsule geometry as
+capsule, and an isolated completed day is the same full-cell capsule. Empty days have a centered
+outline; unavailable days are muted. Hover and focus highlights use the same capsule geometry as
 the marks, so the realce never becomes a larger offset rectangle.
 
 ## Components
@@ -180,9 +182,10 @@ Icon-only chevrons at 32px, muted at rest, centered on either side of the week b
 the text to normal; focus uses a 2px accent ring. The year is a small centered label above the week
 range; a crossing week shows both years. The range is the only headline and no habit count appears.
 Current-week emphasis is a faint accent band across the seven day
-headers, plus the “This week” context label and today’s date marker. The header labels keep their
+headers, plus the “This week” context label and a thin outline around today’s header. The header labels keep their
 normal text color and body cells keep the ground tone, so completion marks stay the focus. “This
-week” appears as a quiet text button only when the visitor is browsing history.
+week” appears only on the current week; other weeks leave the same space empty so the layout stays
+stable. Navigation in both directions uses the arrows.
 
 ### Day Toggle
 
@@ -193,9 +196,10 @@ pre-creation days remain visible but muted.
 
 ### Habit Row
 
-A sticky habit cell holds the name, then `target/wk`, streak, and the selected week's
-`completed / target · outcome`. The row uses a hairline bottom border and a tonal hover, never a card.
-Archived rows are muted and labeled in text.
+A habit cell holds the name, `target/wk`, current streak, and the selected week's
+`completed / target · outcome`. A small rail supplements that text for eligible weeks and caps its
+fill at the target; it never treats a saved future mark as completed. The row uses a hairline bottom
+border and a tonal hover. Archived rows are muted and labeled in text.
 
 ### Disclosure
 

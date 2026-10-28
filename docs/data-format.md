@@ -62,9 +62,8 @@ leaves the existing note untouched, and reports a conflict in the dashboard. The
 the note and repeat the action explicitly.
 
 A dirty or unverifiable editor state blocks the write. The plugin does not promise to recover an
-unsaved intent after an unexpected app exit; previously saved note content remains intact. Immediate
-undo is available for the latest unmark until the dashboard closes or another successful change to
-that habit occurs.
+unsaved intent after an unexpected app exit; previously saved note content remains intact. An
+eligible date that was unmarked can be marked again directly in the dashboard.
 
 Existing `recovery-*` notes from earlier development builds are preserved and ignored unless the
 person deletes them outside the plugin. The plugin does not read, modify, or clean them up.

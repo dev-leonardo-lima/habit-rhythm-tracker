@@ -6,7 +6,6 @@ import { renderHabitGrid } from './week-dashboard';
 export interface DashboardHandlers {
   createHabit(name: string, target: number): void | Promise<unknown>;
   toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
-  undoUnmark(habitId: string): void | Promise<unknown>;
   renameHabit(habitId: string, name: string): void | Promise<unknown>;
   changeColor(habitId: string, color: string | null): void | Promise<unknown>;
   changeTarget(habitId: string, target: number): void | Promise<unknown>;
@@ -17,7 +16,6 @@ export interface DashboardHandlers {
   nextMonth(): void;
   previousWeek(): void;
   nextWeek(): void;
-  goToCurrent(): void;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -37,14 +35,6 @@ function el<K extends keyof HTMLElementTagNameMap>(
 
 function iconButton(glyph: string, ariaLabel: string, onClick: () => void): HTMLButtonElement {
   const control = el('button', 'habit-tracker-icon-button', glyph);
-  control.type = 'button';
-  control.setAttribute('aria-label', ariaLabel);
-  control.addEventListener('click', onClick);
-  return control;
-}
-
-function textButton(label: string, ariaLabel: string, onClick: () => void): HTMLButtonElement {
-  const control = el('button', 'habit-tracker-text-button', label);
   control.type = 'button';
   control.setAttribute('aria-label', ariaLabel);
   control.addEventListener('click', onClick);
@@ -83,6 +73,7 @@ interface CapturedUiState {
   forms: Record<string, Record<string, string>>;
   disclosure: Record<string, boolean>;
   formResetVersion: number;
+  gridScrollLeft: number;
 }
 
 function escapeSelectorValue(value: string): string {
@@ -184,6 +175,8 @@ function captureUiState(container: HTMLElement): CapturedUiState {
     forms,
     disclosure,
     formResetVersion: Number(container.dataset.formResetVersion ?? '0'),
+    gridScrollLeft:
+      container.querySelector<HTMLElement>('.habit-tracker-grid-scroll')?.scrollLeft ?? 0,
   };
 }
 
@@ -278,10 +271,6 @@ function renderHeader(
   const meta = el('div', 'habit-tracker-week-meta');
   if (isCurrentWeek) {
     meta.append(el('span', 'habit-tracker-week-context is-current', 'This week'));
-  } else {
-    meta.append(
-      textButton('This week', 'Return to the current week', () => handlers.goToCurrent()),
-    );
   }
   weekBlock.append(meta);
   nav.append(weekBlock);
@@ -331,29 +320,6 @@ function renderIssues(container: HTMLElement, viewModel: DashboardViewModel): vo
   }
 }
 
-function renderUndo(
-  container: HTMLElement,
-  viewModel: DashboardViewModel,
-  handlers: DashboardHandlers,
-): void {
-  if (viewModel.undo.length === 0) {
-    return;
-  }
-  const undo = el('div', 'habit-tracker-undo');
-  undo.append(el('span', 'habit-tracker-undo-label', 'Unmarked'));
-  for (const item of viewModel.undo) {
-    const habit = viewModel.habits.find((entry) => entry.habitId === item.habitId);
-    undo.append(
-      textButton(
-        `Undo ${item.date}${habit ? ` · ${habit.name}` : ''}`,
-        `Undo unmark of ${item.date} for ${habit?.name ?? 'habit'}`,
-        () => void handlers.undoUnmark(item.habitId),
-      ),
-    );
-  }
-  container.append(undo);
-}
-
 function renderCreateForm(container: HTMLElement, handlers: DashboardHandlers): void {
   renderHabitForm(container, handlers, { heading: false });
 }
@@ -391,17 +357,16 @@ export function renderDashboard(
   }
 
   renderIssues(container, viewModel);
-  renderUndo(container, viewModel, handlers);
   renderCreateForm(container, handlers);
 
   if (!viewModel.loading && viewModel.habits.length === 0) {
     const empty = el('div', 'habit-tracker-empty-state');
-    empty.append(el('p', 'habit-tracker-empty-title', 'A month of small marks'));
+    empty.append(el('p', 'habit-tracker-empty-title', 'Start with one habit'));
     empty.append(
       el(
         'p',
         'habit-tracker-empty-copy',
-        'Add your first habit below. Each day you complete it becomes part of the week’s rhythm.',
+        'Add your first habit above, then mark the days you complete it.',
       ),
     );
     container.append(empty);
@@ -412,6 +377,10 @@ export function renderDashboard(
   renderManageDisclosure(container, viewModel, handlers);
 
   restoreDisclosure(container, captured, viewModel);
+  const gridScroll = container.querySelector<HTMLElement>('.habit-tracker-grid-scroll');
+  if (gridScroll) {
+    gridScroll.scrollLeft = captured.gridScrollLeft;
+  }
   container.dataset.formResetVersion = String(viewModel.formResetVersion);
   restoreFormValues(container, captured, viewModel);
   restoreFocus(container, captured, viewModel);

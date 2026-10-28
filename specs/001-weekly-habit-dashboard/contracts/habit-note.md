@@ -51,9 +51,9 @@ block in the note body between these literal markers; the JSON object is user-re
 5. A conflict, editor block, failed write, or uncertain outcome leaves the previously saved note
    intact and reports the issue in text. The person may review the note and repeat the action, which
    performs a fresh guarded comparison. Nothing is replayed blindly.
-6. Immediate undo is available for the latest unmark in-session until the dashboard closes or another
-   successful change to that habit occurs. No unsaved intent is promised to survive an unexpected
-   app exit. An explicit color change is a normal guarded update like rename or target changes.
+6. An eligible unmarked date can be marked again directly. No unsaved intent is promised to survive
+   an unexpected app exit. An explicit color change is a normal guarded update like rename or target
+   changes.
 7. Existing `recovery-*` files from earlier development builds are ignored and left untouched. The
    plugin does not read, modify, append to, or automatically delete them.
 8. Any future format migration requires explicit user approval and a recoverable copy of the

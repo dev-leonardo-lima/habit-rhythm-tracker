@@ -12,7 +12,7 @@ automated tests now exist. See [plan.md](plan.md), [data-model.md](data-model.md
 - Coverage is at least 80% lines and 80% branches; exact final numbers are in
   [validation.md](validation.md).
 - Desktop Obsidian 1.14.5 on macOS passed a smoke verification in an isolated vault covering
-  creation, completion, undo, editor fail-closed behavior, lifecycle changes, custom color,
+  creation, completion, editor fail-closed behavior, lifecycle changes, custom color,
   header year rendering, keyboard focus, unsupported-schema rejection, previous-week correction,
   and restart.
 - iOS and Android remain **unverified**; the reasons and all unverified scenarios are recorded in
@@ -50,7 +50,8 @@ folder following the official sample instructions. Enable the plugin; its manife
 4. The dashboard opens on the current week with exactly seven labeled dates. Confirm the week
    header is centered, has no habit count, and sits between the arrows. Confirm New habit is always
    visible in a compact row and there is no More or manual Refresh control; archived habits remain
-   reachable through Manage habits. Navigate to previous and next weeks, return to the current week,
+   reachable through Manage habits. Navigate to previous and next weeks and return with the arrows;
+   confirm other weeks do not show a “This week” button or shift the header layout. Then
    and correct an eligible date in a prior week. Verify a week that crosses a month boundary,
    archived-week history, and exclusion of stored dates made future by a clock reversal. Test
    rollover while open and after a suspended/reopened app.
@@ -70,8 +71,8 @@ folder following the official sample instructions. Enable the plugin; its manife
 ## Integrity and conflict acceptance
 
 1. Add unrelated frontmatter and prose to a habit note. Mark and unmark a completion; verify all
-   content outside the managed block is unchanged. Undo the latest unmark before closure or the
-   next successful change, then close the dashboard and verify the note remains correct. No
+   content outside the managed block is unchanged. Mark the same day again, then close the dashboard
+   and verify the note remains correct. No
    recovery of an unsaved intent after an unexpected exit is promised.
 2. Force a note write failure, invalid managed block, and a duplicate ID across two notes. Confirm a
    clear error, both duplicate notes intact, and no silent overwrite. Simulate a path appearing after
@@ -84,8 +85,8 @@ folder following the official sample instructions. Enable the plugin; its manife
    to save or close the editor. Confirm the note is unchanged.
 5. Exercise error surfaces with keyboard and touch, including the labeled circular color swatch,
    its “Use theme color” action, focus, and text labels. Confirm common successful changes show no
-   persistent success banner while errors and conflicts remain visible; verify the in-session undo
-   control after an unmark. Use invalid and unsupported format fixtures to confirm no immediate
+   persistent success banner while errors and conflicts remain visible; verify no undo control is
+   added after an unmark and the same date can be marked again. Use invalid and unsupported format fixtures to confirm no immediate
    rewrite; an invalid color falls back to the theme accent. For any future migration, verify
    explicit approval, preservation of a recoverable original, and failure recovery.
 6. Record independent offline sync conflicts as outside guaranteed detection and verify that valid

@@ -130,9 +130,9 @@ Feature 002's release automation is planned separately and depends on this plugi
    today emphasis, weekly progress and streaks; keep adjacent weeks reachable through previous/next
    navigation and history editable. Use a responsive seven-column layout and refresh on local
    date/zone change or app resume, including when a device sleeps through midnight.
-8. Give the latest unmark per habit an in-session undo window until view closure or the next
-   successful change to that habit; after that, do not promise recovery after an unexpected exit.
-   Error surfaces identify the issue in text, receive focus, and support keyboard and touch. Future
+8. Allow an eligible unmarked date to be marked again directly, without a separate undo control.
+   Do not promise recovery of an unsaved intent after an unexpected exit. Error surfaces identify
+   the issue in text, receive focus, and support keyboard and touch. Future
    format migrations require explicit approval and a recoverable original; unknown formats remain
    unchanged. Record offline persistence evidence for desktop, iOS, and Android.
 9. Verify release prerequisites are compatible with feature 002 without implementing that feature
