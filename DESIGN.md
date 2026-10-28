@@ -178,10 +178,10 @@ the marks, so the realce never becomes a larger offset rectangle.
 
 Icon-only chevrons at 32px, muted at rest. Hover raises the text to normal; focus uses a 2px accent
 ring. The year is a small centered label above the week range; a crossing week shows both years.
-The range is the only headline. Current-week emphasis stays in the header: a faint accent band
-across the seven day headers plus the “This week” context label. Body cells remain on the ground
-tone so completion marks stay the focus. “This week” appears as a quiet text button only when the
-visitor is browsing history.
+The range is the only headline. Current-week emphasis stays in the headers: accent text on the
+seven day labels, the “This week” context label, and today’s date marker. Day-header and body
+surfaces keep the ground tone, with no filled band, so completion marks stay the focus. “This week”
+appears as a quiet text button only when the visitor is browsing history.
 
 ### Day Toggle
 

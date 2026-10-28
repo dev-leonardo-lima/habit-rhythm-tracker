@@ -3,7 +3,6 @@
   --ht-row-height: 58px;
   --ht-mark-height: 26px;
   --ht-accent-soft: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
-  --ht-accent-faint: color-mix(in srgb, var(--interactive-accent) 4%, transparent);
   --ht-line: color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
   padding: 20px 24px 32px;
   color: var(--text-normal);
@@ -399,8 +398,9 @@
   border-left: 1px solid var(--ht-line);
 }
 
-.habit-tracker-day-head.is-current-week {
-  background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
+.habit-tracker-day-head.is-current-week .habit-tracker-weekday,
+.habit-tracker-day-head.is-current-week:not(.is-today) .habit-tracker-date-number {
+  color: var(--interactive-accent);
 }
 
 .habit-tracker-day-head.is-outside-month {

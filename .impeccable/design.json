@@ -160,7 +160,7 @@
       },
       {
         "name": "The Header-Only Week Marker",
-        "body": "Current-week tint is limited to the seven day headers and the This week context label. Body cells keep the ground tone so completion marks stay dominant.",
+        "body": "Current-week emphasis is limited to header text: accent labels on the seven day headers, the This week context label, and today's date marker. Header and body surfaces keep the ground tone; no filled band or column tint.",
         "section": "layout"
       }
     ],
