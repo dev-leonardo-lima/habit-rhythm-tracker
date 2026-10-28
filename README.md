@@ -107,9 +107,9 @@ conversion. A failed migration must leave the original available. See
 ## Platform support
 
 The manifest sets `isDesktopOnly: false`, and the runtime uses supported Vault, workspace, DOM, and
-Obsidian APIs without Node.js or Electron imports. Automated tests cover the shared behavior. Real
-desktop, iOS, and Android verification was not available in the implementation environment; the
-unverified platforms and reasons are recorded in
+Obsidian APIs without Node.js or Electron imports. Automated tests cover the shared behavior.
+Desktop Obsidian 1.14.5 on macOS passed a smoke verification in an isolated vault. iOS and Android
+were not available for testing; the unverified platforms and reasons are recorded in
 [specs/001-weekly-habit-dashboard/validation.md](specs/001-weekly-habit-dashboard/validation.md).
 
 ## Development

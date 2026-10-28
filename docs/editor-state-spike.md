@@ -48,9 +48,10 @@ To execute the manual proof of concept:
 
 ## Results in this environment
 
-- **Desktop Obsidian**: not verified. No Obsidian application/runtime is installed in the build
-  environment used for this implementation. The code uses only documented cross-platform APIs and
-  fails closed.
+- **Desktop Obsidian 1.14.5 (macOS)**: verified in a disposable isolated vault. A modified,
+  unsaved editor buffer blocked the dashboard write and retained a pending recovery record. Two open
+  leaves with different buffers also produced a fail-closed block. After restoring the editor buffer,
+  an explicit retry applied the retained intent.
 - **iOS**: not verified. No iOS device or simulator was available.
 - **Android**: not verified. No Android device or emulator was available.
 

@@ -11,8 +11,11 @@ automated tests now exist. See [plan.md](plan.md), [data-model.md](data-model.md
   `npm run build` pass in the implementation environment.
 - Coverage is at least 80% lines and 80% branches; exact final numbers are in
   [validation.md](validation.md).
-- Desktop, iOS, and Android manual verification was **not available** in this environment. The
-  reasons and all unverified scenarios are recorded in [validation.md](validation.md).
+- Desktop Obsidian 1.14.5 on macOS passed a smoke verification in an isolated vault covering
+  creation, completion, conflict/retry/undo, editor fail-closed behavior, lifecycle changes,
+  unsupported-schema rejection, previous-month correction, deletion confirmation, and restart.
+- iOS and Android remain **unverified**; the reasons and all unverified scenarios are recorded in
+  [validation.md](validation.md).
 
 ## Build and install in a test vault
 
