@@ -255,6 +255,7 @@ export function renderHabitGrid(
 
   const colgroup = el('colgroup');
   colgroup.append(el('col', 'habit-tracker-name-column'));
+  colgroup.append(el('col', 'habit-tracker-gutter-column'));
   for (let index = 0; index < 7; index += 1) {
     colgroup.append(el('col', 'habit-tracker-week-column'));
   }
@@ -263,6 +264,9 @@ export function renderHabitGrid(
   const thead = el('thead');
   const dayRow = el('tr', 'habit-tracker-day-row');
   dayRow.append(el('th', 'habit-tracker-corner'));
+  const gutterHead = el('th', 'habit-tracker-gutter-head');
+  gutterHead.setAttribute('aria-hidden', 'true');
+  dayRow.append(gutterHead);
   week.days.forEach((day, index) => {
     const th = el('th', 'habit-tracker-day-head');
     th.scope = 'col';
@@ -298,6 +302,9 @@ export function renderHabitGrid(
     }
     const selectedRow = rowsByWeek.get(week.week);
     row.append(nameCell(summary, selectedRow));
+    const gutter = el('td', 'habit-tracker-gutter-cell');
+    gutter.setAttribute('aria-hidden', 'true');
+    row.append(gutter);
     const cells = selectedRow?.cells ?? placeholderCells(week);
     const decorated = decorateRun(cells);
     decorated.forEach((item, index) => {

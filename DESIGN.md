@@ -147,22 +147,22 @@ always written in words.
 
 ## Layout
 
-The dashboard is a centered strip up to 1080px inside the main Obsidian tab. The week header holds
-small previous/next arrows around a centered year label and range; a current-week marker sits
-beneath it. The grid uses a fixed habit column (240px) and seven fluid day columns; the full week
-fits without horizontal scrolling. Rows are 58px high, with a 20px week context row and a 38px date
-row.
+The dashboard is a centered strip up to 1080px inside the main Obsidian tab. The week header is a
+centered group: small previous/next arrows around the year label and range, with the current-week
+context directly beneath. It shows no habit count. The grid uses a fixed habit column (240px), a
+10px gutter, and seven fluid day columns; the full week fits without horizontal scrolling. Rows are
+58px high, with a 20px week context row and a 38px date row.
 
-Below the grid, bordered disclosures stack in order: New habit and Manage habits. Details expand in
-place. On narrow widths the header wraps, the habit column narrows
-to 156px then 124px, and all seven days still fit by sharing the remaining width. No modal is used
-for creation or management.
+The always-visible New habit row sits above the grid, separated by a hairline. Only Manage habits is
+a disclosure below the grid; details expand in place. On narrow widths the header stays centered,
+the habit column narrows to 156px then 124px, the gutter narrows to 8px, and all seven days still fit
+by sharing the remaining width. No modal is used for creation or management.
 
 ## Elevation & Depth
 
-The system is flat. Depth comes from tonal surfaces, hairlines, and one popover shadow. The week grid
-has no card shell; table boundaries are single-pixel lines. The More popover may use a single soft
-ambient shadow (`0 8px 24px rgba(0, 0, 0, 0.22)`) to separate it from the ground.
+The system is flat. Depth comes from tonal surfaces and hairlines only. The week grid has no card
+shell and no popovers; table boundaries are single-pixel lines. Routine controls stay in place, and
+successful changes do not raise a banner.
 
 ## Shapes
 
@@ -176,9 +176,10 @@ the marks, so the realce never becomes a larger offset rectangle.
 
 ### Week Navigation
 
-Icon-only chevrons at 32px, muted at rest. Hover raises the text to normal; focus uses a 2px accent
-ring. The year is a small centered label above the week range; a crossing week shows both years.
-The range is the only headline. Current-week emphasis is a faint accent band across the seven day
+Icon-only chevrons at 32px, muted at rest, centered on either side of the week block. Hover raises
+the text to normal; focus uses a 2px accent ring. The year is a small centered label above the week
+range; a crossing week shows both years. The range is the only headline and no habit count appears.
+Current-week emphasis is a faint accent band across the seven day
 headers, plus the “This week” context label and today’s date marker. The header labels keep their
 normal text color and body cells keep the ground tone, so completion marks stay the focus. “This
 week” appears as a quiet text button only when the visitor is browsing history.
@@ -198,13 +199,16 @@ Archived rows are muted and labeled in text.
 
 ### Disclosure
 
-Hairline-top rows with a small rotating chevron. New habit and Manage habits use the same pattern. The summary remains a standard focusable `<summary>`; details open in place.
+Hairline-top rows with a small rotating chevron. Manage habits uses this pattern; the New habit form
+is always visible above the grid. The summary remains a standard focusable `<summary>`; details open
+in place.
 
 ### Inputs and Buttons
 
 Inputs are 30px high, 6px radius, ground-colored, with a hairline border and accent focus. The color
-picker sits beside its Save color action and names the habit in its accessible label; “Use theme
-color” removes a custom value. Primary creation uses the theme accent; all secondary actions are
+control is a true circular swatch with a 34px touch target; choosing a color applies immediately,
+and **Use theme color** sits beside it, disabled when the theme is already active. The input names
+the habit in its accessible label. Primary creation uses the theme accent; all secondary actions are
 text or hairline ghost buttons. Touch targets grow on narrow screens.
 
 ## Do's and Don'ts
@@ -215,8 +219,9 @@ text or hairline ghost buttons. Touch targets grow on narrow screens.
 - **Do** draw consecutive completions as connected capsules without count labels.
 - **Do** keep target, streak, and weekly outcome visible in words.
 - **Do** use the theme accent by default and apply an optional habit color only to that habit.
-- **Do** keep the year smaller and centered above the visible week range.
-- **Do** preserve focus, keyboard access, touch targets, and progressive disclosure.
+- **Do** keep the year smaller and centered above the visible week range, with no habit count.
+- **Do** keep New habit visible, refresh automatically, and reserve banners for errors or conflicts.
+- **Do** preserve focus, keyboard access, touch targets, and progressive disclosure where it earns its place.
 
 ### Don't:
 

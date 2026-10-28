@@ -14,9 +14,10 @@ configuration was restored afterward.
 | `npm run typecheck`                    | PASS   | Strict TypeScript, including tests.                                      |
 | `npm run lint`                         | PASS   | ESLint flat config.                                                      |
 | `npm run format:check`                 | PASS   | Prettier check after formatting maintained files.                        |
-| `npm test -- --coverage`               | PASS   | 20 files, 124 tests; 91.18% lines and 82.31% branches (minimum 80% each). |
+| `npm test -- --coverage`               | PASS   | 20 files, 125 tests; 91.02% lines and 81.49% branches (minimum 80% each). |
 | `npm run build`                        | PASS   | esbuild production bundle produced `main.js`.                            |
 | Manifest minimum version and mobile    | PASS   | `manifest.json` sets `isDesktopOnly: false`, `minAppVersion: 1.6.0`.     |
+| Impeccable mechanical detector         | ADVISORY | Type-scale and radius advisories only; no blocking anti-patterns.       |
 
 The final numbers are re-checked after the last source change; this table is the validation record
 for the active feature. Generated `main.js` and `coverage/` are not committed.
@@ -48,6 +49,12 @@ manual guide, but they do **not** replace real Obsidian device verification.
 | Completion bars omit numeric run labels while keeping textual progress               | `tests/integration/week-dashboard.test.ts`                                                               | PASS (automated)                        |
 | Custom color persists per habit, applies only to it, and removes to theme accent     | `tests/unit/habit-note.test.ts`, `tests/unit/habit-operations.test.ts`, `tests/integration/week-dashboard.test.ts`, `tests/integration/ui-components.test.ts` | PASS (automated)                        |
 | Absent or invalid color falls back to the theme accent without invalidating the note | `tests/unit/habit-note.test.ts`                                                                          | PASS (automated)                        |
+| New habit is always visible; no More menu or manual Refresh control                  | `tests/integration/ui-components.test.ts`                                                                | PASS (automated)                        |
+| Header is centered, omits the habit count, and keeps both years for crossings        | `tests/integration/ui-components.test.ts`, `tests/integration/week-dashboard.test.ts`                    | PASS (automated)                        |
+| Gutter separates the name column and first day with aligned header/body columns       | `tests/integration/week-dashboard.test.ts`                                                               | PASS (automated DOM)                    |
+| Circular color swatch applies on change; Use theme color resets it                   | `tests/integration/ui-components.test.ts`, `tests/integration/week-dashboard.test.ts`                    | PASS (automated)                        |
+| Routine successes are quiet; the unmark undo control remains available               | `tests/integration/week-dashboard.test.ts`                                                               | PASS (automated)                        |
+| Errors/conflicts remain visible and focused while success banners are omitted        | `tests/integration/ui-components.test.ts`, `tests/integration/habit-lifecycle.test.ts`                    | PASS (automated)                        |
 
 ## Desktop Obsidian smoke verification
 
@@ -58,6 +65,10 @@ desktop UI:
 - The command and ribbon opened the dashboard in a main workspace tab on the current week (26 Oct –
   1 Nov 2026) with exactly seven date columns, habits in rows, today marked, and no monthly grid or
   month selector.
+- The week header was centered with the year above the range and arrows on either side; the habit
+  count and the More/Refresh menu were absent. New habit stayed visible in a compact row.
+- A 10px gutter separated the name column from the first day while the header and body columns
+  stayed aligned.
 - Creating “Gym” with target 4 wrote `Habits/Gym.md` with the managed block. Marking 2026-10-28
   persisted the completion and showed 1/4 progress. The simplified build created no recovery folder
   or records; automated tests assert this and guard against regressions.
@@ -84,11 +95,15 @@ desktop UI:
   focus ring now share the same capsule alignment. This includes the isolated completion on
   Wednesday for “No Phone to Bed”, which no longer overflowed or appeared offset to the right.
 - The Manage habits color control was reached with real keyboard Tab input; focus was visible on
-  the labeled color input. Saving a color updated only that habit's completion marks and the note
-  stored the value. “Use theme color” removed the property and restored the theme accent.
-- The weekly view was inspected at desktop, 760 px, and 430 px widths. The grid uses up to 1080 px
-  in the central tab, all seven days remain visible without horizontal clipping, and the year/range
-  header fit without wrapping.
+  the labeled circular swatch. Choosing a color applied it immediately (no Save color button),
+  updated only that habit's completion marks, and stored the value in the note. “Use theme color”
+  removed the property and restored the theme accent.
+- Marking and unmarking a day produced no success banner; the unmark exposed the discrete undo
+  control, and restoring the completion stayed quiet. Errors/conflicts remain in the existing
+  visible, focused message surface.
+- The weekly view was inspected at desktop, 760 px, and 430 px widths. The centered header, compact
+  New habit row, gutter, and seven day columns remained usable without horizontal clipping; the
+  color control and reset action stayed reachable at narrow width.
 - Restarting Obsidian and reopening the dashboard retained the habits and weekly history. No new
   recovery files were created.
 
@@ -120,14 +135,14 @@ complete timed scenarios.
 The sandbox has no human participant; these are developer-executed UI timings, not a usability study.
 The scripted numbers above remain supplemental and are not used as the manual result.
 
-The updated build was also smoke-checked for focus/draft preservation: typing “Draft focus” into the
-create form and activating Refresh retained the input value after the dashboard re-rendered.
+The updated build was also smoke-checked for focus/draft preservation through automatic dashboard
+refreshes, with the New habit row visible; automated interaction tests cover the same path.
 
 ## Manual and device verification
 
 | Platform                     | Result      | Reason / limitation                                                                                                                                                                                                                     |
 | ---------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Obsidian desktop             | PASS (smoke) | Obsidian 1.14.5 on macOS: main-tab weekly dashboard, seven-day grid, year/range header, cross-year weeks, week navigation, creation, completion, undo, per-habit color set/remove, capsule hover/focus geometry, editor fail-closed behavior, lifecycle, schema rejection, previous-week correction, restart, focus/draft preservation, and desktop/760/430 px layouts were exercised in an isolated vault. Conflict/no-journal behavior is covered by automated tests. Native color-panel selection was not automated; the control was keyboard-focused and the form submission was exercised. |
+| Obsidian desktop             | PASS (smoke) | Obsidian 1.14.5 on macOS: centered week header without count or More menu, always-visible New habit row, gutter alignment, seven-day grid, year/range and cross-year labels, week navigation, creation, completion, quiet success with undo, circular per-habit color set/remove, capsule hover/focus geometry, editor fail-closed behavior, lifecycle, schema rejection, previous-week correction, restart, focus/draft preservation, and desktop/760/430 px layouts were exercised in an isolated vault. Conflict/no-journal behavior is covered by automated tests. Native color-panel selection was not automated; the control was keyboard-focused and the change event was exercised. |
 | iOS                          | NOT TESTED  | No iOS device or simulator was available. Mobile webview suspend/resume, touch targets, and real Obsidian editor behavior remain unverified.                                                                                            |
 | Android                      | NOT TESTED  | No Android device or emulator was available. Mobile webview suspend/resume, touch targets, and real Obsidian editor behavior remain unverified.                                                                                          |
 | Offline on real devices      | PARTIAL     | The desktop smoke test used a local vault and the plugin has no network code. Network access was not disabled for the smoke test; iOS/Android offline runs were not executed.                                                             |

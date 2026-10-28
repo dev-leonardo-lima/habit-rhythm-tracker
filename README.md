@@ -34,17 +34,19 @@ fault-injection tests.
 
 ## Usage
 
-- The dashboard opens on the current local week and highlights today within its seven days.
-- Create a habit in the **New habit** form. The default target is 7 days per week.
+- The dashboard opens on the current local week, centered with today highlighted in its seven days.
+- Create a habit in the always-visible **New habit** row. The default target is 7 days per week.
 - Check a day to mark it. Uncheck to unmark. Unmarking is explicit and offers an undo until you close
   the dashboard or make another successful change to that habit.
 - Use previous/next week navigation to review history; **This week** returns to the current week when browsing.
-- Archived habits remain in week history. Enable **Show archived habits** to see their rows when
-  viewing a week in which they are archived.
-- The header shows the year above the week range; a week crossing a new year names both years.
+- Archived habits remain available in **Manage habits**; archived weeks with history remain visible
+  in the grid.
+- The header shows the year above the week range; a week crossing a new year names both years. It
+  does not show a habit count, and refresh is automatic.
 - Target changes, archiving, and color changes take effect immediately for the habit; target and
   archive changes follow their next-week rules. Reactivation applies in the current week.
-- Use **Manage habits** to rename a habit, choose a color, schedule a target, or archive it.
+- Use **Manage habits** to rename a habit, choose a color, schedule a target, or archive it. Choose a
+  color with the circular swatch; it applies immediately, and **Use theme color** restores the theme.
 
 ## Storage format
 

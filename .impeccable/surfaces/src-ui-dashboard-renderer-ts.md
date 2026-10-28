@@ -24,7 +24,8 @@ is marking a day; creation and management are secondary.
 - Preserve all target, streak, date, history, guarded-write, and accessibility behavior.
 - Exactly seven days in the grid: Monday through Sunday for the selected week.
 - Previous/next week navigation and an explicit return to the current week.
-- No monthly grid or month selector.
+- No monthly grid or month selector, no habit count, and no More or manual Refresh control.
+- New habit stays visible in a compact row; archived habits remain available in Manage habits.
 - Open in the main workspace tab; reveal an existing main-tab instance. Move a sidebar instance to a
   predictable main tab rather than leaving it in the sidebar.
 - Keep controls standard, keyboard/touch operable, and fully accessible.
@@ -35,8 +36,9 @@ is marking a day; creation and management are secondary.
 A compact week strip based on the supplied references: habit names in rows, seven date columns,
 completion runs as connected unlabeled capsules that use the habit color or theme accent. The
 selected week range is named once at the top, with the year smaller and centered above it; crossing
-years name both. Navigation is limited to previous, next, and current week. Creation and habit
-management are progressively disclosed below the grid; conflicts and failures surface as clear
+years name both and the header group is centered. Navigation is limited to previous, next, and
+current week. Creation is always visible above the grid; management is progressively disclosed
+below it. Successful routine changes stay quiet, while conflicts and failures surface as clear
 status text without a recovery area.
 
 ## Direction contract
@@ -50,10 +52,11 @@ completion runs as continuous pill segments. Controls are quiet text/icon button
 STORY: The visitor sees the current week's rhythm in one look, marks a day in place, reads weekly
 progress and streak in the habit label, and moves backward one week at a time when reviewing history.
 
-FIRST VIEWPORT: A compact week header with small previous/next week arrows, the year above the
+FIRST VIEWPORT: A centered week header with small previous/next arrows, the year above the
 Monday–Sunday range, a current-week marker, and a return-to-current action when browsing. Immediately
-below, seven date columns and habit rows fill the surface; the current day is ringed in the theme
-accent and the current week is named in accent text. No monthly strip is shown.
+below, the always-visible New habit row sits above seven date columns and habit rows; the current day
+is ringed in the theme accent and the current week header carries the accent band. No monthly strip
+or habit count is shown.
 
 FORM: Seven-day week strip with sticky habit column; picked from the supplied reference direction.
 seed: none (unavailable)

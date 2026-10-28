@@ -184,7 +184,8 @@ old target and that history remains accessible.
 - **FR-001**: The system MUST allow a person to create a habit with a nonempty name and an integer
   target from 1 to 7 days per week; the initial default target is 7.
 - **FR-002**: The dashboard MUST show active habits in rows and the seven days of a week in columns
-  labeled with day and date, with interactive completion controls.
+  labeled with day and date, with interactive completion controls. A visual gutter MUST separate the
+  habit-name column from the first day while headers and body cells remain aligned.
 - **FR-003**: A person MUST be able to mark and unmark a completion per habit and date, from the
   creation date through today, including in past weeks; future dates MUST remain unavailable.
 - **FR-004**: Unmarking MUST be an explicit action and immediately offer undo for the latest
@@ -258,9 +259,16 @@ old target and that history remains accessible.
   a labeled control operable by keyboard and touch. The color MUST apply only to that habit's
   completion marks and be stored as an optional `#rrggbb` value in its Markdown note. When the value
   is absent or invalid, the theme accent MUST be used.
-- **FR-026**: The week header MUST present the year as a smaller label centered above the date
-  range, and a week crossing a year boundary MUST show both years without ambiguity. Completion
-  runs MUST NOT display count labels inside the bars; weekly progress remains available as text.
+- **FR-026**: The week header MUST be centered as a group with previous/next arrows beside it, the
+  year as a smaller label above the date range, and no habit count. A week crossing a year boundary
+  MUST show both years without ambiguity. Completion runs MUST NOT display count labels inside the
+  bars; weekly progress remains available as text.
+- **FR-027**: Routine successful changes MUST NOT add a persistent success banner. Errors and
+  conflicts MUST remain visible in text and receive focus when appropriate; the latest unmark MUST
+  keep its in-session undo control.
+- **FR-028**: The dashboard MUST NOT require a More menu or manual refresh control. Refresh MUST
+  remain automatic, archived habits MUST remain available through Manage habits, and the New habit
+  form MUST stay visible in a compact row without a disclosure.
 
 | Operation | User authorization | Result |
 |-----------|--------------------|--------|

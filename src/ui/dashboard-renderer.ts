@@ -18,8 +18,6 @@ export interface DashboardHandlers {
   previousWeek(): void;
   nextWeek(): void;
   goToCurrent(): void;
-  setShowArchived(value: boolean): void;
-  refresh(): void | Promise<unknown>;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -231,8 +229,6 @@ function restoreDisclosure(
     }
     if (captured.disclosure[key] !== undefined) {
       details.open = captured.disclosure[key] ?? false;
-    } else if (key === 'create' && viewModel.habits.length === 0) {
-      details.open = true;
     } else if (key === 'issues' && viewModel.issues.length > 0) {
       details.open = true;
     }
@@ -279,43 +275,18 @@ function renderHeader(
   range.setAttribute('aria-hidden', 'true');
   label.append(year, range);
   weekBlock.append(label);
-  const meta = el('p', 'habit-tracker-week-meta');
-  meta.append(
-    document.createTextNode(
-      `${viewModel.habits.length} ${viewModel.habits.length === 1 ? 'habit' : 'habits'}`,
-    ),
-  );
-  meta.append(
-    el(
-      'span',
-      isCurrentWeek ? 'habit-tracker-week-context is-current' : 'habit-tracker-week-context',
-      isCurrentWeek ? 'This week' : 'Week in history',
-    ),
-  );
+  const meta = el('div', 'habit-tracker-week-meta');
+  if (isCurrentWeek) {
+    meta.append(el('span', 'habit-tracker-week-context is-current', 'This week'));
+  } else {
+    meta.append(
+      textButton('This week', 'Return to the current week', () => handlers.goToCurrent()),
+    );
+  }
   weekBlock.append(meta);
   nav.append(weekBlock);
   nav.append(iconButton('›', 'Next week', () => handlers.nextWeek()));
   heading.append(nav);
-
-  const actions = el('div', 'habit-tracker-actions');
-  if (!isCurrentWeek) {
-    actions.append(
-      textButton('This week', 'Return to the current week', () => handlers.goToCurrent()),
-    );
-  }
-  const more = disclosure('more', 'More', undefined, 'More options');
-  const moreBody = disclosureBody(more);
-  const archivedLabel = el('label', 'habit-tracker-toggle');
-  const archived = el('input');
-  archived.type = 'checkbox';
-  archived.checked = viewModel.showArchived;
-  archived.setAttribute('aria-label', 'Show archived habits');
-  archived.addEventListener('change', () => handlers.setShowArchived(archived.checked));
-  archivedLabel.append(archived, document.createTextNode(' Show archived'));
-  moreBody.append(archivedLabel);
-  moreBody.append(textButton('Refresh', 'Refresh habits', () => void handlers.refresh()));
-  actions.append(more);
-  heading.append(actions);
   header.append(heading);
   container.append(header);
 }
@@ -383,18 +354,8 @@ function renderUndo(
   container.append(undo);
 }
 
-function renderCreateDisclosure(
-  container: HTMLElement,
-  viewModel: DashboardViewModel,
-  handlers: DashboardHandlers,
-): void {
-  const create = disclosure('create', 'New habit');
-  const body = disclosureBody(create);
-  renderHabitForm(body, handlers, { heading: false });
-  if (viewModel.habits.length === 0) {
-    create.open = true;
-  }
-  container.append(create);
+function renderCreateForm(container: HTMLElement, handlers: DashboardHandlers): void {
+  renderHabitForm(container, handlers, { heading: false });
 }
 
 function renderManageDisclosure(
@@ -431,7 +392,7 @@ export function renderDashboard(
 
   renderIssues(container, viewModel);
   renderUndo(container, viewModel, handlers);
-  renderCreateDisclosure(container, viewModel, handlers);
+  renderCreateForm(container, handlers);
 
   if (!viewModel.loading && viewModel.habits.length === 0) {
     const empty = el('div', 'habit-tracker-empty-state');

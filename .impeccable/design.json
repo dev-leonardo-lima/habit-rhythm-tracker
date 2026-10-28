@@ -64,13 +64,7 @@
         "purpose": "Dates, targets, streaks, outcomes, and state labels."
       }
     },
-    "shadows": [
-      {
-        "name": "popover-ambient",
-        "value": "0 8px 24px rgba(0, 0, 0, 0.22)",
-        "purpose": "Only the More popover uses elevation."
-      }
-    ],
+    "shadows": [],
     "motion": [
       {
         "name": "state-standard",
@@ -94,8 +88,8 @@
       "name": "Week Navigation",
       "kind": "nav",
       "refersTo": "button-ghost",
-      "description": "Quiet previous/next week chevrons around the week range.",
-      "html": "<button class=\"ds-week-nav\" aria-label=\"Previous week\">‹</button>",
+      "description": "Centered previous/next week chevrons around the year and week range; no habit count.",
+      "html": "<button class=\"ds-week-nav\" aria-label=\"Previous week\">\u2039</button>",
       "css": ".ds-week-nav { width: 32px; height: 32px; border: 0; border-radius: 6px; background: transparent; color: #666; font-size: 22px; line-height: 1; cursor: pointer; } .ds-week-nav:hover { background: #282828; color: #dadada; } .ds-week-nav:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
     },
     {
@@ -119,16 +113,16 @@
       "kind": "custom",
       "refersTo": "button-ghost",
       "description": "Habit name with target, streak, and weekly outcome in small text.",
-      "html": "<div class=\"ds-habit\"><strong>Exercise</strong><span>4/wk · 2 weeks</span><span>3 / 4 · In progress</span></div>",
+      "html": "<div class=\"ds-habit\"><strong>Exercise</strong><span>4/wk \u00b7 2 weeks</span><span>3 / 4 \u00b7 In progress</span></div>",
       "css": ".ds-habit { display: grid; gap: 2px; width: 240px; color: #dadada; font-family: Inter, sans-serif; } .ds-habit strong { font-size: 13.5px; font-weight: 560; line-height: 1.25; } .ds-habit span { color: #666; font-size: 10px; line-height: 1.35; }"
     },
     {
       "name": "Disclosure",
       "kind": "custom",
       "refersTo": "button-ghost",
-      "description": "Hairline-top disclosure used for creation and management.",
+      "description": "Hairline-top disclosure used only for habit management; New habit stays visible.",
       "html": "<details class=\"ds-disclosure\"><summary>Manage habits</summary><div>Habit controls</div></details>",
-      "css": ".ds-disclosure { border-top: 1px solid #333; margin-top: 10px; color: #b3b3b3; font: 11px/1.2 Inter, sans-serif; } .ds-disclosure summary { padding: 9px 2px; cursor: pointer; list-style: none; } .ds-disclosure summary::-webkit-details-marker { display: none; } .ds-disclosure summary::before { content: '›'; display: inline-block; margin-right: 7px; transition: transform 140ms ease; } .ds-disclosure[open] summary::before { transform: rotate(90deg); } .ds-disclosure summary:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
+      "css": ".ds-disclosure { border-top: 1px solid #333; margin-top: 10px; color: #b3b3b3; font: 11px/1.2 Inter, sans-serif; } .ds-disclosure summary { padding: 9px 2px; cursor: pointer; list-style: none; } .ds-disclosure summary::-webkit-details-marker { display: none; } .ds-disclosure summary::before { content: '\u203a'; display: inline-block; margin-right: 7px; transition: transform 140ms ease; } .ds-disclosure[open] summary::before { transform: rotate(90deg); } .ds-disclosure summary:focus-visible { outline: 2px solid #8a5cf5; outline-offset: 1px; }"
     }
   ],
   "narrative": {
@@ -139,7 +133,8 @@
       "Habit names left; compact target, streak, and status text underneath.",
       "Completion runs are continuous unlabeled capsules; progress stays textual.",
       "The year is a small centered label above the week range; crossing years name both.",
-      "Quiet typographic navigation; advanced controls are progressively disclosed.",
+      "Centered header with arrows, no habit count, and no More/manual Refresh menu.",
+      "New habit stays visible; successful changes are quiet, errors and conflicts are explicit.",
       "Hairlines and tonal layering instead of cards, shadows, or decorative chrome."
     ],
     "rules": [
@@ -162,15 +157,22 @@
         "name": "The Header-Only Week Marker",
         "body": "Current-week emphasis is a faint accent band behind the seven day headers, plus the This week context label and today's date marker. Header labels keep normal text color and body cells keep the ground tone; no column tint.",
         "section": "layout"
+      },
+      {
+        "name": "The Quiet Success Rule",
+        "body": "Routine successful changes do not raise a persistent banner. Errors and conflicts remain visible in text; the latest unmark keeps a discreet undo control.",
+        "section": "layout"
       }
     ],
     "dos": [
       "Do keep one week, exactly seven date columns, and habits in rows.",
       "Do draw consecutive completions as connected capsules without count labels.",
       "Do keep target, streak, and weekly outcome visible in words.",
-      "Do use the theme accent by default and apply an optional habit color only to that habit's marks.",
+      "Do use the theme accent by default and apply an optional habit color only to that habit.",
       "Do keep the year smaller and centered above the visible week range.",
-      "Do preserve focus, keyboard access, touch targets, and progressive disclosure."
+      "Do keep New habit visible and refresh automatically.",
+      "Do reserve banners for errors and conflicts, with a discreet in-session undo control.",
+      "Do preserve focus, keyboard access, touch targets, and progressive disclosure where it earns its place."
     ],
     "donts": [
       "Don't add a monthly grid, month selector, or all-weeks table as the primary view.",

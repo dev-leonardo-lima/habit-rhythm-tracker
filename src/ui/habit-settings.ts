@@ -28,6 +28,25 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
+function themeAccentHex(): string {
+  if (typeof document === 'undefined' || !document.body) {
+    return '#8a5cf5';
+  }
+  const probe = document.createElement('span');
+  probe.style.display = 'none';
+  probe.style.color = 'var(--interactive-accent, #8a5cf5)';
+  document.body.append(probe);
+  const computed = getComputedStyle(probe).color;
+  probe.remove();
+  const match = /^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(computed);
+  if (!match) {
+    return '#8a5cf5';
+  }
+  return `#${[match[1], match[2], match[3]]
+    .map((value) => Number(value).toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
 export function renderHabitSettings(
   container: HTMLElement,
   habits: HabitSummaryViewModel[],
@@ -99,43 +118,32 @@ function renderHabitSettingsItem(
   });
   body.append(renameForm);
 
-  const colorForm = el('form', 'habit-tracker-inline-form habit-tracker-color-form');
-  colorForm.dataset.formKey = `color:${habit.habitId}`;
-  const colorLabel = el('label');
-  colorLabel.append(document.createTextNode('Color'));
-  const colorInput = el('input');
+  const colorRow = el('div', 'habit-tracker-color-row');
+  colorRow.append(el('span', 'habit-tracker-color-label', 'Color'));
+  const colorPicker = el('label', 'habit-tracker-color-picker');
+  const colorInput = el('input', 'habit-tracker-color-input');
   colorInput.type = 'color';
-  colorInput.value = habit.color ?? '#8a5cf5';
-  colorInput.setAttribute('aria-label', `Habit color for ${habit.name}`);
-  colorLabel.append(colorInput);
-  colorForm.append(colorLabel);
-  const colorButton = el('button', undefined, 'Save color');
-  colorButton.type = 'submit';
-  colorButton.setAttribute('aria-label', `Save color for ${habit.name}`);
-  colorForm.append(colorButton);
-  colorForm.addEventListener('submit', (event) => {
-    event.preventDefault();
+  colorInput.value = habit.color ?? themeAccentHex();
+  colorInput.setAttribute('aria-label', `Choose color for ${habit.name}`);
+  const swatch = el('span', 'habit-tracker-color-swatch');
+  swatch.style.background = habit.color ?? 'var(--interactive-accent)';
+  swatch.setAttribute('aria-hidden', 'true');
+  colorPicker.append(colorInput, swatch);
+  colorInput.addEventListener('change', () => {
     void handlers.changeColor(habit.habitId, colorInput.value);
   });
-  body.append(colorForm);
-
-  const colorRow = el('div', 'habit-tracker-color-row');
-  colorRow.append(
-    el(
-      'span',
-      'habit-tracker-color-status',
-      habit.color ? `Custom color ${habit.color}` : 'Using the theme color',
-    ),
+  colorRow.append(colorPicker);
+  const resetColor = el('button', 'habit-tracker-color-reset', 'Use theme color');
+  resetColor.type = 'button';
+  resetColor.disabled = habit.color === null;
+  resetColor.setAttribute(
+    'aria-label',
+    habit.color ? `Use theme color for ${habit.name}` : `${habit.name} uses the theme color`,
   );
-  if (habit.color) {
-    const removeColor = el('button', undefined, 'Use theme color');
-    removeColor.type = 'button';
-    removeColor.setAttribute('aria-label', `Remove custom color for ${habit.name}`);
-    removeColor.addEventListener('click', () => {
-      void handlers.changeColor(habit.habitId, null);
-    });
-    colorRow.append(removeColor);
-  }
+  resetColor.addEventListener('click', () => {
+    void handlers.changeColor(habit.habitId, null);
+  });
+  colorRow.append(resetColor);
   body.append(colorRow);
 
   const targetForm = el('form', 'habit-tracker-inline-form');

@@ -79,12 +79,6 @@ describe('US4: lifecycle changes preserve history', () => {
     const currentWeek = view.weeks.find((week) => week.week === view.currentWeek);
     expect(currentWeek?.rows).toHaveLength(0);
 
-    harness.controller.setShowArchived(true);
-    view = harness.controller.getViewModel();
-    const archivedWeek = view.weeks.find((week) => week.week === view.currentWeek);
-    expect(archivedWeek?.rows[0]?.outcome).toBe('excluded');
-    expect(archivedWeek?.rows[0]?.state).toBe('archived');
-
     harness.controller.previousWeek();
     view = harness.controller.getViewModel();
     expect(view.weeks[0]?.week).toBe('2026-10-26');

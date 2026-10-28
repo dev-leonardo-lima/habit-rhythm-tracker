@@ -2,6 +2,7 @@
   --ht-name-width: 240px;
   --ht-row-height: 58px;
   --ht-mark-height: 26px;
+  --ht-gutter-width: 10px;
   --ht-accent-soft: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
   --ht-line: color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
   padding: 20px 24px 32px;
@@ -28,7 +29,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px 18px;
   margin-bottom: 12px;
 }
@@ -37,7 +38,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px 18px;
   width: 100%;
 }
@@ -45,7 +46,9 @@
 .habit-tracker-week-nav {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  width: 100%;
   min-width: 0;
 }
 
@@ -81,11 +84,22 @@
 .habit-tracker-week-meta {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   margin: 4px 0 0;
   color: var(--text-muted);
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
+}
+
+.habit-tracker-week-meta .habit-tracker-text-button {
+  padding: 2px 4px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.habit-tracker-week-meta .habit-tracker-text-button:hover {
+  color: var(--text-normal);
 }
 
 .habit-tracker-week-context {
@@ -265,56 +279,6 @@
   padding: 0 0 13px;
 }
 
-.habit-tracker-header .habit-tracker-disclosure {
-  border-top: 0;
-  margin-top: 0;
-  position: relative;
-}
-
-.habit-tracker-header .habit-tracker-disclosure-summary {
-  padding: 7px 8px;
-  border-radius: 6px;
-}
-
-.habit-tracker-header .habit-tracker-disclosure-summary:hover {
-  background: var(--background-modifier-hover);
-}
-
-.habit-tracker-header .habit-tracker-disclosure-body {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 30;
-  display: grid;
-  gap: 7px;
-  width: 185px;
-  padding: 9px;
-  border: 1px solid var(--ht-line);
-  border-radius: 8px;
-  background: var(--background-primary);
-  box-shadow: 0 8px 24px color-mix(in srgb, black 22%, transparent);
-}
-
-.habit-tracker-more-row {
-  display: flex;
-  gap: 4px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--ht-line);
-}
-
-.habit-tracker-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-muted);
-  font-size: 10.5px;
-  cursor: pointer;
-}
-
-.habit-tracker-toggle input {
-  accent-color: var(--interactive-accent);
-}
-
 .habit-tracker-grid-scroll {
   overflow-x: auto;
   overflow-y: visible;
@@ -361,6 +325,10 @@
   width: var(--ht-name-width);
 }
 
+.habit-tracker-gutter-column {
+  width: var(--ht-gutter-width);
+}
+
 .habit-tracker-week-column {
   width: auto;
 }
@@ -381,6 +349,15 @@
   border-right: 1px solid var(--ht-line);
 }
 
+.habit-tracker-gutter-head,
+.habit-tracker-gutter-cell {
+  width: var(--ht-gutter-width);
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--ht-line);
+  background: transparent;
+}
+
 .habit-tracker-day-head {
   height: 38px;
   padding: 3px 0 4px;
@@ -395,7 +372,7 @@
 }
 
 .habit-tracker-day-head.is-week-start {
-  border-left: 1px solid var(--ht-line);
+  border-left: 0;
 }
 
 .habit-tracker-day-head.is-current-week {
@@ -517,7 +494,7 @@
 }
 
 .habit-tracker-day-cell.is-week-start {
-  border-left-color: var(--ht-line);
+  border-left-color: transparent;
 }
 
 .habit-tracker-day-cell.is-outside-month {
@@ -694,6 +671,12 @@
   padding: 9px 0 3px;
 }
 
+.habit-tracker-create-form {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ht-line);
+}
+
 .habit-tracker-form h2 {
   display: none;
 }
@@ -803,31 +786,68 @@
   margin: 6px 0;
 }
 
-.habit-tracker-color-form input[type='color'] {
-  width: 46px;
-  padding: 2px;
-  cursor: pointer;
-}
-
 .habit-tracker-color-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 10px;
-  margin: 2px 0 6px;
+  gap: 8px;
+  margin: 8px 0 6px;
 }
 
-.habit-tracker-color-status {
+.habit-tracker-color-label {
   color: var(--text-faint);
-  font-size: 9.5px;
-  font-variant-numeric: tabular-nums;
+  font-size: 9px;
 }
 
-.habit-tracker-color-row button {
-  min-height: 24px;
-  padding: 0 7px;
+.habit-tracker-color-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.habit-tracker-color-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.habit-tracker-color-swatch {
+  width: 24px;
+  height: 24px;
+  border: 1px solid color-mix(in srgb, var(--text-normal) 18%, transparent);
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--background-primary) 55%, transparent);
+  pointer-events: none;
+}
+
+.habit-tracker-color-picker:hover .habit-tracker-color-swatch {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--background-primary) 55%, transparent),
+    0 0 0 2px var(--background-modifier-hover);
+}
+
+.habit-tracker-color-picker:has(.habit-tracker-color-input:focus-visible) {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
+}
+
+.habit-tracker-color-reset {
+  min-height: 28px;
+  padding: 0 8px;
   border: 1px solid var(--ht-line);
-  border-radius: 5px;
+  border-radius: 6px;
   background: var(--background-primary);
   color: var(--text-muted);
   font-family: inherit;
@@ -835,14 +855,19 @@
   cursor: pointer;
 }
 
-.habit-tracker-color-row button:hover {
+.habit-tracker-color-reset:hover:not(:disabled) {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.habit-tracker-color-row button:focus-visible {
+.habit-tracker-color-reset:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 1px;
+}
+
+.habit-tracker-color-reset:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .habit-tracker-inline-form label {
@@ -1070,6 +1095,7 @@
     --ht-name-width: 150px;
     --ht-row-height: 56px;
     --ht-mark-height: 24px;
+    --ht-gutter-width: 8px;
     padding: 12px 12px 22px;
   }
 

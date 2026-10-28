@@ -18,7 +18,5 @@ export function createDashboardHandlers(controller: DashboardController): Dashbo
     previousWeek: () => controller.previousWeek(),
     nextWeek: () => controller.nextWeek(),
     goToCurrent: () => controller.goToCurrent(),
-    setShowArchived: (value) => controller.setShowArchived(value),
-    refresh: () => controller.refresh(),
   };
 }

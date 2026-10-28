@@ -124,7 +124,6 @@ export interface DashboardViewModel {
   currentWeek: WeekKey;
   focusedWeek: WeekKey;
   loading: boolean;
-  showArchived: boolean;
   message: DashboardMessage | null;
   issues: NoteIssue[];
   weeks: WeekViewModel[];
@@ -159,7 +158,6 @@ export class DashboardController {
   private pathById = new Map<string, string>();
   private issues: NoteIssue[] = [];
   private loading = true;
-  private showArchived = false;
   private message: DashboardMessage | null = null;
   private formResetVersion = 0;
 
@@ -254,7 +252,6 @@ export class DashboardController {
       currentWeek,
       focusedWeek: this.calendar.focusedWeek,
       loading: this.loading,
-      showArchived: this.showArchived,
       message: this.message,
       issues: this.issues,
       weeks,
@@ -279,7 +276,7 @@ export class DashboardController {
       const state = stateForWeek(habit, week);
       const allDates = completedDatesInWeek(habit, week);
       const hasHistory = allDates.length > 0;
-      if (state === 'archived' && !hasHistory && !this.showArchived) {
+      if (state === 'archived' && !hasHistory) {
         continue;
       }
       rows.push(this.buildRow(entry.path, habit, week, days, state));
@@ -407,11 +404,6 @@ export class DashboardController {
     this.emit();
   }
 
-  setShowArchived(value: boolean): void {
-    this.showArchived = value;
-    this.emit();
-  }
-
   closeDashboard(): void {
     this.undo.clearAll();
     this.emit();
@@ -439,7 +431,7 @@ export class DashboardController {
     if (result.status === 'applied') {
       this.formResetVersion += 1;
     }
-    await this.handleWriteResult(result, `Created “${habit.name}”.`, habit.id, null);
+    await this.handleWriteResult(result, habit.id, null);
     return result;
   }
 
@@ -474,12 +466,7 @@ export class DashboardController {
       date,
       baseContent: fresh.content,
     });
-    await this.handleWriteResult(
-      result,
-      desired ? `Saved completion for ${date}.` : `Removed completion for ${date}.`,
-      habitId,
-      desired ? null : date,
-    );
+    await this.handleWriteResult(result, habitId, desired ? null : date);
     return result;
   }
 
@@ -515,58 +502,44 @@ export class DashboardController {
     });
     if (result.status === 'applied') {
       this.undo.clearHabit(habitId);
-      await this.handleWriteResult(result, `Restored completion for ${entry.date}.`, habitId, null);
+      await this.handleWriteResult(result, habitId, null);
     } else {
-      await this.handleWriteResult(result, '', habitId, null);
+      await this.handleWriteResult(result, habitId, null);
     }
     return result;
   }
 
   async renameHabit(habitId: string, name: string): Promise<WriteResult | null> {
-    return this.applyLifecycle(habitId, (habit) => renameHabitRecord(habit, name), {
-      success: 'The habit was renamed.',
-    });
+    return this.applyLifecycle(habitId, (habit) => renameHabitRecord(habit, name));
   }
 
   async changeColor(habitId: string, color: string | null): Promise<WriteResult | null> {
-    return this.applyLifecycle(habitId, (habit) => setHabitColor(habit, color), {
-      success:
-        color === null ? 'The habit now uses the theme color.' : 'The habit color was updated.',
-    });
+    return this.applyLifecycle(habitId, (habit) => setHabitColor(habit, color));
   }
 
   async changeTarget(habitId: string, target: number): Promise<WriteResult | null> {
-    return this.applyLifecycle(
-      habitId,
-      (habit) => scheduleTargetChange(habit, target, this.calendar.today),
-      { success: `The ${target}-day target takes effect next week.` },
+    return this.applyLifecycle(habitId, (habit) =>
+      scheduleTargetChange(habit, target, this.calendar.today),
     );
   }
 
   async archiveHabit(habitId: string): Promise<WriteResult | null> {
-    return this.applyLifecycle(habitId, (habit) => archiveHabit(habit, this.calendar.today), {
-      success: 'The habit will be archived from next week. History remains available.',
-    });
+    return this.applyLifecycle(habitId, (habit) => archiveHabit(habit, this.calendar.today));
   }
 
   async reactivateHabit(habitId: string): Promise<WriteResult | null> {
-    return this.applyLifecycle(habitId, (habit) => reactivateHabit(habit, this.calendar.today), {
-      success: 'The habit is active again for the current week.',
-    });
+    return this.applyLifecycle(habitId, (habit) => reactivateHabit(habit, this.calendar.today));
   }
 
   async cancelPendingArchive(habitId: string): Promise<WriteResult | null> {
-    return this.applyLifecycle(
-      habitId,
-      (habit) => cancelPendingArchive(habit, this.calendar.today),
-      { success: 'The scheduled archive was canceled for the current week.' },
+    return this.applyLifecycle(habitId, (habit) =>
+      cancelPendingArchive(habit, this.calendar.today),
     );
   }
 
   private async applyLifecycle(
     habitId: string,
     transform: (habit: Habit) => Habit,
-    messages: { success: string },
   ): Promise<WriteResult | null> {
     let fresh: DiscoveredHabit;
     try {
@@ -586,13 +559,12 @@ export class DashboardController {
       habit: updated,
       baseContent: fresh.content,
     });
-    await this.handleWriteResult(result, messages.success, habitId, null);
+    await this.handleWriteResult(result, habitId, null);
     return result;
   }
 
   private async handleWriteResult(
     result: WriteResult,
-    successText: string,
     habitId: string | null,
     unmarkDate: LocalDate | null,
   ): Promise<void> {
@@ -604,8 +576,7 @@ export class DashboardController {
           this.undo.clearHabit(habitId);
         }
       }
-      this.message = { kind: 'info', text: successText };
-      this.notify?.(successText);
+      this.message = null;
       await this.refresh();
       return;
     }

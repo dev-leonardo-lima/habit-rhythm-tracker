@@ -244,3 +244,13 @@ recovery data was deleted; personal vaults were not touched.
 - [X] T077 Add an accessible optional per-habit color picker and "Use theme color" removal action, persisted as `#rrggbb` in the habit note with theme fallback for absent or invalid values.
 - [X] T078 Update specification, data model, contracts, quickstart, README, data-format docs, PRODUCT.md, DESIGN.md, design tokens, surface brief, and tests.
 - [X] T079 Verify the real Obsidian desktop and narrow-width rendering, including custom color application/removal, focus geometry, and cross-year header; then restore the personal vault configuration.
+
+## Phase 12: Six Approved Interface Adjustments
+
+- [X] T080 Remove the More menu and manual refresh; keep refresh automatic and archived habits accessible through Manage habits.
+- [X] T081 Add a 10px desktop / 8px narrow gutter between the name column and first day, aligned across headers and body cells.
+- [X] T082 Keep New habit always visible as a compact row without a disclosure.
+- [X] T083 Center the week header with arrows beside the year/range and remove the habit count.
+- [X] T084 Replace the color form with a circular swatch that applies on change, with an adjacent Use theme color control and visible keyboard focus.
+- [X] T085 Remove success banners for routine changes while preserving visible/focused errors and conflicts plus the in-session undo control.
+- [X] T086 Update specs, contracts, quickstart, README, design docs/tokens, surface brief, validation, and tests; verify Obsidian desktop, 760px, and 430px layouts.

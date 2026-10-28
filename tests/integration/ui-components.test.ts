@@ -35,8 +35,6 @@ function handlers(): DashboardHandlers {
     previousWeek: vi.fn(),
     nextWeek: vi.fn(),
     goToCurrent: vi.fn(),
-    setShowArchived: vi.fn(),
-    refresh: vi.fn(),
   };
 }
 
@@ -66,7 +64,6 @@ function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
     currentWeek: '2026-10-26',
     focusedWeek: '2026-10-26',
     loading: false,
-    showArchived: false,
     message: null,
     issues: [],
     weeks: [],
@@ -130,17 +127,10 @@ describe('UI components', () => {
       ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(callbacks.renameHabit).toHaveBeenCalledWith('habit-1', 'Strength');
 
-    const colorInput = first?.querySelector('input[type="color"]') as HTMLInputElement;
-    colorInput.value = '#3366cc';
-    first
-      ?.querySelectorAll('form')[1]
-      ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(callbacks.changeColor).toHaveBeenCalledWith('habit-1', '#3366cc');
-
     const targetSelect = first?.querySelector('select') as HTMLSelectElement;
     targetSelect.value = '3';
     first
-      ?.querySelectorAll('form')[2]
+      ?.querySelectorAll('form')[1]
       ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(callbacks.changeTarget).toHaveBeenCalledWith('habit-1', 3);
 
@@ -174,13 +164,24 @@ describe('UI components', () => {
 
     const input = container.querySelector<HTMLInputElement>('input[type="color"]');
     expect(input?.value).toBe('#3366cc');
-    expect(input?.getAttribute('aria-label')).toBe('Habit color for Gym');
-    expect(container.textContent).toContain('Custom color #3366cc');
+    expect(input?.getAttribute('aria-label')).toBe('Choose color for Gym');
+    const swatch = container.querySelector<HTMLElement>('.habit-tracker-color-swatch');
+    expect(swatch?.style.background).toBe('rgb(51, 102, 204)');
+    input!.value = '#224466';
+    input?.dispatchEvent(new Event('change'));
+    expect(callbacks.changeColor).toHaveBeenCalledWith('habit-1', '#224466');
 
     container
-      .querySelector('button[aria-label="Remove custom color for Gym"]')
+      .querySelector('button[aria-label="Use theme color for Gym"]')
       ?.dispatchEvent(new Event('click'));
     expect(callbacks.changeColor).toHaveBeenCalledWith('habit-1', null);
+
+    const themed = document.createElement('div');
+    renderHabitSettings(themed, [summary()], callbacks);
+    expect(
+      (themed.querySelector('button[aria-label="Gym uses the theme color"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
   });
 
   it('renders an empty week state', () => {
@@ -196,7 +197,6 @@ describe('UI components', () => {
       container,
       viewModel({
         loading: true,
-        showArchived: true,
         message: { kind: 'error', text: 'Conflict detected' },
         issues: [{ path: 'Habits/Bad.md', code: 'missing-markers', message: 'Missing markers' }],
         habits: [summary()],
@@ -210,32 +210,25 @@ describe('UI components', () => {
     expect(message?.getAttribute('role')).toBe('alert');
     expect(container.textContent).toContain('Loading habits…');
     expect(container.textContent).toContain('Habits/Bad.md');
-    expect(
-      (container.querySelector('input[aria-label="Show archived habits"]') as HTMLInputElement)
-        .checked,
-    ).toBe(true);
+    expect(container.querySelector('[data-disclosure-key="more"]')).toBeNull();
+    expect(container.querySelector('[data-disclosure-key="create"]')).toBeNull();
+    expect(container.textContent).not.toContain('Show archived');
+    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).not.toMatch(
+      /\d+ habits?/,
+    );
+    expect(container.querySelector('[data-testid="create-habit-form"]')).not.toBeNull();
 
     container.querySelector('button[aria-label="Next week"]')?.dispatchEvent(new Event('click'));
     container
       .querySelector('button[aria-label="Return to the current week"]')
       ?.dispatchEvent(new Event('click'));
     container
-      .querySelector('button[aria-label="Refresh habits"]')
-      ?.dispatchEvent(new Event('click'));
-    container
       .querySelector('button[aria-label="Undo unmark of 2026-10-27 for Gym"]')
       ?.dispatchEvent(new Event('click'));
-    const archivedToggle = container.querySelector(
-      'input[aria-label="Show archived habits"]',
-    ) as HTMLInputElement;
-    archivedToggle.checked = false;
-    archivedToggle.dispatchEvent(new Event('change'));
 
     expect(callbacks.nextWeek).toHaveBeenCalled();
     expect(callbacks.goToCurrent).toHaveBeenCalled();
-    expect(callbacks.refresh).toHaveBeenCalled();
     expect(callbacks.undoUnmark).toHaveBeenCalledWith('habit-1');
-    expect(callbacks.setShowArchived).toHaveBeenCalledWith(false);
   });
 
   it('preserves keyboard focus and unsaved form input across routine refreshes', async () => {
@@ -249,14 +242,6 @@ describe('UI components', () => {
     const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
     const unsubscribe = harness.controller.subscribe(render);
     render();
-    const createDetails = container.querySelector<HTMLDetailsElement>(
-      '[data-disclosure-key="create"]',
-    );
-    if (!createDetails) {
-      throw new Error('missing create panel');
-    }
-    createDetails.open = true;
-
     const name = container.querySelector<HTMLInputElement>(
       '[data-testid="create-habit-form"] input',
     );
@@ -293,8 +278,11 @@ describe('UI components', () => {
     ).toBe('Draft habit');
 
     const id = harness.controller.getViewModel().habits[0]?.habitId ?? '';
-    await harness.controller.toggleCompletion(id, '2026-10-27', true);
-    expect(document.activeElement).toBe(container.querySelector('[data-testid="status-message"]'));
+    await harness.controller.toggleCompletion(id, '2026-10-26', true);
+    expect(container.querySelector('[data-testid="status-message"]')).toBeNull();
+    expect(document.activeElement).toBe(
+      container.querySelector('[data-testid="create-habit-form"] select'),
+    );
     expect(
       container.querySelector<HTMLInputElement>('[data-testid="create-habit-form"] input')?.value,
     ).toBe('Draft habit');
