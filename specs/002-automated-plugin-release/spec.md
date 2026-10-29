@@ -15,6 +15,9 @@ are validated and released for Obsidian, using a maintainable release structure.
 
 - Q: How should the new version be recorded in the repository before each release? → A: The developer explicitly chooses patch, minor, or major and runs a project command before merge; this supersedes the earlier choice of an automation-generated version commit.
 - Q: How should the automation select the release version? → A: It validates the developer-selected version; changes without an explicit version bump do not produce a release.
+- Q: How is the selected version verified? → A: The maintainer checks the developer's command and intent during PR review. CI validates the resulting metadata and version transition, but cannot prove which command changed the files.
+- Q: How does publication begin in a newly configured repository? → A: The maintainer initializes a cursor at an existing `main` revision; that revision is the baseline and only a later explicit bump can produce the first automated release.
+- Q: How can an approved coverage exception be used? → A: A version-scoped, expiring record includes the limits, scope, reason, risks, remediation, approving maintainer, and a link to their PR review or comment. CI checks its structure, repository, version, expiry, and limits; the maintainer verifies that the linked approval is genuine before merge.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -27,7 +30,8 @@ A maintainer receives automatic, visible quality feedback for proposed changes a
 updates to users.
 
 **Independent Test**: Submit one change with passing checks and another with a failing test; the
-maintainer can see the result for each, and the failing change is not released.
+maintainer can see the result for each. An isolated release-gate test establishes that failure is
+not eligible; US2 verifies the complete no-release outcome once publication is integrated.
 
 **Acceptance Scenarios**:
 
@@ -135,8 +139,6 @@ as complete, the failure is visible, and the retry produces no duplicate release
   Obsidian's processing; their completion and timing are outside this automation's control.
 - A release may be complete even if the directory has not yet processed it; release publication and
   directory availability MUST be reported as distinct states.
-- Platform-sensitive changes remain subject to the constitution's desktop and mobile verification
-  and documented exceptions, even when some verification cannot be automated.
 
 ## Requirements *(mandatory)*
 
@@ -147,10 +149,15 @@ as complete, the failure is visible, and the retry produces no duplicate release
   build.
 - **FR-002**: Publication MUST require all applicable checks to pass, including at least 80% line
   coverage and 80% branch coverage for maintained application code, excluding generated code, or a
-  documented and approved exception as permitted by the constitution.
+  documented and approved exception as permitted by the constitution. The version-scoped exception
+  record MUST include the approving maintainer, approval reference, scope, reason, risks, remediation,
+  expiry, and temporary limits. CI MUST reject malformed, expired, or version-mismatched records;
+  the maintainer MUST verify approval and authority before merge.
 - **FR-003**: Each push to `main` MUST initiate validation. A push with an explicit valid version
   bump MUST initiate an automatic release after checks pass; a push without a bump MUST NOT create
-  a release. Release automation MUST NOT generate a version bump on the developer's behalf.
+  a release. Release automation MUST NOT generate a version bump on the developer's behalf. Release
+  processing starts after the one-time cursor baseline has been initialized; that existing baseline
+  revision itself is not automatically published.
 - **FR-004**: Each release MUST have a unique, increasing `x.y.z` version and a release tag that
   exactly matches the manifest version, without a prefix. The committed package version, committed
   plugin manifest version, and attached manifest version MUST match before publication.
@@ -176,9 +183,6 @@ as complete, the failure is visible, and the retry produces no duplicate release
   validation gates, initial directory submission, review status, failure recovery, and retry behavior.
 - **FR-012**: The process MUST distinguish successful release creation from acceptance, review, and
   availability in the Obsidian Community directory, and MUST NOT claim to control the latter.
-- **FR-013**: Any required platform-sensitive verification that is not automated MUST be recorded,
-  including unverified platforms and reasons, according to the constitution; approved exceptions
-  MUST identify their scope and remediation.
 
 ### Key Entities *(include if feature involves data)*
 

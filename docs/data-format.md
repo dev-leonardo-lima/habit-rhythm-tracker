@@ -41,7 +41,10 @@ plugin owns exactly one body block between `<!-- habit-tracker:start -->` and
 
 All content outside the managed block, including YAML frontmatter and arbitrary prose, belongs to the
 user and is preserved byte-for-byte. The plugin never reconstructs the whole note; it replaces only
-the managed block.
+the managed block. It also preserves unknown JSON fields and unknown properties on existing target
+and state entries. An invalid stored color is retained on unrelated edits; selecting a new color is
+an explicit replacement. If an action would remove a history entry that has unknown properties, the
+action is blocked so the person can review those properties first.
 
 ## Discovery and validation
 
@@ -51,8 +54,9 @@ the managed block.
   not overwritten.
 - Malformed JSON, an unknown schema version, an invalid record, or a duplicate habit ID is reported.
   Every conflicting note is preserved; duplicates are never auto-merged.
-- A valid external edit is loaded on refresh, focus, resume, a vault modify event, or a manual
-  refresh. An absent or invalid `color` falls back to the theme accent without corrupting the
+- A valid external edit is loaded on focus, resume, or a vault create, modify, delete, or rename
+  event. Immediately before an edit, discovery runs again and refuses duplicate IDs. An absent or
+  invalid `color` falls back to the theme accent without corrupting the
   record, and an explicit color edit is written back as a normalized hex value.
 - An unsupported schema version is rejected visibly. The note remains unchanged; no automatic
   migration or rewrite occurs.
@@ -65,7 +69,9 @@ the current note with that captured snapshot. If another edit changed the note, 
 leaves the existing note untouched, and reports a conflict in the dashboard. The person can review
 the note and repeat the action explicitly.
 
-A dirty or unverifiable editor state blocks the write. The plugin does not promise to recover an
+A dirty or unverifiable editor state blocks the write. If an editor changes during the write and is
+detected only afterwards, the plugin reports an uncertain outcome and asks the person to inspect the
+note. The plugin does not promise to recover an
 unsaved intent after an unexpected app exit; previously saved note content remains intact. An
 eligible date that was unmarked can be marked again directly in the dashboard.
 

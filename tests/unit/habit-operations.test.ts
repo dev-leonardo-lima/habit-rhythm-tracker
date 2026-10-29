@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   HabitOperationError,
-  cloneHabit,
   createHabit,
-  currentMonday,
   markCompletion,
-  nextMonday,
   normalizeHabitName,
   renameHabit,
   setCompletion,
@@ -70,15 +67,11 @@ describe('habit operations', () => {
     expect(unmarkCompletion(habit, '2026-10-26', today)).toBe(habit);
   });
 
-  it('renames and clones without sharing mutable arrays', () => {
+  it('renames without changing the habit history', () => {
     const habit = makeHabit({ completions: ['2026-10-26'] });
     expect(renameHabit(habit, ' Strength ').name).toBe('Strength');
     expect(() => renameHabit(habit, ' ')).toThrow('Enter a habit name');
 
-    const clone = cloneHabit(habit);
-    clone.completions.push('2026-10-27');
-    clone.targets[0]!.days = 2;
-    clone.states[0]!.state = 'archived';
     expect(habit.completions).toEqual(['2026-10-26']);
     expect(habit.targets[0]?.days).toBe(4);
     expect(habit.states[0]?.state).toBe('active');
@@ -92,11 +85,5 @@ describe('habit operations', () => {
     expect(setHabitColor(colored, null)).toEqual(habit);
     expect(() => setHabitColor(habit, 'red')).toThrow('valid six-digit hex color');
     expect(() => setHabitColor(habit, '#fff')).toThrow(HabitOperationError);
-  });
-
-  it('calculates current and next Monday', () => {
-    expect(currentMonday('2026-10-28')).toBe('2026-10-26');
-    expect(nextMonday('2026-10-28')).toBe('2026-11-02');
-    expect(nextMonday('2026-10-26')).toBe('2026-11-02');
   });
 });

@@ -16,7 +16,6 @@ import {
   unmarkCompletion,
 } from '../domain/habit-operations';
 import { compareDates, mondayOf, todayLocalDate, weekDates } from '../domain/local-date';
-import { monthTotal } from '../domain/month-view';
 import { currentStreak, streakLabel } from '../domain/streak';
 import {
   effectiveTargetForWeek,
@@ -31,7 +30,6 @@ import type { WriteResult } from '../storage/guarded-write';
 import type { GuardedCreator, GuardedWriter } from '../storage/guarded-write';
 import { CalendarController } from './calendar-controller';
 import {
-  monthLabel as formatMonthLabel,
   shortDate,
   weekLabel as formatWeekLabel,
   weekRangeLabel as formatWeekRangeLabel,
@@ -61,7 +59,6 @@ export interface HabitCellViewModel {
   disabled: boolean;
   reason: string;
   ariaLabel: string;
-  inSelectedMonth: boolean;
   isToday: boolean;
 }
 
@@ -79,11 +76,9 @@ export interface HabitRowViewModel {
   outcomeText: string;
   streak: number;
   streakText: string;
-  monthlyTotal: number;
   cells: HabitCellViewModel[];
   pendingArchive: boolean;
   pendingTarget: number | null;
-  canReactivate: boolean;
 }
 
 export interface WeekViewModel {
@@ -92,13 +87,11 @@ export interface WeekViewModel {
   rangeLabel: string;
   yearLabel: string;
   isCurrentWeek: boolean;
-  isFocusedWeek: boolean;
   days: Array<{
     date: LocalDate;
     weekday: string;
     weekdayShort: string;
     shortDate: string;
-    inSelectedMonth: boolean;
     isToday: boolean;
   }>;
   rows: HabitRowViewModel[];
@@ -115,10 +108,8 @@ export interface HabitSummaryViewModel {
   target: number | null;
   completedThisWeek: number;
   streak: number;
-  monthlyTotal: number;
   pendingArchive: boolean;
   pendingTarget: number | null;
-  canReactivate: boolean;
 }
 
 export interface HabitDetailViewModel {
@@ -131,8 +122,6 @@ export interface HabitDetailViewModel {
 
 export interface DashboardViewModel {
   today: LocalDate;
-  selectedMonth: string;
-  monthLabel: string;
   currentWeek: WeekKey;
   focusedWeek: WeekKey;
   loading: boolean;
@@ -173,6 +162,8 @@ export class DashboardController {
   private formResetVersion = 0;
   private selectedHabitId: string | null = null;
   private selectedHistoryYear: number | null = null;
+  private reloadGeneration = 0;
+  private readonly habitQueues = new Map<string, Promise<void>>();
 
   constructor(options: DashboardControllerOptions) {
     this.repository = options.repository;
@@ -208,8 +199,6 @@ export class DashboardController {
     this.loading = true;
     this.emit();
     await this.reload();
-    this.loading = false;
-    this.emit();
   }
 
   async refresh(): Promise<void> {
@@ -228,14 +217,21 @@ export class DashboardController {
   }
 
   private async reload(): Promise<void> {
+    const generation = ++this.reloadGeneration;
     try {
       const discovery = await this.repository.discover();
+      if (generation !== this.reloadGeneration) {
+        return;
+      }
       this.discovered = discovery.habits;
       this.issues = discovery.issues;
       this.pathById = new Map(discovery.habits.map((entry) => [entry.habit.id, entry.path]));
       this.loading = false;
       this.emit();
     } catch (error) {
+      if (generation !== this.reloadGeneration) {
+        return;
+      }
       this.loading = false;
       this.message = {
         kind: 'error',
@@ -247,14 +243,13 @@ export class DashboardController {
 
   getViewModel(): DashboardViewModel {
     const today = this.calendar.today;
-    const selectedMonth = this.calendar.selectedMonth;
     const currentWeek = this.calendar.currentWeek;
     const habits = this.discovered.map((entry) => entry.habit);
 
     const focusedWeek = this.calendar.focusedWeek;
     const weeks = [this.buildWeek(focusedWeek, weekDates(focusedWeek))];
     const summaries = habits
-      .map((habit) => this.buildSummary(habit, today, selectedMonth))
+      .map((habit) => this.buildSummary(habit, today))
       .sort((left, right) => left.name.localeCompare(right.name));
     const selected = this.discovered.find((entry) => entry.habit.id === this.selectedHabitId);
     const year = Math.min(
@@ -273,8 +268,6 @@ export class DashboardController {
 
     return {
       today,
-      selectedMonth,
-      monthLabel: formatMonthLabel(selectedMonth),
       currentWeek,
       focusedWeek: this.calendar.focusedWeek,
       loading: this.loading,
@@ -289,7 +282,6 @@ export class DashboardController {
 
   private buildWeek(week: WeekKey, days: LocalDate[]): WeekViewModel {
     const today = this.calendar.today;
-    const selectedMonth = this.calendar.selectedMonth;
     const rows: HabitRowViewModel[] = [];
     for (const entry of this.discovered) {
       const habit = entry.habit;
@@ -299,7 +291,11 @@ export class DashboardController {
       const state = stateForWeek(habit, week);
       const allDates = completedDatesInWeek(habit, week);
       const hasHistory = allDates.length > 0;
-      if (state === 'archived' && !hasHistory) {
+      if (
+        state === 'archived' &&
+        !hasHistory &&
+        compareDates(week, this.calendar.currentWeek) >= 0
+      ) {
         continue;
       }
       rows.push(this.buildRow(entry.path, habit, week, days, state));
@@ -311,13 +307,11 @@ export class DashboardController {
       rangeLabel: formatWeekRangeLabel(week),
       yearLabel: formatWeekYearsLabel(week),
       isCurrentWeek: week === this.calendar.currentWeek,
-      isFocusedWeek: week === this.calendar.focusedWeek,
       days: days.map((date, index) => ({
         date,
         weekday: weekdayName(index),
         weekdayShort: weekdayShort(index),
         shortDate: shortDate(date),
-        inSelectedMonth: date.slice(0, 7) === selectedMonth,
         isToday: date === today,
       })),
       rows,
@@ -351,10 +345,8 @@ export class DashboardController {
       outcomeText: outcomeLabel(outcome),
       streak,
       streakText: streakLabel(streak),
-      monthlyTotal: monthTotal(habit, this.calendar.selectedMonth, today),
       pendingArchive: isPendingArchive(habit, today),
       pendingTarget: pending?.days ?? null,
-      canReactivate: state === 'archived' || isPendingArchive(habit, today),
       cells: days.map((date, index) => {
         const isCompleted = habit.completions.includes(date);
         const future = compareDates(date, today) > 0;
@@ -373,18 +365,13 @@ export class DashboardController {
           ariaLabel: `${habit.name}, ${weekdayName(index)} ${date}, ${
             isCompleted ? 'completed' : 'not completed'
           }, ${reason}`,
-          inSelectedMonth: date.slice(0, 7) === this.calendar.selectedMonth,
           isToday: date === today,
         };
       }),
     };
   }
 
-  private buildSummary(
-    habit: Habit,
-    today: LocalDate,
-    selectedMonth: string,
-  ): HabitSummaryViewModel {
+  private buildSummary(habit: Habit, today: LocalDate): HabitSummaryViewModel {
     const week = mondayOf(today);
     const state = stateForWeek(habit, week);
     return {
@@ -398,21 +385,9 @@ export class DashboardController {
       target: effectiveTargetForWeek(habit, week),
       completedThisWeek: completedCountInWeek(habit, week, today),
       streak: currentStreak(habit, today),
-      monthlyTotal: monthTotal(habit, selectedMonth, today),
       pendingArchive: isPendingArchive(habit, today),
       pendingTarget: pendingTargetChange(habit, today)?.days ?? null,
-      canReactivate: state === 'archived' || isPendingArchive(habit, today),
     };
-  }
-
-  previousMonth(): void {
-    this.calendar.previousMonth();
-    this.emit();
-  }
-
-  nextMonth(): void {
-    this.calendar.nextMonth();
-    this.emit();
   }
 
   previousWeek(): void {
@@ -456,11 +431,6 @@ export class DashboardController {
     this.emit();
   }
 
-  goToCurrent(): void {
-    this.calendar.goToCurrent();
-    this.emit();
-  }
-
   async createHabit(name: string, target = 7): Promise<WriteResult | null> {
     let habit: Habit;
     try {
@@ -483,11 +453,20 @@ export class DashboardController {
     date: LocalDate,
     completed?: boolean,
   ): Promise<WriteResult | null> {
+    return this.serializeHabit(habitId, () => this.writeCompletion(habitId, date, completed));
+  }
+
+  private async writeCompletion(
+    habitId: string,
+    date: LocalDate,
+    completed?: boolean,
+  ): Promise<WriteResult | null> {
     let fresh: DiscoveredHabit;
     try {
       fresh = await this.loadFresh(habitId);
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
+      await this.refresh();
       return null;
     }
     const desired = completed ?? !fresh.habit.completions.includes(date);
@@ -549,11 +528,19 @@ export class DashboardController {
     habitId: string,
     transform: (habit: Habit) => Habit,
   ): Promise<WriteResult | null> {
+    return this.serializeHabit(habitId, () => this.writeLifecycle(habitId, transform));
+  }
+
+  private async writeLifecycle(
+    habitId: string,
+    transform: (habit: Habit) => Habit,
+  ): Promise<WriteResult | null> {
     let fresh: DiscoveredHabit;
     try {
       fresh = await this.loadFresh(habitId);
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
+      await this.refresh();
       return null;
     }
     let updated: Habit;
@@ -590,10 +577,29 @@ export class DashboardController {
   }
 
   private async loadFresh(habitId: string): Promise<DiscoveredHabit> {
-    const path = this.pathById.get(habitId);
-    if (!path) {
-      throw new Error('The habit was not found. Refresh the dashboard and try again.');
+    const discovery = await this.repository.discover();
+    const found = discovery.habits.find((entry) => entry.habit.id === habitId);
+    if (!found) {
+      throw new Error(
+        'The habit was not found or has a duplicate ID. Review note problems and try again.',
+      );
     }
-    return this.repository.loadByPath(path);
+    return found;
+  }
+
+  private serializeHabit<T>(habitId: string, action: () => Promise<T>): Promise<T> {
+    const previous = this.habitQueues.get(habitId) ?? Promise.resolve();
+    const next = previous.then(action, action);
+    const settled = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.habitQueues.set(habitId, settled);
+    void settled.then(() => {
+      if (this.habitQueues.get(habitId) === settled) {
+        this.habitQueues.delete(habitId);
+      }
+    });
+    return next;
   }
 }

@@ -85,14 +85,13 @@ publication before uploading all assets exposes an incomplete release.
 **Decision**: Align TypeScript, npm, and esbuild with the official sample. Pin Node.js 24 and action
 versions; use Vitest with coverage for plugin and release logic, isolated Git repositories for
 version/push fixtures, mocked release API contract tests, and one disposable-repository end-to-end
-exercise. Record manual desktop/mobile verification or explicit unverified status and reason.
+exercise.
 
 **Rationale**: A pinned build and lockfile keep release artifacts repeatable; layered tests exercise
 edge cases without publishing real artifacts. Vitest supports TypeScript and coverage without adding
 a separate runtime dependency to the plugin.
 
-**Alternatives considered**: Only a live release test is slow and insufficient for failure cases;
-CI-only plugin testing does not establish mobile runtime behavior.
+**Alternatives considered**: Only a live release test is slow and insufficient for failure cases.
 
 **Sources**: [Official sample](https://github.com/obsidianmd/obsidian-sample-plugin),
 [Vitest coverage](https://vitest.dev/guide/coverage.html),

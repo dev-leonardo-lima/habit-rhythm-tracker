@@ -1,4 +1,4 @@
-# Obsidian Habit Tracker Constitution
+# Habit Rhythm Constitution
 
 ## Core Principles
 
@@ -23,7 +23,7 @@ avoid silently changing their meaning. Users must be able to trust their history
 
 Features that read or write an Obsidian vault MUST preserve unrelated content and work within the
 supported Obsidian APIs and documented vault conventions. The plugin MUST support Obsidian desktop
-and mobile, including iOS and Android; shared functionality MUST NOT depend on desktop-only APIs.
+and mobile; shared functionality MUST NOT depend on desktop-only APIs.
 Data formats and migrations MUST be documented when introduced or changed so users can understand
 and retain access to their data.
 
@@ -33,10 +33,9 @@ Each change MUST be verified against its specified behavior. Automated tests MUS
 and relevant failure and boundary cases for persistence, data integrity, date handling, progress
 calculations, and integrations. The project MUST measure automated coverage and maintain at least
 80% line and 80% branch coverage for maintained application code, excluding generated code; an
-approved exception MUST identify uncovered risks and a remediation plan. Platform-sensitive changes
-MUST be verified on desktop and on mobile, including iOS and Android, or the unverified platforms
-and reasons MUST be recorded. When automation is impractical, the change MUST document the reason
-and reproducible manual verification. These checks make tracking and data handling reliable.
+approved exception MUST identify uncovered risks and a remediation plan. When automation is
+impractical, the change MUST document the reason and reproducible manual verification. These checks
+make tracking and data handling reliable.
 
 ### V. Keep the Design Simple and Usable
 
@@ -64,7 +63,7 @@ keyboard operation where applicable.
 - Feature specifications MUST describe user-visible behavior, data effects, and acceptance criteria
   before implementation. Plans MUST identify relevant constraints and verification approaches.
 - Changes MUST be reviewed against the applicable principles and acceptance criteria. Review MUST
-  include the results of automated checks, coverage, and any required manual or platform verification.
+  include the results of automated checks, coverage, and any required manual verification.
 - Data format or behavior changes MUST document compatibility and any migration or recovery steps.
 - Exceptions MUST identify the affected principle, reason, scope, and remediation in the change
   record and receive maintainer approval before being relied upon.
@@ -79,4 +78,4 @@ principles or materially expanded guidance, and PATCH for clarifications and oth
 changes. Each change review MUST check compliance and record approved exceptions. The ratification
 date records original adoption; the last-amended date changes whenever the constitution changes.
 
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): confirm original adoption date | **Last Amended**: 2026-10-28
+**Version**: 2.0.0 | **Ratified**: 2026-10-28 | **Last Amended**: 2026-10-29

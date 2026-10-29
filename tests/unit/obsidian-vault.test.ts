@@ -45,13 +45,4 @@ describe('Obsidian vault adapter', () => {
     await expect(port.ensureFolder('Habits.md')).rejects.toThrow('A file already exists');
     await port.ensureFolder('   ');
   });
-
-  it('removes existing notes and ignores missing paths', async () => {
-    const { vault } = createFakeApp();
-    await vault.create('Habits/Gym.md', 'a');
-    const port = new ObsidianVaultPort(vault as never);
-    await port.remove('Habits/Gym.md');
-    expect(port.exists('Habits/Gym.md')).toBe(false);
-    await port.remove('Habits/Missing.md');
-  });
 });

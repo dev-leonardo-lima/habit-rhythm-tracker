@@ -1,6 +1,6 @@
 # Validation Evidence
 
-**Date**: 2026-10-28
+**Date**: 2026-10-29 for the repository review checks; earlier desktop smoke checks were on 2026-10-28.
 
 **Environment**: macOS (darwin), Node.js 24.21.0, npm 11.19.0, Vitest 5.0.5 with jsdom 30.1.3.
 Desktop smoke verification used Obsidian 1.14.5 in a disposable isolated test vault; the user's vault
@@ -15,18 +15,28 @@ the original verification, not features retained in the current interface.
 **Latest management and history refinement**: Automated tests cover the editor, icon selection,
 history, draft preservation, and focus. The build was installed in the isolated test vault and the
 user reported the revised UI was improved. The latest layout was not independently inspected through
-desktop automation because the computer-use host was unavailable; no new desktop/narrow or mobile
+desktop automation because the computer-use host was unavailable; no new desktop/narrow
 visual smoke result is claimed. Follow the current [quickstart](quickstart.md) for those checks.
+
+**Repository review corrections**: The plugin ID is now `habit-rhythm`. Automated
+regression tests cover unknown JSON property preservation, invalid color retention, duplicate IDs
+added after refresh, sequential rapid actions, stale refresh results, historical archived-week
+correction, draft refresh behavior, deferred editors, and editor changes during a guarded write.
+The changed build has not yet been independently retested in a real desktop Obsidian window.
+
+**Obsidian mobile emulation**: On 2026-10-29, the current build was exercised in Obsidian 1.14.5
+at 390 × 844 in an isolated test vault. Marking and unmarking persisted, week navigation worked,
+and habit history opened.
 
 ## Automated gates
 
 | Gate                                   | Result | Evidence                                                                 |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------ |
-| `npm ci`                               | PASS   | Lockfile install completed during earlier implementation validation.     |
+| `npm ci`                               | PASS   | Clean lockfile install completed for the repository review.              |
 | `npm run typecheck`                    | PASS   | Strict TypeScript, including tests.                                      |
 | `npm run lint`                         | PASS   | ESLint flat config.                                                      |
 | `npm run format:check`                 | PASS   | Prettier check after formatting maintained files.                        |
-| `npm run test:coverage`                | PASS   | 23 files, 143 tests; 94.4% lines and 85.98% branches (minimum 80% each). |
+| `npm run test:coverage`                | PASS   | 32 files, 213 tests; 91.84% lines and 86.8% branches across plugin and release-tooling code (minimum 80% each). |
 | `npm run build`                        | PASS   | esbuild production bundle produced `main.js`.                            |
 | Manifest minimum version and mobile    | PASS   | `manifest.json` sets `isDesktopOnly: false`, `minAppVersion: 1.6.0`.     |
 | Impeccable layout detector             | PASS   | No layout findings for the settings, history, icon picker, and CSS files. |
@@ -37,7 +47,7 @@ for the active feature. Generated `main.js` and `coverage/` are not committed.
 ## Functional acceptance
 
 The following automated scenarios pass. They exercise the same domain and controller paths as the
-manual guide, but they do **not** replace real Obsidian device verification.
+manual guide and supplement manual verification in Obsidian.
 
 | Quickstart scenario                                                                  | Automated evidence                                                                                       | Result                                  |
 | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | --------------------------------------- |
@@ -56,7 +66,7 @@ manual guide, but they do **not** replace real Obsidian device verification.
 | Dirty/unknown editor state fails closed without writing                              | `tests/unit/editor-guard.test.ts`, `tests/integration/guarded-write-extra.test.ts`                      | PASS (automated)                        |
 | Unknown/unsupported schema is reported without rewrite                               | `tests/unit/habit-note.test.ts`, `tests/integration/habit-repository.test.ts`                            | PASS (automated)                        |
 | Offline behavior without external services                                           | No network code; all tests use in-memory or mocked vaults                                                | PASS (automated)                        |
-| Touch/keyboard labels, focus, narrow-screen markup                                   | `tests/integration/ui-components.test.ts`, `styles.css`                                                  | PASS (automated DOM); device unverified |
+| Touch/keyboard labels, focus, narrow-screen markup                                   | `tests/integration/ui-components.test.ts`, `styles.css`                                                  | PASS (automated DOM) |
 | Year above range; cross-year week names both years                                   | `tests/integration/week-dashboard.test.ts`, `tests/integration/ui-components.test.ts`                    | PASS (automated)                        |
 | Completion bars omit numeric run labels while keeping textual progress               | `tests/integration/week-dashboard.test.ts`                                                               | PASS (automated)                        |
 | Custom color persists per habit, applies only to it, and removes to theme accent     | `tests/unit/habit-note.test.ts`, `tests/unit/habit-operations.test.ts`, `tests/integration/week-dashboard.test.ts`, `tests/integration/ui-components.test.ts` | PASS (automated)                        |
@@ -154,16 +164,14 @@ The scripted numbers above remain supplemental and are not used as the manual re
 The updated build was also smoke-checked for focus/draft preservation through automatic dashboard
 refreshes, with the New habit row visible; automated interaction tests cover the same path.
 
-## Manual and device verification
+## Manual verification
 
 | Platform                     | Result      | Reason / limitation                                                                                                                                                                                                                     |
 | ---------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Obsidian desktop             | PASS (earlier smoke) | Obsidian 1.14.5 on macOS: centered week header without count or More menu, always-visible New habit row, gutter alignment, seven-day grid, year/range and cross-year labels, week navigation, creation, completion, circular per-habit color set/remove, capsule hover/focus geometry, editor fail-closed behavior, lifecycle, schema rejection, previous-week correction, restart, focus/draft preservation, and desktop/760/430 px layouts were exercised in an isolated vault. The earlier build included an undo control, since removed. The latest management and activity layout needs a new independent visual smoke check. Native color-panel selection was not automated; the control was keyboard-focused and the change event was exercised. |
-| iOS                          | NOT TESTED  | No iOS device or simulator was available. Mobile webview suspend/resume, touch targets, and real Obsidian editor behavior remain unverified.                                                                                            |
-| Android                      | NOT TESTED  | No Android device or emulator was available. Mobile webview suspend/resume, touch targets, and real Obsidian editor behavior remain unverified.                                                                                          |
-| Offline on real devices      | PARTIAL     | The desktop smoke test used a local vault and the plugin has no network code. Network access was not disabled for the smoke test; iOS/Android offline runs were not executed.                                                             |
-| Accessibility                | PARTIAL     | Labels, focus, disabled states, keyboard-operable native controls, and real keyboard checkbox/undo operation were observed. No screen-reader or physical touch-device verification was performed.                                                |
-| Editor state proof of concept | PASS (desktop) | A dirty single buffer and two open leaves with differing buffers both blocked the write without changing the note. Real mobile editor behavior remains unverified.                                                                        |
+| Offline behavior             | PARTIAL     | Automated tests exercise core flows without network access. The desktop smoke test used a local vault, but network access was not disabled. |
+| Accessibility                | PARTIAL     | Labels, focus, disabled states, keyboard-operable native controls, and real keyboard checkbox/undo operation were observed. Screen-reader and formal touch accessibility checks were not performed. |
+| Editor state proof of concept | PASS (desktop) | A dirty single buffer and two open leaves with differing buffers both blocked the write without changing the note. |
 
 ## Success criteria review
 
@@ -182,18 +190,18 @@ refreshes, with the New habit row visible; automated interaction tests cover the
 - **SC-005**: Automated tests perform creation, marking, navigation, and history review without
   network access or an external service; the desktop smoke test used only a local vault.
 - **SC-006**: Automated conflict, failed-write, editor-uncertainty, and reopen cases preserve the
-  existing note, never overwrite concurrent changes, and report the issue. No change is replayed
-  blindly and no recovery journal is promised.
-- **SC-007**: Desktop Obsidian 1.14.5 was verified on macOS and the evidence is recorded above. iOS
-  and Android remain unverified and are explicitly identified with reasons.
+  existing note in the tested pre-write failure scenarios and report the issue. If a change is
+  detected only after a write, the outcome is reported as uncertain for inspection. No change is
+  replayed blindly and no recovery journal is promised.
+- **SC-007**: Reopening was verified in Obsidian on macOS. Offline behavior was exercised in
+  automated tests; network access was not disabled during the desktop smoke check.
 
 ## Known limitations
 
 - Desktop Obsidian 1.14.5 on macOS passed a weekly-view smoke verification at desktop, 760 px, and
   430 px widths on an earlier build; the latest management and activity layout has not received a
-  new independent visual smoke check. iOS and Android have not been verified on real devices or
-  simulators.
-- No screen-reader, physical touch-device, or formal human usability timing study was performed.
+  new independent visual smoke check.
+- No screen-reader, formal touch accessibility, or human usability timing study was performed.
 - Network access was not disabled during the desktop smoke test, although the plugin has no network
   code and used only the local test vault.
 - Cross-device synchronization conflicts outside Obsidian's `Vault.process` interval are not
@@ -203,4 +211,5 @@ refreshes, with the New habit row visible; automated interaction tests cover the
 - No recovery journal is created; existing recovery-* files from earlier synthetic development
   builds were deleted with authorization and are not part of the product.
 - An unsaved intent is not promised to survive an unexpected app exit; saved note content remains.
-- Feature 002 release automation is separate and was not implemented or validated here.
+- Feature 002 release automation has local automated tests and actionlint verification, but has not
+  been run end-to-end in a GitHub repository; see [the release guide](../../docs/releasing.md).

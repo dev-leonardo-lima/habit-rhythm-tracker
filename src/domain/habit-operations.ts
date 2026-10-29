@@ -1,6 +1,6 @@
 import { normalizeHabitColor } from './habit-color';
 import { normalizeHabitIcon } from './habit-icon';
-import { addDays, compareDates, isValidLocalDate, mondayOf, todayLocalDate } from './local-date';
+import { compareDates, isValidLocalDate, mondayOf, todayLocalDate } from './local-date';
 import type { Habit, LocalDate } from './types';
 
 export type HabitOperationErrorCode =
@@ -151,22 +151,4 @@ export function setHabitIcon(habit: Habit, icon: string | null): Habit {
     throw new HabitOperationError('invalid-icon', 'Choose a valid icon');
   }
   return { ...habit, icon: normalized };
-}
-
-/** Applies only an explicit historical correction/restoration to a cloned record. */
-export function cloneHabit(habit: Habit): Habit {
-  return {
-    ...habit,
-    targets: habit.targets.map((entry) => ({ ...entry })),
-    states: habit.states.map((entry) => ({ ...entry })),
-    completions: [...habit.completions],
-  };
-}
-
-export function nextMonday(today: LocalDate): LocalDate {
-  return addDays(mondayOf(today), 7);
-}
-
-export function currentMonday(today: LocalDate): LocalDate {
-  return mondayOf(today);
 }

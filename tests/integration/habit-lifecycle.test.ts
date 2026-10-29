@@ -51,7 +51,7 @@ describe('US4: lifecycle changes preserve history', () => {
     view = harness.controller.getViewModel();
     expect(view.weeks[0]?.week).toBe('2026-10-26');
     expect(view.weeks[0]?.rows[0]?.target).toBe(4);
-    harness.controller.goToCurrent();
+    harness.controller.nextWeek();
 
     await harness.controller.changeTarget(id, 5);
     await harness.controller.changeTarget(id, 6);
@@ -84,7 +84,7 @@ describe('US4: lifecycle changes preserve history', () => {
     expect(view.weeks[0]?.week).toBe('2026-10-26');
     expect(view.weeks[0]?.rows[0]?.completed).toBe(1);
 
-    harness.controller.goToCurrent();
+    harness.controller.nextWeek();
     await harness.controller.reactivateHabit(id);
     view = harness.controller.getViewModel();
     expect(view.habits[0]?.state).toBe('active');

@@ -1,6 +1,6 @@
-# Contributing to Habit Tracker
+# Contributing to Habit Rhythm
 
-Thanks for helping improve Habit Tracker. Bug reports, documentation, accessibility work, tests,
+Thanks for helping improve Habit Rhythm. Bug reports, documentation, accessibility work, tests,
 and code changes are all welcome.
 
 ## Before you start
@@ -27,9 +27,9 @@ version pinned in `.nvmrc`.
    npm run build
    ```
 
-3. Create `.obsidian/plugins/habit-tracker/` inside your test vault and copy `main.js`,
+3. Create `.obsidian/plugins/habit-rhythm/` inside your test vault and copy `main.js`,
    `manifest.json`, and `styles.css` into it.
-4. Enable **Habit Tracker** in Obsidian's community plugin settings and open its dashboard from the
+4. Enable **Habit Rhythm** in Obsidian's community plugin settings and open its dashboard from the
    ribbon or command palette.
 
 Run `npm run dev -- --watch` to rebuild `main.js` when source files change. Copy the rebuilt file
@@ -48,10 +48,13 @@ npm run test:coverage
 npm run build
 ```
 
-The coverage command enforces at least 80% line and branch coverage for maintained code. Use
-`npm test` for a quicker test run while developing; `npm run format` formats the files covered by
-Prettier. Automated DOM tests do not replace testing the plugin in Obsidian. For UI or platform
-changes, record the environments you checked and any you could not test.
+The coverage command measures plugin and release-tooling code and enforces at least 80% line and
+branch coverage unless a specific, approved temporary exception is recorded as described in
+[docs/releasing.md](docs/releasing.md). Tests launched in child processes exercise command-line
+behavior, but Vitest's parent-process V8 report may not attribute their lines to the child scripts.
+Use `npm test` for a quicker test run while developing; `npm run format` formats the files covered by
+Prettier. Automated DOM tests do not replace testing the plugin in Obsidian. For UI changes,
+record the checks performed.
 
 ## Guidelines
 
@@ -78,12 +81,12 @@ docs: clarify installation
 
 For a pull request, explain what changed and why, link any related issue, and list the checks you
 ran. Include screenshots or a short recording for visual changes, using synthetic data. Describe
-any data-format, compatibility, or migration impact and identify platforms you could not test.
+any data-format, compatibility, or migration impact.
 
-Release version changes are an explicit maintainer decision; release automation is not implemented
-yet. When preparing a release, keep `package.json`, `package-lock.json`, and `manifest.json` aligned
-and add the corresponding compatibility entry to `versions.json`. Do not assume a commit type
-automatically creates a release.
+Release version changes are an explicit maintainer decision. Run `npm run version:bump -- patch`,
+`minor`, or `major` before merging a release change; review the synchronized metadata and the
+[release guide](docs/releasing.md). The automation is implemented locally but has not yet been
+validated end to end on GitHub. A commit type does not automatically select or create a release.
 
 ## License
 

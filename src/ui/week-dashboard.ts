@@ -7,7 +7,7 @@ import type {
 } from './dashboard-controller';
 import { habitIcon } from './habit-icon-picker';
 
-export interface MonthDashboardHandlers {
+export interface WeekDashboardHandlers {
   toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
   toggleHabitHistory(habitId: string): void;
 }
@@ -68,7 +68,6 @@ function placeholderCells(week: WeekViewModel): HabitCellViewModel[] {
     disabled: true,
     reason: 'not tracked this week',
     ariaLabel: `${day.weekday} ${day.date}, not tracked this week`,
-    inSelectedMonth: day.inSelectedMonth,
     isToday: day.isToday,
   }));
 }
@@ -88,10 +87,8 @@ function summaryFallback(
     target: firstRow?.target ?? null,
     completedThisWeek: 0,
     streak: firstRow?.streak ?? 0,
-    monthlyTotal: firstRow?.monthlyTotal ?? 0,
     pendingArchive: firstRow?.pendingArchive ?? false,
     pendingTarget: firstRow?.pendingTarget ?? null,
-    canReactivate: firstRow?.canReactivate ?? false,
   };
 }
 
@@ -126,7 +123,7 @@ function nameCell(
   summary: HabitSummaryViewModel,
   selectedRow: HabitRowViewModel | undefined,
   historyOpen: boolean,
-  handlers: MonthDashboardHandlers,
+  handlers: WeekDashboardHandlers,
 ): HTMLTableCellElement {
   const cell = el('th', 'habit-tracker-habit-cell');
   cell.scope = 'row';
@@ -184,15 +181,12 @@ function dayCell(
   habitId: string,
   week: WeekViewModel,
   index: number,
-  handlers: MonthDashboardHandlers,
+  handlers: WeekDashboardHandlers,
   currentWeek: string,
 ): HTMLTableCellElement {
   const { cell } = decorated;
   const td = el('td', 'habit-tracker-day-cell');
   td.setAttribute('role', 'cell');
-  if (!cell.inSelectedMonth) {
-    td.classList.add('is-outside-month');
-  }
   if (cell.completed) {
     td.classList.add('is-completed');
   }
@@ -255,7 +249,7 @@ function dayCell(
 export function renderHabitGrid(
   container: HTMLElement,
   viewModel: DashboardViewModel,
-  handlers: MonthDashboardHandlers,
+  handlers: WeekDashboardHandlers,
 ): void {
   const week = viewModel.weeks[0];
   if (!week) {
@@ -316,9 +310,6 @@ export function renderHabitGrid(
     if (day.isToday) {
       th.classList.add('is-today');
       th.setAttribute('aria-current', 'date');
-    }
-    if (!day.inSelectedMonth) {
-      th.classList.add('is-outside-month');
     }
     if (week.week === viewModel.currentWeek) {
       th.classList.add('is-current-week');

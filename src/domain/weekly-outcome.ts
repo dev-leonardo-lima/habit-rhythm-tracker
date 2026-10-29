@@ -4,17 +4,6 @@ import { effectiveTargetForWeek } from './target-history';
 import { completedCountInWeek } from './week-progress';
 import type { Habit, LocalDate, WeekKey, WeekOutcome } from './types';
 
-export function isWeekEvaluable(habit: Habit, week: WeekKey, today: LocalDate): boolean {
-  const currentWeek = mondayOf(today);
-  if (compareDates(week, currentWeek) > 0) {
-    return false;
-  }
-  if (compareDates(week, mondayOf(habit.created)) < 0) {
-    return false;
-  }
-  return stateForWeek(habit, week) !== 'archived';
-}
-
 export function weeklyOutcome(habit: Habit, week: WeekKey, today: LocalDate): WeekOutcome {
   const currentWeek = mondayOf(today);
   if (compareDates(week, currentWeek) > 0 || compareDates(week, mondayOf(habit.created)) < 0) {

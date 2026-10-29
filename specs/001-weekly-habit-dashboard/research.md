@@ -87,7 +87,7 @@ Use the local clock to refresh at a date/zone change and on resume; register and
 and timers with the view/plugin lifecycle.
 
 **Rationale**: Native UI fits the supplied minimalist reference and Obsidian themes with a small
-runtime surface. Actual iOS and Android testing is necessary; desktop emulation is supplementary.
+runtime surface.
 
 **Alternatives considered**: React is optional and unnecessary for this scope; color-only completion
 states are inaccessible; relying only on midnight timers misses suspended mobile apps or zone changes.

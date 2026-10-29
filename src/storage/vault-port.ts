@@ -18,6 +18,5 @@ export interface VaultPort {
   create(path: string, content: string): Promise<void>;
   /** Protected read-modify-write, mirroring Obsidian's `Vault.process`. */
   process(path: string, transform: (content: string) => string): Promise<string>;
-  remove(path: string): Promise<void>;
   ensureFolder(path: string): Promise<void>;
 }

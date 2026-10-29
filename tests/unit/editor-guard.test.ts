@@ -59,6 +59,39 @@ describe('Obsidian editor guard', () => {
     expect(await mixed.inspect('Habits/Gym.md')).toEqual({ status: 'unknown' });
   });
 
+  it('ignores an unrelated deferred note using its saved leaf state', async () => {
+    const leaf = {
+      view: {},
+      isDeferred: true,
+      getViewState: () => ({ type: 'markdown', state: { file: 'Other.md' } }),
+      loadIfDeferred: async () => {
+        throw new Error('unrelated notes should not be loaded');
+      },
+    };
+    const app = { workspace: { getLeavesOfType: () => [leaf] } } as unknown as App;
+    const guard = new ObsidianEditorGuard(app);
+    await guard.prepare('Habits/Gym.md');
+    expect(guard.inspect('Habits/Gym.md')).toEqual({ status: 'none' });
+    leaf.view = null as unknown as object;
+    expect(guard.inspect('Habits/Gym.md')).toEqual({ status: 'none' });
+  });
+
+  it('loads a deferred target note before checking its editor', async () => {
+    const leaf = {
+      view: {} as unknown,
+      isDeferred: true,
+      getViewState: () => ({ type: 'markdown', state: { file: 'Habits/Gym.md' } }),
+      async loadIfDeferred() {
+        this.view = { file: { path: 'Habits/Gym.md' }, editor: { getValue: () => 'content' } };
+        this.isDeferred = false;
+      },
+    };
+    const app = { workspace: { getLeavesOfType: () => [leaf] } } as unknown as App;
+    const guard = new ObsidianEditorGuard(app);
+    await guard.prepare('Habits/Gym.md');
+    expect(guard.inspect('Habits/Gym.md')).toEqual({ status: 'clean', content: 'content' });
+  });
+
   it('fails closed for unknown, missing, throwing or disagreeing editors', async () => {
     const unknown = new ObsidianEditorGuard(
       appWithLeaves([{ file: { path: 'Habits/Gym.md' }, editor: null }]),

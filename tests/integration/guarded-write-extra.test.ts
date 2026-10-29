@@ -19,24 +19,24 @@ describe('guarded write failure paths', () => {
     addHabitNote(vault.files, habit, PATH);
 
     const throwingGuard: EditorGuard = {
-      async inspect() {
+      inspect() {
         throw new Error('editor API unavailable');
       },
     };
     const throwing = new GuardedWriter({ vault, editorGuard: throwingGuard });
-    const first = await throwing.update(PATH, { habit, baseContent: vault.files.get(PATH) });
+    const first = await throwing.update(PATH, { habit, baseContent: vault.files.get(PATH) ?? '' });
     expect(first.status).toBe('editor-blocked');
     if (first.status === 'editor-blocked') {
       expect(first.reason).toBe('unknown');
     }
 
     const mismatchGuard: EditorGuard = {
-      async inspect() {
+      inspect() {
         return { status: 'clean', content: 'unsaved different content' };
       },
     };
     const mismatch = new GuardedWriter({ vault, editorGuard: mismatchGuard });
-    const second = await mismatch.update(PATH, { habit, baseContent: vault.files.get(PATH) });
+    const second = await mismatch.update(PATH, { habit, baseContent: vault.files.get(PATH) ?? '' });
     expect(second.status).toBe('editor-blocked');
     if (second.status === 'editor-blocked') {
       expect(second.reason).toBe('dirty');
@@ -87,7 +87,7 @@ describe('guarded write failure paths', () => {
     const { vault, writer } = setup();
     const habit = makeHabit();
     addHabitNote(vault.files, habit, PATH);
-    const before = vault.files.get(PATH);
+    const before = vault.files.get(PATH) ?? '';
     vault.failNextProcess = new Error('write failed');
 
     const result = await writer.update(PATH, {
@@ -99,19 +99,57 @@ describe('guarded write failure paths', () => {
     expect(vault.files.get(PATH)).toBe(before);
   });
 
-  it('serializes updates to the same habit', async () => {
+  it('refuses an update without the snapshot used to compute it', async () => {
     const { vault, writer } = setup();
     const habit = makeHabit();
     addHabitNote(vault.files, habit, PATH);
-    const first = writer.update(PATH, {
-      habit: { ...habit, completions: ['2026-10-27'] },
-      baseContent: vault.files.get(PATH),
-    });
-    const second = writer.update(PATH, {
+    const before = vault.files.get(PATH);
+    const result = await writer.update(PATH, {
       habit: { ...habit, completions: ['2026-10-28'] },
+    } as never);
+    expect(result.status).toBe('failed');
+    expect(vault.files.get(PATH)).toBe(before);
+  });
+
+  it('blocks when an editor changes after inspection but before the protected write', async () => {
+    const { vault } = setup();
+    const habit = makeHabit();
+    addHabitNote(vault.files, habit, PATH);
+    const base = vault.files.get(PATH) ?? '';
+    let editorContent = base;
+    const writer = new GuardedWriter({
+      vault,
+      editorGuard: { inspect: () => ({ status: 'clean', content: editorContent }) },
     });
-    expect((await first).status).toBe('applied');
-    expect((await second).status).toBe('applied');
+    vault.beforeProcess = () => {
+      editorContent = `${base}\nUnsaved edit`;
+    };
+    const result = await writer.update(PATH, {
+      habit: { ...habit, completions: ['2026-10-28'] },
+      baseContent: base,
+    });
+    expect(result).toEqual({ status: 'editor-blocked', reason: 'dirty' });
+    expect(vault.files.get(PATH)).toBe(base);
+  });
+
+  it('reports an uncertain outcome if an editor changes during the save', async () => {
+    const { vault } = setup();
+    const habit = makeHabit();
+    addHabitNote(vault.files, habit, PATH);
+    const base = vault.files.get(PATH) ?? '';
+    let editorContent = base;
+    const writer = new GuardedWriter({
+      vault,
+      editorGuard: { inspect: () => ({ status: 'clean', content: editorContent }) },
+    });
+    vault.afterProcess = () => {
+      editorContent = `${base}\nUnsaved edit`;
+    };
+    const result = await writer.update(PATH, {
+      habit: { ...habit, completions: ['2026-10-28'] },
+      baseContent: base,
+    });
+    expect(result.status).toBe('uncertain');
     expect(parseHabitNote(vault.files.get(PATH) ?? '').habit.completions).toEqual(['2026-10-28']);
   });
 });

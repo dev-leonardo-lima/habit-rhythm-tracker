@@ -99,6 +99,7 @@ export function renderIconPicker(
   const search = document.createElement('input');
   search.type = 'search';
   search.dataset.iconSearch = 'true';
+  search.dataset.fieldKey = 'icon-search';
   search.setAttribute('aria-label', `Search icons for ${habit.name}`);
   search.placeholder = 'Search icons';
   search.autocomplete = 'off';

@@ -44,7 +44,6 @@ describe('US3: week navigation and history', () => {
       '2 Nov – 8 Nov 2026',
     );
     expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
     expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('');
     expect(container.querySelector('.habit-tracker-week-meta button')).toBeNull();
     expect(container.querySelector('.habit-tracker-gutter-head')?.classList).not.toContain(
@@ -103,7 +102,6 @@ describe('US3: week navigation and history', () => {
     await harness.controller.refreshClock();
 
     expect(harness.controller.getViewModel().focusedWeek).toBe('2026-11-02');
-    expect(harness.controller.getViewModel().selectedMonth).toBe('2026-11');
   });
 
   it('refreshes observed external edits after a suspend/resume', async () => {
@@ -149,7 +147,6 @@ describe('US3: week navigation and history', () => {
     const result = await harness.controller.toggleCompletion(id, '2026-09-30', true);
     expect(result?.status).toBe('applied');
     const view = harness.controller.getViewModel();
-    expect(view.habits[0]?.monthlyTotal).toBe(1);
     expect(view.weeks[0]?.rows[0]?.completed).toBe(1);
 
     const container = document.createElement('div');
@@ -363,7 +360,7 @@ describe('US3: week navigation and history', () => {
     );
     expect(updated?.checked).toBe(true);
     expect(updated?.disabled).toBe(false);
-    expect(harness.controller.getViewModel().habits[0]?.monthlyTotal).toBe(1);
+    expect(harness.controller.getViewModel().weeks[0]?.rows[0]?.completed).toBe(1);
   });
 
   it('shows archived-week history and its excluded weekly state', async () => {

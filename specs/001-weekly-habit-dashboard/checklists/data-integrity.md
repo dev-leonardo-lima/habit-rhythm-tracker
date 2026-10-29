@@ -45,7 +45,7 @@ that the superseded features exist.
 
 - [x] CHK017 Are acceptance criteria sufficient to distinguish a completed weekly goal from a daily streak, including rest days and a currently open week? [Acceptance Criteria, Spec §User Story 2, SC-002]
 - [x] CHK018 Are measurable outcomes and acceptance criteria explicit for preservation and recovery after a detected conflict, failed save, and restart? [Acceptance Criteria, Spec §FR-018, SC-003, Gap]
-- [x] CHK019 Are the scope and expected evidence for persistence across device types and offline operation defined without assuming external synchronization? [Measurability, Spec §FR-010, FR-013, SC-003–SC-005]
+- [x] CHK019 Are the scope and expected evidence for persistence and offline operation defined without assuming external synchronization? [Measurability, Spec §FR-010, FR-013, SC-003–SC-005]
 - [x] CHK020 Are target and state changes accompanied by examples sufficient to determine the expected historical and current-week results? [Acceptance Criteria, Spec §FR-011–FR-012, Gap]
 
 ## Scenario and Edge Case Coverage
@@ -60,7 +60,7 @@ that the superseded features exist.
 
 ## Non-Functional Requirements and Assumptions
 
-- [x] CHK028 Are offline availability and desktop, iOS, and Android compatibility required for both normal tracking and recovery flows? [Coverage, Spec §FR-013, Gap]
+- [x] CHK028 Are offline availability and mobile compatibility required for both normal tracking and error-handling flows? [Coverage, Spec §FR-013, Gap]
 - [x] CHK029 Are accessibility requirements for identifying, understanding, and resolving data errors defined for keyboard and touch users? [Coverage, Spec §FR-014, FR-018, Gap]
 - [x] CHK030 Are the growth, user visibility, and storage implications of retaining a recovery record for every change specified or explicitly accepted? [Assumption, Plan §Technical Context, Gap]
 - [x] CHK031 Are migration, backward-compatibility, and preservation requirements defined for future changes to the habit-note format? [Completeness, Constitution §III, Gap]

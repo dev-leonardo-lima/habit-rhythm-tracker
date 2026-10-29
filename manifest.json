@@ -1,10 +1,9 @@
 {
-  "id": "habit-tracker",
-  "name": "Habit Tracker",
+  "id": "habit-rhythm",
+  "name": "Habit Rhythm",
   "version": "0.1.0",
   "minAppVersion": "1.6.0",
   "description": "Track weekly habits in a seven-day dashboard stored in user-editable Markdown notes.",
-  "author": "Habit Tracker maintainers",
-  "authorUrl": "",
+  "author": "Leonardo Lima",
   "isDesktopOnly": false
 }

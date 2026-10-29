@@ -1,4 +1,4 @@
-import type { App } from 'obsidian';
+import type { App, WorkspaceLeaf } from 'obsidian';
 import type { EditorGuard, EditorInspection } from '../storage/guarded-write';
 
 interface EditorBuffer {
@@ -17,15 +17,28 @@ interface MarkdownLeafView {
 export class ObsidianEditorGuard implements EditorGuard {
   constructor(private readonly app: App) {}
 
-  async inspect(path: string): Promise<EditorInspection> {
+  async prepare(path: string): Promise<void> {
+    for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
+      if (
+        leaf.isDeferred &&
+        this.storedPath(leaf) === path &&
+        typeof leaf.loadIfDeferred === 'function'
+      ) {
+        await leaf.loadIfDeferred();
+      }
+    }
+  }
+
+  inspect(path: string): EditorInspection {
     const leaves = this.app.workspace.getLeavesOfType('markdown');
     let buffer: string | undefined;
     for (const leaf of leaves) {
       const view = leaf.view as unknown as MarkdownLeafView | null;
-      if (!view) {
-        return { status: 'unknown' };
-      }
-      if (!view.file || typeof view.file.path !== 'string' || view.file.path.length === 0) {
+      if (!view?.file || typeof view.file.path !== 'string' || view.file.path.length === 0) {
+        const storedPath = this.storedPath(leaf);
+        if (storedPath && storedPath !== path) {
+          continue;
+        }
         return { status: 'unknown' };
       }
       if (view.file.path !== path) {
@@ -52,5 +65,14 @@ export class ObsidianEditorGuard implements EditorGuard {
       return { status: 'none' };
     }
     return { status: 'clean', content: buffer };
+  }
+
+  private storedPath(leaf: WorkspaceLeaf): string | null {
+    try {
+      const path = leaf.getViewState?.().state?.file;
+      return typeof path === 'string' && path.length > 0 ? path : null;
+    } catch {
+      return null;
+    }
   }
 }

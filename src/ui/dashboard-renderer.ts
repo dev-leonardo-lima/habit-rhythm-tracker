@@ -17,8 +17,6 @@ export interface DashboardHandlers {
   archiveHabit(habitId: string): void | Promise<unknown>;
   reactivateHabit(habitId: string): void | Promise<unknown>;
   cancelPendingArchive(habitId: string): void | Promise<unknown>;
-  previousMonth(): void;
-  nextMonth(): void;
   previousWeek(): void;
   nextWeek(): void;
 }
@@ -93,7 +91,7 @@ function escapeSelectorValue(value: string): string {
 }
 
 function fieldKey(field: HTMLInputElement | HTMLSelectElement): string | null {
-  return field.getAttribute('aria-label') ?? field.name ?? null;
+  return field.dataset.fieldKey ?? field.getAttribute('aria-label') ?? field.name ?? null;
 }
 
 function captureFocus(container: HTMLElement): FocusDescriptor | null {
@@ -172,7 +170,8 @@ function captureUiState(container: HTMLElement): CapturedUiState {
       'input, select',
     )) {
       const keyForField = fieldKey(field);
-      if (keyForField) {
+      const preserveState = field instanceof HTMLInputElement && field.type === 'hidden';
+      if (keyForField && (preserveState || field.value !== field.dataset.baseValue)) {
         values[keyForField] = field.value;
       }
     }
@@ -227,11 +226,11 @@ function restoreFormValues(
       const keyForField = fieldKey(field);
       if (keyForField && Object.prototype.hasOwnProperty.call(values, keyForField)) {
         field.value = values[keyForField] ?? field.value;
-        if (field.dataset.iconSearch === 'true') {
-          field.dispatchEvent(new Event('habit-tracker:restore-icon-search'));
-        }
       }
     }
+    form
+      .querySelector<HTMLInputElement>('input[data-icon-search="true"]')
+      ?.dispatchEvent(new Event('habit-tracker:restore-icon-search'));
   }
 }
 
@@ -293,7 +292,7 @@ function renderHeader(
   handlers: DashboardHandlers,
 ): void {
   const week = viewModel.weeks[0];
-  const weekText = week?.label ?? viewModel.monthLabel;
+  const weekText = week?.label ?? '';
   const isCurrentWeek = week?.isCurrentWeek ?? false;
   const header = el('header', 'habit-tracker-header');
   const heading = el('div', 'habit-tracker-heading');
@@ -442,6 +441,12 @@ export function renderDashboard(
   }
 
   renderManageDisclosure(container, viewModel, presentationHandlers);
+
+  for (const field of container.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+    'form[data-form-key] input, form[data-form-key] select',
+  )) {
+    field.dataset.baseValue = field.value;
+  }
 
   restoreDisclosure(container, captured, viewModel);
   const gridScroll = container.querySelector<HTMLElement>('.habit-tracker-grid-scroll');

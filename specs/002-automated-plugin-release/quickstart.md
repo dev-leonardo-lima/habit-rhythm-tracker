@@ -1,8 +1,8 @@
 # Quickstart: Validate Automated Releases
 
-This guide describes checks to run **after implementation**. The current repository contains only
-Spec Kit artifacts and an initialized Git repository: the plugin, commands, workflows, and remote
-are not present yet.
+The local implementation and its automated tests are present. Follow the
+[maintainer release guide](../../docs/releasing.md) for setup and recovery. The checks below are not
+a claim of external verification: an end-to-end run in a disposable GitHub repository remains needed.
 See [plan.md](plan.md), [data-model.md](data-model.md), and
 [release-contract.md](contracts/release-contract.md).
 
@@ -19,7 +19,8 @@ See [plan.md](plan.md), [data-model.md](data-model.md), and
 
 ## Local validation and explicit version bump
 
-After the planned scripts are implemented:
+Run these commands in an isolated temporary checkout; the final command changes version files and is
+not a dry run:
 
 ```sh
 npm ci
@@ -36,6 +37,8 @@ Expected: checks pass and application line/branch coverage each reach at least 8
 verify the compatibility map when the minimum Obsidian version changes. The version command creates
 neither a Git commit nor a tag. Repeat in a clean temporary checkout for `minor` and `major` and for
 an invalid or inconsistent version; invalid operations fail without partial changes.
+Confirm CI accepts the normal 80% coverage thresholds, rejects an invalid or expired exception,
+and accepts only a documented, approved exception for its matching version.
 
 ## CI and release acceptance
 
@@ -58,8 +61,7 @@ an invalid or inconsistent version; invalid operations fail without partial chan
    original event, reconcile, and confirm safe recovery. Record the operator action needed when a
    provider never delivered an event; its push boundary cannot be reconstructed reliably from Git.
 6. Check logs, issue receipts, and release assets for credentials and vault data. Verify untrusted
-   PR checks lack publish permissions. Record desktop, iOS, and Android verification for relevant
-   changes or document unverified platforms and reasons.
+   PR checks lack publish permissions.
 
 ## Community directory walkthrough
 

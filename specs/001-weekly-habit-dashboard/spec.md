@@ -56,8 +56,9 @@ the dashboard; all four records and 4/4 progress remain visible.
    requested, **Then** no write is attempted, the note remains unchanged, and the person is told to
    save or close the editor before repeating the action.
 9. **Given** a save fails or its outcome is uncertain, **When** the person returns to the dashboard,
-   **Then** the saved note remains intact, the change is not presented as saved, and an actionable
-   error is shown. No unsaved intent is promised after an unexpected app exit.
+   **Then** the change is not presented as confirmed, and an actionable error asks the person to
+   inspect the note before retrying. A write with an uncertain outcome may already have completed.
+   No unsaved intent is promised after an unexpected app exit.
 10. **Given** a mixed or invalid habit block, **When** it is loaded, **Then** the problem is reported
     and the note is preserved without overwrite.
 
@@ -264,7 +265,8 @@ old target and that history remains accessible.
 - **FR-015**: The interface MUST use a minimalist presentation with visible habit names, dates, and
   states, without requiring decorative elements to understand progress.
 - **FR-016**: The system MUST preserve unrelated data and content when changing habit records; data
-  deletion MUST depend on explicit user action.
+  deletion MUST depend on explicit user action. Preserve unknown managed JSON properties and invalid
+  color values across unrelated edits.
 - **FR-017**: Habit data MUST be kept in one user-readable and editable Markdown note per habit in
   the vault. Each note MUST contain the habit name, target history, and completion history. The
   dashboard MUST reflect valid user edits to these notes and report invalid habit data without
@@ -277,9 +279,10 @@ old target and that history remains accessible.
 - **FR-019**: The plugin MUST NOT create per-edit recovery records or a recovery area. Any
   `recovery-*` files left by earlier development builds MUST be ignored and
   left untouched; no automatic cleanup or deletion is performed.
-- **FR-020**: Guarded writes MUST capture the exact note content used to compute an edit, compare it
-  with the current note, and preserve the existing note on mismatch, write failure, or uncertain
-  outcome. The system MUST report the issue and MUST NOT replay a change blindly.
+- **FR-020**: Guarded writes MUST capture the exact note content used to compute an edit and compare
+  it with the current note in the protected callback. Detected mismatches or unsafe editor state
+  before the write MUST block it. A potentially completed write whose result cannot be established
+  MUST be reported as uncertain for inspection. Changes MUST NOT be replayed blindly.
 - **FR-021**: There is no durable journal; the system MUST NOT promise recovery of an unsaved intent
   after an unexpected app exit. Previously saved note content MUST remain intact.
 - **FR-022**: Any future habit-note format migration MUST preserve the original data in a recoverable
@@ -289,7 +292,7 @@ old target and that history remains accessible.
   surface when shown, and provide labeled controls operable by keyboard and touch, offline on
   desktop, iOS, and Android.
 - **FR-024**: Unmarking a completion and replacing a pending target or archive setting MUST require
-  an explicit user action. A failed or conflicting write MUST leave the saved note unchanged.
+  an explicit user action. A detected conflict before writing MUST leave the saved note unchanged.
   Permanent deletion of habit notes is outside this feature.
 - **FR-025**: A person MUST be able to choose or remove an optional completion color per habit using
   a labeled control operable by keyboard and touch. The color MUST apply only to that habit's
@@ -333,6 +336,9 @@ old target and that history remains accessible.
   visible control, and identify the selection to assistive technology.
 - **FR-032**: The weekly dashboard MUST NOT display aggregate average-progress or weekly-goals-met
   indicators; individual habit progress and streaks remain available.
+- **FR-033**: Refreshes MUST NOT overwrite user drafts with stale untouched form values. Concurrent
+  actions on the same habit MUST run in order, and older refresh results MUST NOT replace newer ones.
+  The dashboard MUST allow correction of eligible past archived weeks even when no marks remain.
 
 | Operation | User authorization | Result |
 |-----------|--------------------|--------|
@@ -362,14 +368,13 @@ old target and that history remains accessible.
 - **SC-003**: In acceptance tests, 100% of saved records remain accessible after reopening, weekly
   rollover, and navigation between weeks, including weeks that cross a month or year boundary.
 - **SC-004**: In a manual acceptance scenario, locating and correcting a date in a previous week
-  can be completed within one minute using a desktop or mobile device.
+  can be completed within one minute.
 - **SC-005**: In offline tests, 100% of creation, marking, navigation, and history review flows are
   completed without an external service.
-- **SC-006**: In acceptance scenarios for detected conflict, failed write, editor uncertainty, and
-  reopening, 100% preserve the last saved note, never overwrite a concurrent change, and report the
-  issue clearly. No operation is replayed blindly.
-- **SC-007**: For each of desktop, iOS, and Android, verification records MUST identify results for
-  offline persistence and reopening, or state which platform was not verified and why.
+- **SC-006**: In acceptance scenarios for pre-write conflicts and unverifiable editors, 100% leave
+  the saved note unchanged and report the issue clearly. An outcome detected as uncertain after a
+  write is reported for inspection. No operation is replayed blindly.
+- **SC-007**: Verification records MUST identify results for offline persistence and reopening.
 
 ## Assumptions
 

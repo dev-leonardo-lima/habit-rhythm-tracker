@@ -1,20 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
-  addMonths,
   compareDates,
   dayOfWeekIndex,
   daysFromCreationThroughSunday,
   differenceInDays,
-  endOfMonth,
   isFutureDate,
   isValidLocalDate,
   localDateFromDate,
   mondayOf,
-  monthIntersectingWeeks,
-  monthKeyOf,
   parseLocalDate,
-  startOfMonth,
   todayLocalDate,
   weekDates,
 } from '../../src/domain/local-date';
@@ -95,28 +90,5 @@ describe('local calendar dates', () => {
     expect(daysFromCreationThroughSunday('2026-10-26')).toBe(7);
     expect(daysFromCreationThroughSunday('2026-10-30')).toBe(3);
     expect(daysFromCreationThroughSunday('2026-11-01')).toBe(1);
-  });
-
-  it('handles month keys, boundaries and weeks intersecting a month', () => {
-    expect(monthKeyOf('2026-10-28')).toBe('2026-10');
-    expect(startOfMonth('2026-10')).toBe('2026-10-01');
-    expect(endOfMonth('2026-10')).toBe('2026-10-31');
-    expect(endOfMonth('2024-02')).toBe('2024-02-29');
-    expect(addMonths('2026-10', 1)).toBe('2026-11');
-    expect(addMonths('2026-01', -1)).toBe('2025-12');
-    expect(addMonths('2026-12', 1)).toBe('2027-01');
-    expect(monthIntersectingWeeks('2026-10')).toEqual([
-      '2026-09-28',
-      '2026-10-05',
-      '2026-10-12',
-      '2026-10-19',
-      '2026-10-26',
-    ]);
-    expect(monthIntersectingWeeks('2027-02')).toEqual([
-      '2027-02-01',
-      '2027-02-08',
-      '2027-02-15',
-      '2027-02-22',
-    ]);
   });
 });

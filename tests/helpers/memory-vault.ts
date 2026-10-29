@@ -6,7 +6,6 @@ export class MemoryVault implements VaultPort {
   failNextRead: Error | null = null;
   failNextCreate: Error | null = null;
   failNextProcess: Error | null = null;
-  failNextRemove: Error | null = null;
   failNextEnsureFolder: Error | null = null;
   beforeCreate: ((path: string, content: string) => void) | null = null;
   afterCreate: ((path: string, content: string) => void) | null = null;
@@ -71,15 +70,6 @@ export class MemoryVault implements VaultPort {
     this.files.set(path, next);
     this.afterProcess?.(path);
     return next;
-  }
-
-  async remove(path: string): Promise<void> {
-    if (this.failNextRemove) {
-      const error = this.failNextRemove;
-      this.failNextRemove = null;
-      throw error;
-    }
-    this.files.delete(path);
   }
 
   async ensureFolder(path: string): Promise<void> {

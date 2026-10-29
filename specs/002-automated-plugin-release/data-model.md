@@ -35,8 +35,8 @@
 
 ## Validation result
 
-- **Fields**: exact source SHA, check/run identity, typecheck/lint/format/test/build status, coverage,
-  platform verification evidence or approved exception, and conclusion.
+- **Fields**: exact source SHA, check/run identity, typecheck/lint/format/test/build status, measured
+  coverage and applicable limits/approved exception, and conclusion.
 - **Invariant**: only a trusted successful result for the receipt's exact `after` SHA can authorize
   publication. Tests from a PR merge preview or another SHA cannot stand in for the main push.
 

@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-habit-tracker",
+  "name": "habit-rhythm",
   "version": "0.1.0",
   "description": "Weekly habit dashboard for Obsidian, stored in user-editable Markdown notes.",
   "main": "main.js",
@@ -13,7 +13,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "version:bump": "node scripts/version-bump.mjs",
+    "version:check": "node scripts/validate-versions.mjs"
   },
   "keywords": [
     "obsidian",
@@ -34,6 +36,7 @@
     "prettier": "3.9.10",
     "typescript": "5.9.3",
     "typescript-eslint": "8.72.1",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "yaml": "2.9.1"
   }
 }

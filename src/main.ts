@@ -38,15 +38,22 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
     this.addSettingTab(new HabitTrackerSettingTab(this.app, this));
 
     this.app.workspace.onLayoutReady(() => {
+      this.registerEvent(
+        this.app.vault.on('create', (file) => this.refreshForVaultPath(file.path)),
+      );
+      this.registerEvent(
+        this.app.vault.on('delete', (file) => this.refreshForVaultPath(file.path)),
+      );
+      this.registerEvent(
+        this.app.vault.on('rename', (file, oldPath) => {
+          if (this.affectsHabitsFolder(file.path) || this.affectsHabitsFolder(oldPath)) {
+            void this.controller?.refresh();
+          }
+        }),
+      );
       void this.initializeDashboard();
     });
-    this.registerEvent(
-      this.app.vault.on('modify', (file) => {
-        if (file.path.startsWith(`${this.settings.habitsFolder}/`)) {
-          void this.controller?.refresh();
-        }
-      }),
-    );
+    this.registerEvent(this.app.vault.on('modify', (file) => this.refreshForVaultPath(file.path)));
     this.registerDomEvent(document, 'visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         void this.refreshFromLifecycle();
@@ -76,8 +83,9 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
     await this.saveData(next);
     this.configure();
     for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)) {
-      const view = leaf.view as HabitDashboardView;
-      view.rebind();
+      if (leaf.view instanceof HabitDashboardView) {
+        leaf.view.rebind();
+      }
     }
     await this.controller?.load();
   }
@@ -97,7 +105,7 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
 
   private getController(): DashboardController {
     if (!this.controller) {
-      throw new Error('Habit Tracker has not finished loading');
+      throw new Error('Habit Rhythm has not finished loading');
     }
     return this.controller;
   }
@@ -135,5 +143,16 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
     }
     await this.controller.refreshClock();
     await this.controller.refresh();
+  }
+
+  private affectsHabitsFolder(path: string): boolean {
+    const folder = this.settings.habitsFolder;
+    return path === folder || path.startsWith(`${folder}/`) || folder.startsWith(`${path}/`);
+  }
+
+  private refreshForVaultPath(path: string): void {
+    if (this.affectsHabitsFolder(path)) {
+      void this.controller?.refresh();
+    }
   }
 }

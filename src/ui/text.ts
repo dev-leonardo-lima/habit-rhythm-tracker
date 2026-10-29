@@ -1,3 +1,4 @@
+import { addDays } from '../domain/local-date';
 import type { LocalDate } from '../domain/types';
 
 const MONTH_NAMES = [
@@ -68,32 +69,4 @@ export function weekLabel(week: LocalDate): string {
     return `${shortDate(week)} – ${shortDate(end)} ${endYear}`;
   }
   return `${shortDate(week)} ${startYear} – ${shortDate(end)} ${endYear}`;
-}
-
-export function weekdayDateLabel(week: LocalDate, index: number): string {
-  return `${weekdayName(index)} ${shortDate(addDays(week, index))}`;
-}
-
-export function formatTimestamp(timestamp: string): string {
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) {
-    return timestamp;
-  }
-  return date.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function addDays(date: LocalDate, days: number): LocalDate {
-  const parts = date.split('-').map(Number);
-  const shifted = new Date(Date.UTC(parts[0] ?? 1970, (parts[1] ?? 1) - 1, (parts[2] ?? 1) + days));
-  return [
-    String(shifted.getUTCFullYear()).padStart(4, '0'),
-    String(shifted.getUTCMonth() + 1).padStart(2, '0'),
-    String(shifted.getUTCDate()).padStart(2, '0'),
-  ].join('-');
 }

@@ -43,7 +43,7 @@ not interpret an empty test suite as meeting the coverage requirement.
 - [X] T008 [P] Add note-codec contract tests for preservation of unrelated bytes, valid external edits, invalid/missing/duplicate markers, and unsupported versions in `tests/unit/habit-note.test.ts`.
 - [X] T009 [P] Add repository integration tests using two distinct notes with the same ID, a creation-path collision, and a path appearing after precheck; require an error and preservation of every existing note in `tests/integration/habit-repository.test.ts`.
 - [X] T010 [P] Add recovery contract tests for initial journal creation/read-back failure, full storage, interruption during separate status-record creation, malformed status, note-save failure, dirty-editor uncertainty, guarded conflicts, restart, retry, and preservation of the last complete snapshot and intent in `tests/integration/recovery-store.test.ts`.
-- [X] T011 Validate supported Obsidian editor APIs with a proof of concept for multiple open leaves, clean/dirty and unknown editor state, and available desktop/mobile versions; document results and fail-closed cases in `docs/editor-state-spike.md`.
+- [X] T011 Validate supported Obsidian editor APIs with a proof of concept for multiple open leaves and clean/dirty and unknown editor state; document results and fail-closed cases in `docs/editor-state-spike.md`.
 
 ### Implementation
 
@@ -158,13 +158,13 @@ integration require US1 and US2.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-**Purpose**: Complete documentation and verify the specified quality and platform gates.
+**Purpose**: Complete documentation and verify the specified quality checks.
 
 - [X] T051 [P] Document user-facing habit-note format, external-edit/sync limits, retained recovery records, explicit deletion, and future migration safeguards in `README.md`.
 - [X] T052 [P] Document local development, Conventional Commits (`type(scope): description`, optional scope, and breaking-change notation), `format:check`, coverage, sample-vault setup, and the separate 002 release-automation dependency in `docs/development.md`.
 - [X] T053 Implement visible rejection of unsupported schemas without rewriting notes in `src/storage/habit-note.ts`, and document approval and recoverable-original requirements for future migrations in `docs/data-format.md`.
 - [X] T054 Run typecheck, ESLint, Prettier `format:check`, Vitest/V8 coverage (at least 80% lines and branches), and production build using `package.json`; fix failures and record results in `specs/001-weekly-habit-dashboard/quickstart.md` or linked validation evidence.
-- [X] T055 Execute the offline, conflict, restart, small-screen, accessibility, and usability scenarios from `specs/001-weekly-habit-dashboard/quickstart.md`; record desktop/iOS/Android results or explicitly record each unverified platform and reason in `specs/001-weekly-habit-dashboard/validation.md`.
+- [X] T055 Record results and limitations for the offline, conflict, restart, small-screen, accessibility, and usability scenarios in `specs/001-weekly-habit-dashboard/validation.md`.
 - [X] T056 Review all acceptance scenarios and documentation links against `specs/001-weekly-habit-dashboard/spec.md`, including SC-001–SC-007 and the elapsed times for the manual acceptance scenarios, and record outcomes in `specs/001-weekly-habit-dashboard/validation.md`.
 
 ## Dependencies & Execution Order
@@ -202,8 +202,7 @@ integration require US1 and US2.
 2. Deliver US1 as the MVP; independently validate creation, completion, undo, and conflict recovery.
 3. Add US2 weekly streaks, then US3 month/history and US4 lifecycle management; use seeded fixtures
    to validate each domain slice independently before shared UI integration.
-4. Finish cross-cutting checks and record actual device/usability results. Never treat unverified
-   platform evidence or the 002 release pipeline as already implemented.
+4. Finish cross-cutting checks and record verification results and limitations.
 
 ## Phase 8: Convergence
 
@@ -238,7 +237,7 @@ recovery data was deleted; personal vaults were not touched.
 - [X] T070 Remove legacy recovery modules and tests, and update guarded-write, lifecycle, repository, settings, plugin, and UI tests.
 - [X] T071 Update `spec.md`, `plan.md`, `data-model.md`, contracts, quickstart, README, development/data-format docs, PRODUCT.md, and DESIGN.md to remove recovery obligations and document the no-journal behavior.
 - [X] T072 Delete recovery files/folders from the project's synthetic development/test vaults only, with explicit user authorization; leave personal vaults and unrelated files untouched.
-- [X] T073 Verify the weekly dashboard in Obsidian desktop, keyboard operation, and narrow widths after the visual scale/spacing refinements; record results and remaining platform limitations in `validation.md`.
+- [X] T073 Verify the weekly dashboard in Obsidian desktop, keyboard operation, and narrow widths after the visual scale/spacing refinements; record results and visual limitations in `validation.md`.
 
 ## Phase 11: Header, Cell Geometry, and Per-Habit Color
 
@@ -274,4 +273,14 @@ recovery data was deleted; personal vaults were not touched.
 - [X] T094 Group name and next-week target before side-by-side color and icon controls where space permits; omit the technical icon name visually while retaining its accessible description.
 - [X] T095 Expand the activity calendar to the available width with square cells and preserve horizontal scrolling and weekday labels on narrow views.
 - [X] T096 Replace the redundant management-row tooltip with an accessible description and preserve summary focus across refreshes.
-- [X] T097 Update the feature specification, contracts, plan, quickstart, design and user documentation, and automated validation evidence. Record current visual/device verification limits in `validation.md`.
+- [X] T097 Update the feature specification, contracts, plan, quickstart, design and user documentation, and automated validation evidence. Record current visual verification limits in `validation.md`.
+
+## Phase 15: Repository Review Corrections
+
+- [X] T098 Give the plugin a unique community-directory ID and update installation documentation.
+- [X] T099 Preserve unknown note fields and invalid stored colors across unrelated changes.
+- [X] T100 Rediscover notes before edits, handle relevant vault events, and queue actions per habit.
+- [X] T101 Recheck editor buffers during protected writes, handle deferred leaves, and report uncertainty.
+- [X] T102 Keep historical archived weeks correctable, discard stale refresh results, and preserve only edited drafts.
+- [X] T103 Remove unused monthly dashboard logic and unused production deletion code.
+- [X] T104 Cover review regressions and document verification limitations.

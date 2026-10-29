@@ -28,8 +28,10 @@ block in the note body between these literal markers; the JSON object is user-re
   entry per week and an initial entry for the creation week. A completion occurs at most once per
   local date and cannot predate creation. `color` is optional; when present it is a six-digit hex
   value used for that habit's completion marks and icon. An absent or invalid value uses the theme
-  accent and does not invalidate the habit record; a later guarded edit writes only the valid color
-  fields. `icon` is an optional nonblank Obsidian icon ID, at most 128 characters without control
+  accent and does not invalidate the habit record; unrelated edits preserve the original value until
+  the user explicitly chooses a color. Unknown fields in the object and in existing target and state
+  entries are preserved during guarded edits; an action that would remove an entry with unknown
+  properties is blocked for review. `icon` is an optional nonblank Obsidian icon ID, at most 128 characters without control
   characters. An unavailable but well-formed ID is preserved; malformed icon data is reported and
   never discarded silently.
 - The plugin preserves every byte outside this block, including frontmatter and arbitrary user
@@ -51,9 +53,9 @@ block in the note body between these literal markers; the JSON object is user-re
    without modifying the note and report the conflict clearly.
 4. For creation, use a create-if-absent operation and fail on a path collision, including a note that
    appears after the initial path check. Never overwrite the existing note.
-5. A conflict, editor block, failed write, or uncertain outcome leaves the previously saved note
-   intact and reports the issue in text. The person may review the note and repeat the action, which
-   performs a fresh guarded comparison. Nothing is replayed blindly.
+5. A detected conflict or blocked write leaves the previously saved note intact and reports the
+   issue in text. If an editor change is detected after a write, the outcome is reported as
+   uncertain; the user can inspect the note before deciding what to do. Nothing is replayed blindly.
 6. An eligible unmarked date can be marked again directly. No unsaved intent is promised to survive
    an unexpected app exit. An explicit color or icon change is a normal guarded update like rename
    or target changes.

@@ -6,13 +6,11 @@ import { renderHabitForm, parseHabitForm } from '../../src/ui/habit-form';
 import { renderHabitSettings } from '../../src/ui/habit-settings';
 import { renderHabitGrid } from '../../src/ui/week-dashboard';
 import {
-  formatTimestamp,
   monthLabel,
   shortDate,
   weekLabel,
   weekRangeLabel,
   weekYearsLabel,
-  weekdayDateLabel,
   weekdayName,
   weekdayShort,
 } from '../../src/ui/text';
@@ -33,8 +31,6 @@ function handlers(): DashboardHandlers {
     archiveHabit: vi.fn(),
     reactivateHabit: vi.fn(),
     cancelPendingArchive: vi.fn(),
-    previousMonth: vi.fn(),
-    nextMonth: vi.fn(),
     previousWeek: vi.fn(),
     nextWeek: vi.fn(),
   };
@@ -52,10 +48,8 @@ function summary(overrides: Partial<HabitSummaryViewModel> = {}): HabitSummaryVi
     target: 4,
     completedThisWeek: 2,
     streak: 2,
-    monthlyTotal: 3,
     pendingArchive: false,
     pendingTarget: null,
-    canReactivate: false,
     ...overrides,
   };
 }
@@ -63,8 +57,6 @@ function summary(overrides: Partial<HabitSummaryViewModel> = {}): HabitSummaryVi
 function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewModel {
   return {
     today: '2026-10-28',
-    selectedMonth: '2026-10',
-    monthLabel: 'October 2026',
     currentWeek: '2026-10-26',
     focusedWeek: '2026-10-26',
     loading: false,
@@ -120,7 +112,7 @@ describe('UI components', () => {
       [
         summary(),
         summary({ habitId: 'habit-2', name: 'Read', state: 'archived' }),
-        summary({ habitId: 'habit-3', name: 'Walk', pendingArchive: true, canReactivate: true }),
+        summary({ habitId: 'habit-3', name: 'Walk', pendingArchive: true }),
       ],
       callbacks,
     );
@@ -343,8 +335,5 @@ describe('UI components', () => {
     expect(weekRangeLabel('2026-12-28')).toBe('28 Dec – 3 Jan');
     expect(weekYearsLabel('2026-10-26')).toBe('2026');
     expect(weekYearsLabel('2026-12-28')).toBe('2026 – 2027');
-    expect(weekdayDateLabel('2026-10-26', 2)).toBe('Wednesday 28 Oct');
-    expect(formatTimestamp('not-a-date')).toBe('not-a-date');
-    expect(formatTimestamp('2026-10-28T10:00:00.000Z')).not.toBe('2026-10-28T10:00:00.000Z');
   });
 });

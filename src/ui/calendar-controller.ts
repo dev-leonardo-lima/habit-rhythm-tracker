@@ -1,36 +1,22 @@
-import {
-  addDays,
-  addMonths,
-  mondayOf,
-  monthKeyOf,
-  monthIntersectingWeeks,
-} from '../domain/local-date';
+import { addDays, mondayOf } from '../domain/local-date';
 import type { LocalDate, WeekKey } from '../domain/types';
 
 export interface CalendarChange {
   dateChanged: boolean;
   weekChanged: boolean;
-  monthChanged: boolean;
 }
 
 export class CalendarController {
   private todayDate: LocalDate;
-  private selected: string;
   private focused: WeekKey;
-  private followingCurrent = true;
 
   constructor(today: LocalDate) {
     this.todayDate = today;
-    this.selected = monthKeyOf(today);
     this.focused = mondayOf(today);
   }
 
   get today(): LocalDate {
     return this.todayDate;
-  }
-
-  get selectedMonth(): string {
-    return this.selected;
   }
 
   get focusedWeek(): WeekKey {
@@ -41,71 +27,23 @@ export class CalendarController {
     return mondayOf(this.todayDate);
   }
 
-  get isFollowingCurrent(): boolean {
-    return this.followingCurrent;
-  }
-
-  /**
-   * Advances the local date. A weekly rollover always returns the view to the
-   * current month and highlights the new current week, even when the user was
-   * browsing history. Within the current period, any date change also refreshes
-   * the selected month/week; date-only changes while browsing history do not
-   * pull the user away from the historical month.
-   */
+  /** A new week returns the view to the current week; a date change does not. */
   setToday(today: LocalDate): CalendarChange {
     const previousToday = this.todayDate;
     const previousWeek = mondayOf(previousToday);
-    const previousMonth = monthKeyOf(previousToday);
     this.todayDate = today;
-    const nextWeek = mondayOf(today);
-    const nextMonth = monthKeyOf(today);
-    const weekChanged = nextWeek !== previousWeek;
-    const dateChanged = today !== previousToday;
-    const monthChanged = nextMonth !== previousMonth;
+    const weekChanged = mondayOf(today) !== previousWeek;
     if (weekChanged) {
-      this.selected = nextMonth;
-      this.focused = nextWeek;
-      this.followingCurrent = true;
-    } else if (this.followingCurrent && dateChanged) {
-      this.selected = nextMonth;
-      this.focused = nextWeek;
+      this.focused = mondayOf(today);
     }
-    return { dateChanged, weekChanged, monthChanged };
-  }
-
-  previousMonth(): void {
-    this.selected = addMonths(this.selected, -1);
-    this.focused = this.defaultFocusedWeek();
-    this.followingCurrent = false;
-  }
-
-  nextMonth(): void {
-    this.selected = addMonths(this.selected, 1);
-    this.focused = this.defaultFocusedWeek();
-    this.followingCurrent = false;
+    return { dateChanged: today !== previousToday, weekChanged };
   }
 
   previousWeek(): void {
     this.focused = addDays(this.focused, -7);
-    this.selected = monthKeyOf(this.focused);
-    this.followingCurrent = this.focused === this.currentWeek;
   }
 
   nextWeek(): void {
     this.focused = addDays(this.focused, 7);
-    this.selected = monthKeyOf(this.focused);
-    this.followingCurrent = this.focused === this.currentWeek;
-  }
-
-  goToCurrent(): void {
-    this.selected = monthKeyOf(this.todayDate);
-    this.focused = this.currentWeek;
-    this.followingCurrent = true;
-  }
-
-  private defaultFocusedWeek(): WeekKey {
-    const weeks = monthIntersectingWeeks(this.selected);
-    const currentWeek = this.currentWeek;
-    return weeks.includes(currentWeek) ? currentWeek : (weeks[0] ?? mondayOf(this.todayDate));
   }
 }

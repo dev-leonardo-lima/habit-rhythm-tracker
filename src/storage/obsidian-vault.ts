@@ -33,13 +33,6 @@ export class ObsidianVaultPort implements VaultPort {
     return this.vault.process(this.requireFile(path), transform);
   }
 
-  async remove(path: string): Promise<void> {
-    const file = this.vault.getAbstractFileByPath(path);
-    if (file instanceof TFile) {
-      await this.vault.delete(file);
-    }
-  }
-
   async ensureFolder(folder: string): Promise<void> {
     const normalized = folder
       .trim()

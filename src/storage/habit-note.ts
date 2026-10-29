@@ -28,6 +28,7 @@ export class HabitNoteError extends Error {
 
 export interface ParsedHabitNote {
   habit: Habit;
+  record: Record<string, unknown>;
   startIndex: number;
   endIndex: number;
 }
@@ -234,27 +235,72 @@ export function parseHabitNote(content: string): ParsedHabitNote {
   const blockStart = startIndex + MANAGED_START.length;
   const block = content.slice(blockStart, endMarkerIndex);
   const endIndex = endMarkerIndex + MANAGED_END.length;
-  const habit = validateHabitRecord(parseBlockJson(block));
-  return { habit, startIndex, endIndex };
+  const record = parseBlockJson(block);
+  const habit = validateHabitRecord(record);
+  // Validation above guarantees this is an object; keep its extra fields so
+  // an unrelated dashboard edit does not discard user-authored data.
+  return { habit, record: record as Record<string, unknown>, startIndex, endIndex };
 }
 
-export function serializeHabitBlock(habit: Habit): string {
+function retainEntryFields<T extends { week: string }>(
+  entries: T[],
+  previous: unknown,
+  knownFields: readonly string[],
+  label: string,
+): Array<T & Record<string, unknown>> {
+  const byWeek = new Map<string, Record<string, unknown>>();
+  const retainedWeeks = new Set(entries.map((entry) => entry.week));
+  if (Array.isArray(previous)) {
+    for (const entry of previous) {
+      if (isRecord(entry) && typeof entry.week === 'string') {
+        if (
+          !retainedWeeks.has(entry.week) &&
+          Object.keys(entry).some((key) => !knownFields.includes(key))
+        ) {
+          invalid(
+            `Cannot remove the ${label} entry for ${entry.week} because it contains extra fields. Review the note first.`,
+          );
+        }
+        byWeek.set(entry.week, entry);
+      }
+    }
+  }
+  return entries.map((entry) => ({ ...byWeek.get(entry.week), ...entry }));
+}
+
+export function serializeHabitBlock(habit: Habit, previous?: Record<string, unknown>): string {
   const color = normalizeHabitColor(habit.color);
+  if (habit.color !== undefined && !color) {
+    invalid('color must be a six-digit hex value');
+  }
   const icon = habit.icon === undefined ? null : normalizeHabitIcon(habit.icon);
   if (habit.icon !== undefined && !icon) {
     invalid('icon must be a nonblank icon ID without control characters');
   }
-  const normalized: Habit = {
+  const normalized: Record<string, unknown> = {
+    ...previous,
     schemaVersion: habit.schemaVersion,
-    id: habit.id,
-    name: habit.name,
-    ...(color ? { color } : {}),
-    ...(icon ? { icon } : {}),
+    id:
+      typeof previous?.id === 'string' && previous.id.trim() === habit.id ? previous.id : habit.id,
+    name:
+      typeof previous?.name === 'string' && previous.name.trim() === habit.name
+        ? previous.name
+        : habit.name,
     created: habit.created,
-    targets: habit.targets,
-    states: habit.states,
+    targets: retainEntryFields(habit.targets, previous?.targets, ['week', 'days'], 'target'),
+    states: retainEntryFields(habit.states, previous?.states, ['week', 'state'], 'state'),
     completions: [...habit.completions].sort(),
   };
+  if (color) {
+    normalized.color = color;
+  } else if (!previous || !('color' in previous) || normalizeHabitColor(previous.color)) {
+    delete normalized.color;
+  }
+  if (icon) {
+    normalized.icon = icon;
+  } else {
+    delete normalized.icon;
+  }
   return [MANAGED_START, '```json', JSON.stringify(normalized, null, 2), '```', MANAGED_END].join(
     '\n',
   );
@@ -267,5 +313,5 @@ export function renderHabitNote(habit: Habit): string {
 /** Replaces only the managed block, preserving every byte outside it. */
 export function replaceHabitBlock(content: string, habit: Habit): string {
   const parsed = parseHabitNote(content);
-  return `${content.slice(0, parsed.startIndex)}${serializeHabitBlock(habit)}${content.slice(parsed.endIndex)}`;
+  return `${content.slice(0, parsed.startIndex)}${serializeHabitBlock(habit, parsed.record)}${content.slice(parsed.endIndex)}`;
 }

@@ -10,11 +10,12 @@ export interface EditorInspection {
 }
 
 export interface EditorGuard {
-  inspect(path: string): Promise<EditorInspection>;
+  prepare?(path: string): Promise<void>;
+  inspect(path: string): EditorInspection;
 }
 
 export const NoEditorGuard: EditorGuard = {
-  async inspect() {
+  inspect() {
     return { status: 'none' };
   },
 };
@@ -26,7 +27,11 @@ export interface WriteIntent {
    * Exact note content from which this edit was computed. The writer refuses to
    * proceed when the note no longer matches, leaving concurrent edits untouched.
    */
-  baseContent?: string;
+  baseContent: string;
+}
+
+export interface CreateIntent {
+  habit: Habit;
 }
 
 export type WriteResult =
@@ -66,6 +71,30 @@ class SnapshotMismatch extends Error {
   }
 }
 
+class EditorStateChanged extends Error {
+  constructor(readonly reason: 'dirty' | 'unknown') {
+    super('The editor changed before the note could be written');
+  }
+}
+
+function inspectionProblem(
+  inspection: EditorInspection,
+  allowedContent: string[],
+): 'dirty' | 'unknown' | null {
+  if (inspection.status === 'dirty' || inspection.status === 'unknown') {
+    return inspection.status;
+  }
+  if (inspection.status === 'clean') {
+    if (inspection.content === undefined) {
+      return 'unknown';
+    }
+    if (!allowedContent.includes(inspection.content)) {
+      return 'dirty';
+    }
+  }
+  return null;
+}
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -73,7 +102,7 @@ function errorMessage(error: unknown): string {
 export class GuardedWriter {
   protected readonly vault: VaultPort;
   protected readonly editorGuard: EditorGuard;
-  private readonly queues = new Map<string, Promise<unknown>>();
+  private readonly queues = new Map<string, Promise<void>>();
 
   constructor(options: GuardedWriterOptions) {
     this.vault = options.vault;
@@ -87,74 +116,101 @@ export class GuardedWriter {
   protected serialize<T>(key: string, task: () => Promise<T>): Promise<T> {
     const previous = this.queues.get(key) ?? Promise.resolve();
     const next = previous.then(task, task);
-    this.queues.set(
-      key,
-      next.catch(() => undefined),
+    const settled = next.then(
+      () => undefined,
+      () => undefined,
     );
+    this.queues.set(key, settled);
+    void settled.then(() => {
+      if (this.queues.get(key) === settled) {
+        this.queues.delete(key);
+      }
+    });
     return next;
   }
 
   private async doUpdate(path: string, intent: WriteIntent): Promise<WriteResult> {
-    let baseContent: string;
-    if (intent.baseContent !== undefined) {
-      baseContent = intent.baseContent;
-    } else {
-      try {
-        baseContent = await this.vault.read(path);
-      } catch (error) {
-        return {
-          status: 'failed',
-          error: `Could not read the habit note: ${errorMessage(error)}`,
-        };
-      }
+    const baseContent = intent.baseContent;
+    if (typeof baseContent !== 'string') {
+      return { status: 'failed', error: 'A captured note snapshot is required to update a habit.' };
     }
 
-    if (intent.baseContent !== undefined) {
-      let currentContent: string;
-      try {
-        currentContent = await this.vault.read(path);
-      } catch (error) {
-        return {
-          status: 'failed',
-          error: `Could not verify the habit note against the captured snapshot: ${errorMessage(error)}`,
-        };
-      }
-      if (currentContent !== baseContent) {
-        return {
-          status: 'conflict',
-          reason: 'snapshot-mismatch',
-          baseContent,
-          currentContent,
-        };
-      }
+    let currentContent: string;
+    try {
+      currentContent = await this.vault.read(path);
+    } catch (error) {
+      return {
+        status: 'failed',
+        error: `Could not verify the habit note against the captured snapshot: ${errorMessage(error)}`,
+      };
+    }
+    if (currentContent !== baseContent) {
+      return {
+        status: 'conflict',
+        reason: 'snapshot-mismatch',
+        baseContent,
+        currentContent,
+      };
     }
 
     let inspection: EditorInspection;
     try {
-      inspection = await this.editorGuard.inspect(path);
+      await this.editorGuard.prepare?.(path);
+      inspection = this.editorGuard.inspect(path);
     } catch {
       return { status: 'editor-blocked', reason: 'unknown' };
     }
-    if (inspection.status === 'dirty' || inspection.status === 'unknown') {
-      return { status: 'editor-blocked', reason: inspection.status };
-    }
-    if (
-      inspection.status === 'clean' &&
-      inspection.content !== undefined &&
-      inspection.content !== baseContent
-    ) {
-      return { status: 'editor-blocked', reason: 'dirty' };
+    const initialProblem = inspectionProblem(inspection, [baseContent]);
+    if (initialProblem) {
+      return { status: 'editor-blocked', reason: initialProblem };
     }
 
+    let transformError: unknown;
     try {
       const content = await this.vault.process(path, (current) => {
         if (current !== baseContent) {
           throw new SnapshotMismatch(current);
         }
-        return replaceHabitBlock(current, intent.habit);
+        let problem: 'dirty' | 'unknown' | null;
+        try {
+          problem = inspectionProblem(this.editorGuard.inspect(path), [baseContent]);
+        } catch {
+          problem = 'unknown';
+        }
+        if (problem) {
+          throw new EditorStateChanged(problem);
+        }
+        try {
+          return replaceHabitBlock(current, intent.habit);
+        } catch (error) {
+          transformError = error;
+          throw error;
+        }
       });
+      try {
+        const problem = inspectionProblem(this.editorGuard.inspect(path), [baseContent, content]);
+        if (problem) {
+          return {
+            status: 'uncertain',
+            error: 'An open editor changed while the note was being saved.',
+            content,
+          };
+        }
+      } catch {
+        return {
+          status: 'uncertain',
+          error: 'The editor state could not be verified after saving.',
+          content,
+        };
+      }
       return { status: 'applied', content };
     } catch (error) {
+      if (transformError !== undefined && error === transformError) {
+        return { status: 'failed', error: errorMessage(error) };
+      }
+      if (error instanceof EditorStateChanged) {
+        return { status: 'editor-blocked', reason: error.reason };
+      }
       if (error instanceof SnapshotMismatch) {
         let currentContent: string | null = error.current;
         try {
@@ -186,11 +242,11 @@ export class GuardedWriter {
 }
 
 export class GuardedCreator extends GuardedWriter {
-  create(path: string, intent: WriteIntent): Promise<WriteResult> {
+  create(path: string, intent: CreateIntent): Promise<WriteResult> {
     return this.serialize(path, () => this.doCreate(path, intent));
   }
 
-  private async doCreate(path: string, intent: WriteIntent): Promise<WriteResult> {
+  private async doCreate(path: string, intent: CreateIntent): Promise<WriteResult> {
     const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
     if (folder) {
       try {

@@ -20,7 +20,7 @@ type MockPlugin = HabitTrackerPlugin & {
 type MockLeaf = WorkspaceLeaf & { state?: { type: string; active?: boolean } | null };
 
 const manifest = {
-  id: 'habit-tracker',
+  id: 'habit-rhythm',
   version: '0.1.0',
   minAppVersion: '1.6.0',
   isDesktopOnly: false,
@@ -66,6 +66,14 @@ describe('plugin lifecycle and Obsidian views', () => {
     vault.emitModify('Unrelated/Note.md');
     await flush();
     expect(refreshSpy).toHaveBeenCalledTimes(1);
+
+    refreshSpy.mockClear();
+    vault.emit('create', 'Habits/New.md');
+    vault.emit('delete', 'Habits/Old.md');
+    vault.emit('rename', 'Other/Moved.md', 'Habits/Previous.md');
+    vault.emit('rename', 'Unrelated/New.md', 'Unrelated/Old.md');
+    await flush();
+    expect(refreshSpy).toHaveBeenCalledTimes(3);
 
     const commands = plugin.commands;
     await commands[0]?.callback();
@@ -129,9 +137,15 @@ describe('plugin lifecycle and Obsidian views', () => {
     vi.spyOn(window, 'setInterval').mockReturnValue(1 as never);
     await plugin.onload();
     const leaf = workspace.addLeaf();
-    const rebind = vi.fn();
     (leaf as MockLeaf).state = { type: VIEW_TYPE_HABIT_DASHBOARD };
-    (leaf as unknown as { view: unknown }).view = { rebind };
+    const view = new HabitDashboardView(leaf, () => {
+      throw new Error('the rebind spy should not call the provider');
+    });
+    const rebind = vi.spyOn(view, 'rebind').mockImplementation(() => undefined);
+    (leaf as unknown as { view: unknown }).view = view;
+    const deferred = workspace.addLeaf();
+    (deferred as MockLeaf).state = { type: VIEW_TYPE_HABIT_DASHBOARD };
+    (deferred as unknown as { view: unknown }).view = {};
     const loadSpy = vi.spyOn(DashboardController.prototype, 'load').mockResolvedValue();
 
     await plugin.updateSettings({ habitsFolder: 'Health' });

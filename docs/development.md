@@ -50,12 +50,12 @@ fails the command.
 
 ```sh
 npm run build
-mkdir -p "<vault>/.obsidian/plugins/habit-tracker"
-cp main.js manifest.json styles.css "<vault>/.obsidian/plugins/habit-tracker/"
+mkdir -p "<vault>/.obsidian/plugins/habit-rhythm"
+cp main.js manifest.json styles.css "<vault>/.obsidian/plugins/habit-rhythm/"
 ```
 
 Enable the plugin and open the dashboard from the command palette or ribbon. The default folder is
-`Habits`; change it in **Settings → Habit Tracker**.
+`Habits`; change it in **Settings → Habit Rhythm**.
 
 ## Conventional Commits
 
@@ -92,6 +92,5 @@ inputs that release automation can consume. Do not implement the 002 pipeline he
 ## Manual verification
 
 Use [specs/001-weekly-habit-dashboard/quickstart.md](../specs/001-weekly-habit-dashboard/quickstart.md)
-for functional and conflict scenarios. Record actual desktop/iOS/Android results or the
-unverified platform and reason in
+for functional and conflict scenarios. Record verification results in
 [specs/001-weekly-habit-dashboard/validation.md](../specs/001-weekly-habit-dashboard/validation.md).

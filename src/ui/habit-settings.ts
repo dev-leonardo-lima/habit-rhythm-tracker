@@ -160,6 +160,7 @@ function renderHabitSettingsItem(
   renameLabel.append(document.createTextNode('Name'));
   const nameInput = el('input');
   nameInput.type = 'text';
+  nameInput.dataset.fieldKey = 'name';
   nameInput.value = habit.name;
   nameInput.required = true;
   nameInput.setAttribute('aria-label', `Habit name for ${habit.name}`);
@@ -180,6 +181,7 @@ function renderHabitSettingsItem(
   const targetLabel = el('label');
   targetLabel.append(document.createTextNode('Target from next week'));
   const targetSelect = el('select');
+  targetSelect.dataset.fieldKey = 'target';
   targetSelect.setAttribute('aria-label', `Weekly target for ${habit.name} from next week`);
   for (let day = 1; day <= 7; day += 1) {
     const option = el('option', undefined, `${day} ${day === 1 ? 'day' : 'days'} / week`);

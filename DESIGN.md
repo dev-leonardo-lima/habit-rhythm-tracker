@@ -1,5 +1,5 @@
 ---
-name: Habit Tracker
+name: Habit Rhythm
 description: A compact seven-day habit strip inside Obsidian, built around completion sequences.
 colors:
   accent: '#8a5cf5'
@@ -66,7 +66,7 @@ components:
     height: '16px'
 ---
 
-# Design System: Habit Tracker
+# Design System: Habit Rhythm
 
 ## Overview
 

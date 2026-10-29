@@ -3,7 +3,7 @@ import type { DashboardController } from './dashboard-controller';
 import { createDashboardHandlers } from './controller-handlers';
 import { renderDashboard } from './dashboard-renderer';
 
-export const VIEW_TYPE_HABIT_DASHBOARD = 'habit-tracker-dashboard';
+export const VIEW_TYPE_HABIT_DASHBOARD = 'habit-rhythm-dashboard';
 
 export type ControllerProvider = () => DashboardController;
 

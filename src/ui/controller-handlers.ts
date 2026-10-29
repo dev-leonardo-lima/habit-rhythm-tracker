@@ -16,8 +16,6 @@ export function createDashboardHandlers(controller: DashboardController): Dashbo
     archiveHabit: (habitId) => controller.archiveHabit(habitId),
     reactivateHabit: (habitId) => controller.reactivateHabit(habitId),
     cancelPendingArchive: (habitId) => controller.cancelPendingArchive(habitId),
-    previousMonth: () => controller.previousMonth(),
-    nextMonth: () => controller.nextMonth(),
     previousWeek: () => controller.previousWeek(),
     nextWeek: () => controller.nextWeek(),
   };

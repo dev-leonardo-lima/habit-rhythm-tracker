@@ -4,7 +4,7 @@ import {
   isPathInFolder,
   sanitizeHabitFileName,
 } from '../../src/storage/habit-repository';
-import { GuardedCreator } from '../../src/storage/guarded-create';
+import { GuardedCreator } from '../../src/storage/guarded-write';
 import { parseHabitNote, renderHabitNote } from '../../src/storage/habit-note';
 import { MemoryVault } from '../helpers/memory-vault';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';

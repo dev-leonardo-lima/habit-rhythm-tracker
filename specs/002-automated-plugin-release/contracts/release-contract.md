@@ -12,6 +12,8 @@ npm run version:bump -- patch|minor|major
   maintain `versions.json` when `minAppVersion` changes. The command does not commit, create a tag,
   publish, or contact the directory. Invalid input or inconsistent baseline fails visibly without
   leaving a partial version update.
+- PR review confirms the developer's version choice. CI validates the committed values and transition,
+  but cannot prove that a particular local command produced them.
 - CI validates committed consistency, stable version format, and monotonicity on version changes.
   A no-bump change can pass CI but cannot generate a release.
 
@@ -32,10 +34,16 @@ npm run version:bump -- patch|minor|major
 - Reconcile on capture, on a periodic schedule, and on maintainer retry. Serialize publication and
   cursor updates; hold no lock while waiting for missing intake. Audit intake failures and recover
   by rerunning the original event where available. Never claim unseen provider events are known.
+- A cursor at the current `main` head is idle. If `main` has advanced and the next receipt is absent,
+  wait without moving the cursor and expose the gap. Initial setup establishes a baseline at an
+  existing `main` SHA; it does not release that revision automatically.
 
 ## GitHub release contract
 
 - Trigger: an eligible receipt after all applicable quality and verification gates pass.
+- Coverage defaults to 80% for lines and branches. A version-scoped exception requires a structured,
+  expiring record, a link to explicit maintainer approval, risks, and remediation. CI validates the
+  record and thresholds; the maintainer reviews the actual approval.
 - Tag: `<major>.<minor>.<patch>`; resolve the actual Git ref to the validated `after` SHA. Do not
   accept a pre-existing tag pointing elsewhere or move it.
 - Assets: exact names `main.js`, `manifest.json`, and `styles.css` if used; the attached manifest,
@@ -45,7 +53,7 @@ npm run version:bump -- patch|minor|major
   only an owned draft or published release with matching SHA, version and assets. Never overwrite or
   delete published releases. A later version must not be replaced by an older release as latest.
 - Permissions: untrusted PR checks use read-only access; trusted intake needs issue write, while
-  release reconciliation has only the issue and contents permissions it needs. Never execute PR
+  release reconciliation needs Actions read, issue write, and contents write. Never execute PR
   source in a privileged `pull_request_target` context or expose tokens in artifacts and logs.
 - Outcome: expose receipt, validation, release status and recovery reason. Directory review and
   availability are separate external states and must not be reported as completed by release alone.
@@ -53,7 +61,7 @@ npm run version:bump -- patch|minor|major
 ## Compatibility and failure contract
 
 - Desktop and mobile remain supported; `isDesktopOnly` is false. Maintain compatible historical
-  versions when minimum Obsidian version changes and document relevant manual device checks.
+  versions when the minimum Obsidian version changes.
 - Missing assets, coverage failure, inconsistent metadata, unauthorized access, failed upload,
   same-version/different-SHA, missing predecessor, queue overflow, or force-push must not lead to an
   incomplete public release or a cursor leap. Rerunning a recoverable failure must be idempotent.

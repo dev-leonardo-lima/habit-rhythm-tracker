@@ -13,10 +13,6 @@ export function stateForWeek(habit: Habit, week: LocalDate): HabitState {
   return state;
 }
 
-export function isArchivedInWeek(habit: Habit, week: LocalDate): boolean {
-  return stateForWeek(habit, week) === 'archived';
-}
-
 export function isPendingArchive(habit: Habit, today: LocalDate): boolean {
   const nextWeek = addDays(mondayOf(today), 7);
   return (

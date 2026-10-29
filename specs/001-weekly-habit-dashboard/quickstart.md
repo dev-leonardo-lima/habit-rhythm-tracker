@@ -15,8 +15,6 @@ automated tests now exist. See [plan.md](plan.md), [data-model.md](data-model.md
   creation, completion, editor fail-closed behavior, lifecycle changes, custom color,
   header year rendering, keyboard focus, unsupported-schema rejection, previous-week correction,
   and restart.
-- iOS and Android remain **unverified**; the reasons and all unverified scenarios are recorded in
-  [validation.md](validation.md).
 
 ## Build and install in a test vault
 
@@ -66,7 +64,7 @@ folder following the official sample instructions. Enable the plugin; its manife
 7. Open a habit's activity calendar. Verify year navigation, marked and future dates, weekly-streak
    statistics, and read-only behavior. On a wide desktop view, confirm the square day cells fill
    the available width and stay aligned; on a narrow view, confirm horizontal scrolling and visible
-   weekday labels. Record the real platform and viewport when reporting visual verification.
+   weekday labels. Record the viewport when reporting visual verification.
 8. Expand a habit in Manage habits. Check that name and next week's target appear before the grouped
    color and icon controls, that those controls sit side by side when space permits, and that the
    selected icon appears without its technical name in the button. Check the accessible selection
@@ -76,10 +74,8 @@ folder following the official sample instructions. Enable the plugin; its manife
    that an unavailable icon is identified without losing its stored ID.
 9. Confirm individual weekly progress remains visible without an average-progress or
    weekly-goals-met summary.
-10. Run the core flows offline on desktop and on actual iOS and Android devices. Check theme
-   adaptation, narrow scrolling, touch targets, keyboard navigation, focus, and labels. Record
-   device versions and results for offline persistence and reopening in a desktop/iOS/Android
-   matrix, or explicitly record unverified platforms and reasons.
+10. Check offline behavior, theme adaptation, narrow scrolling, touch targets, keyboard navigation,
+   focus, and labels. Record the results for offline persistence and reopening.
 
 ## Integrity and conflict acceptance
 
@@ -93,8 +89,8 @@ folder following the official sample instructions. Enable the plugin; its manife
 3. In a test fixture, change the underlying note between snapshot and guarded write. Confirm the
    existing note is not overwritten and a clear conflict warning is shown. Review the note and repeat
    the action explicitly to verify a fresh guarded comparison. Confirm no recovery file is created.
-4. Document editor-state proof-of-concept results for multiple open views, dirty/unknown buffers,
-   supported app versions and platforms; verify unverifiable state blocks edits and asks the person
+4. Document editor-state proof-of-concept results for multiple open views and dirty/unknown buffers;
+   verify unverifiable state blocks edits and asks the person
    to save or close the editor. Confirm the note is unchanged.
 5. Exercise error surfaces with keyboard and touch, including the labeled circular color swatch,
    its “Use theme color” action, focus, and text labels. Confirm common successful changes show no

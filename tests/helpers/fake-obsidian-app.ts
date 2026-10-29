@@ -10,17 +10,26 @@ export class FakeVault {
   failNextRead: Error | null = null;
   failNextCreate: Error | null = null;
   failNextProcess: Error | null = null;
-  modifyListeners: Array<(file: TFile) => void> = [];
+  listeners = new Map<string, Array<(file: TFile, oldPath?: string) => void>>();
 
-  on(_event: string, callback: (file: TFile) => void): { event: string; callback: unknown } {
-    this.modifyListeners.push(callback);
-    return { event: _event, callback };
+  on(
+    event: string,
+    callback: (file: TFile, oldPath?: string) => void,
+  ): { event: string; callback: unknown } {
+    const listeners = this.listeners.get(event) ?? [];
+    listeners.push(callback);
+    this.listeners.set(event, listeners);
+    return { event, callback };
   }
 
   emitModify(path: string): void {
+    this.emit('modify', path);
+  }
+
+  emit(event: string, path: string, oldPath?: string): void {
     const file = this.file(path);
-    for (const listener of this.modifyListeners) {
-      listener(file);
+    for (const listener of this.listeners.get(event) ?? []) {
+      listener(file, oldPath);
     }
   }
 

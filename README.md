@@ -1,4 +1,4 @@
-# Habit Tracker for Obsidian
+# Habit Rhythm for Obsidian
 
 [![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20%26%20mobile-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
@@ -35,10 +35,14 @@ npm ci
 npm run build
 ```
 
-1. Create the folder `<your-vault>/.obsidian/plugins/habit-tracker/` in your vault.
+1. Create the folder `<your-vault>/.obsidian/plugins/habit-rhythm/` in your vault.
 2. Copy `main.js`, `manifest.json`, and `styles.css` from the project root into that folder.
-3. In Obsidian, open **Settings → Community plugins** and enable **Habit Tracker**.
-4. Open the dashboard using the ribbon icon or the **Habit Tracker: Open habit dashboard** command.
+3. In Obsidian, open **Settings → Community plugins** and enable **Habit Rhythm**.
+4. Open the dashboard using the ribbon icon or the **Habit Rhythm: Open habit dashboard** command.
+
+If you used an earlier development build, disable it and install this build in the new folder.
+Existing habit notes remain in their configured folder. This build has its own settings, so set the
+habits folder again if you previously changed it.
 
 For development setup and test-vault instructions, see [CONTRIBUTING.md](CONTRIBUTING.md) and
 [docs/development.md](docs/development.md).
@@ -59,7 +63,7 @@ through a week, the first week's target is capped at the number of days remainin
 ## Configuration and habits
 
 By default, habit notes are stored in the `Habits` folder. Change **Habits folder** in
-**Settings → Habit Tracker** to use a different vault folder. The plugin creates a Markdown note for
+**Settings → Habit Rhythm** to use a different vault folder. The plugin creates a Markdown note for
 each habit and manages a marked block inside it; content outside that block is preserved. See
 [docs/data-format.md](docs/data-format.md) for the note format and editing guidance.
 
@@ -88,9 +92,7 @@ format migrations require explicit approval and a recoverable copy of the origin
 
 ## Compatibility
 
-The manifest supports desktop and mobile and requires Obsidian **1.6.0 or later**. Desktop Obsidian
-has been smoke-tested on macOS. iOS and Android have not yet been tested on real devices; see the
-[validation record](specs/001-weekly-habit-dashboard/validation.md) for current results and limits.
+The plugin supports Obsidian desktop and mobile and requires Obsidian **1.6.0 or later**.
 
 ## Troubleshooting
 
@@ -109,6 +111,7 @@ relevant error text. Use synthetic examples and remove private vault content bef
 
 Contributions, bug reports, and documentation improvements are welcome. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and pull request guidelines.
+Maintainers can find version and release steps in [docs/releasing.md](docs/releasing.md).
 
 ## License
 

@@ -16,18 +16,20 @@ behavior when a safe comparison cannot be made.
 - `Vault.process(file, callback)` performs Obsidian's documented protected local read/modify/write.
   The callback receives the current saved content and must be synchronous.
 
-The plugin adapter (`src/ui/obsidian-editor-guard.ts`) compares the editor buffer with the saved
-snapshot before a guarded write:
+The plugin adapter (`src/ui/obsidian-editor-guard.ts`) loads a deferred target note when possible and
+compares its editor buffers with the saved snapshot before and during a guarded write:
 
 1. No open Markdown leaf for the path → safe (`none`).
 2. One or more open leaves whose buffers all equal the saved note → safe (`clean`).
 3. Any open leaf whose buffer differs from the saved note → blocked (`dirty`).
 4. Any leaf whose editor is unavailable, throws, or whose open copies disagree → blocked (`unknown`).
-5. Any open Markdown leaf whose view or file identity cannot be determined → blocked (`unknown`).
+5. An unrelated deferred leaf whose saved path is known → ignored without forcing it to load.
+6. Any open Markdown leaf whose view or file identity cannot be determined → blocked (`unknown`).
    The plugin cannot prove such a leaf is unrelated, so it fails closed for the whole write.
 
-If a leaf is dirty or its state is unknown, the write is **not attempted**. The person is told to
-save or close the editor, and an explicit retry starts a new guarded comparison.
+If a leaf is dirty or its state is unknown before or inside the protected callback, the write is
+**not attempted**. A post-write change or unverifiable state is reported as uncertain, because the
+write may already have happened. The person can inspect the note before retrying.
 
 ## Proof-of-concept procedure
 
@@ -36,7 +38,7 @@ automated suite uses `EditorGuard` fakes to verify the blocked paths.
 
 To execute the manual proof of concept:
 
-1. Build and install the plugin in an isolated test vault on desktop and on iOS/Android.
+1. Build and install the plugin in an isolated test vault.
 2. Create a habit note; open it in two Markdown leaves. Modify one buffer without saving.
 3. Attempt a dashboard mark. Expected: no write; the note is unchanged; the message asks to save or
    close the editor.
@@ -44,20 +46,18 @@ To execute the manual proof of concept:
 5. Open a second vault window or sync client and repeat while the note is being edited externally.
    Expected: protected `Vault.process` comparison detects a saved mismatch and preserves both
    versions for explicit retry/discard.
-6. Repeat on mobile with the app suspended/resumed and with a note open in multiple panes where the
-   device supports it.
 
 ## Results in this environment
 
-- **Desktop Obsidian 1.14.5 (macOS)**: verified in a disposable isolated vault. A modified,
+- **Desktop Obsidian 1.14.5 (macOS), earlier build**: verified in a disposable isolated vault. A modified,
   unsaved editor buffer blocked the dashboard write without changing the note. Two open leaves with
   different buffers also produced a fail-closed block. After restoring the editor buffer, an explicit
   retry applied the intended change.
-- **iOS**: not verified. No iOS device or simulator was available.
-- **Android**: not verified. No Android device or emulator was available.
 
-The automated tests cover safe, dirty, unknown, and mismatched editor states with injected guards.
-The unverified platforms and reasons are also recorded in
+The latest deferred-leaf and in-process/post-write checks have automated fake-based coverage, but
+have not yet been verified in a real Obsidian runtime. Automated tests cover safe, dirty, unknown,
+and mismatched editor states with injected guards.
+Results are also recorded in
 [`../specs/001-weekly-habit-dashboard/validation.md`](../specs/001-weekly-habit-dashboard/validation.md).
 
 ## Limitations
@@ -66,7 +66,7 @@ The unverified platforms and reasons are also recorded in
   of an independent writer (another program or device sync) that changes the vault outside
   Obsidian's documented `Vault.process` interval.
 - Deferred, unresolved, or reading-mode Markdown leaves may expose no editor or no file identity to
-  the plugin. Because the target cannot be ruled out, such leaves block writes with an explicit
+  the plugin. When the target cannot be ruled out, such leaves block writes with an explicit
   save/close/retry message instead of allowing a potentially unsafe write.
 - Multiple open leaves with different buffers are treated as ambiguous and block the write even if
   one buffer appears current.

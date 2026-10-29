@@ -79,14 +79,41 @@ describe('habit note codec', () => {
     expectCode(() => serializeHabitBlock(makeHabit({ icon: '  ' })), 'invalid-record');
   });
 
-  it('ignores invalid custom colors and falls back safely', () => {
+  it('falls back for an invalid color without deleting it on an unrelated edit', () => {
     const habit = makeHabit();
     const content = renderHabitNote(habit).replace(
       '"name": "Gym",',
       '"name": "Gym",\n    "color": "not-a-color",',
     );
-    expect(parseHabitNote(content).habit.color).toBeUndefined();
-    expect(serializeHabitBlock(parseHabitNote(content).habit)).not.toContain('not-a-color');
+    const parsed = parseHabitNote(content).habit;
+    expect(parsed.color).toBeUndefined();
+    const updated = replaceHabitBlock(content, { ...parsed, completions: ['2026-10-28'] });
+    expect(updated).toContain('"color": "not-a-color"');
+    expect(parseHabitNote(updated).habit.completions).toEqual(['2026-10-28']);
+  });
+
+  it('preserves extra top-level and history fields when updating the managed block', () => {
+    const content = renderHabitNote(makeHabit())
+      .replace('"name": "Gym",', '"name": " Gym ",\n  "custom": {"note": "keep"},')
+      .replace('"days": 4', '"days": 4,\n      "source": "personal"')
+      .replace('"state": "active"', '"state": "active",\n      "reason": "keep"');
+    const parsed = parseHabitNote(content).habit;
+    const updated = replaceHabitBlock(content, { ...parsed, completions: ['2026-10-28'] });
+    const record = parseHabitNote(updated).record;
+    expect(record.name).toBe(' Gym ');
+    expect(record.custom).toEqual({ note: 'keep' });
+    expect(record.targets).toEqual([{ week: '2026-10-26', days: 4, source: 'personal' }]);
+    expect(record.states).toEqual([{ week: '2026-10-26', state: 'active', reason: 'keep' }]);
+    expect(record.completions).toEqual(['2026-10-28']);
+  });
+
+  it('removes an existing valid color when the user explicitly clears it', () => {
+    const original = makeHabit({ color: '#3366cc' });
+    const updated = { ...original };
+    delete updated.color;
+    expect(
+      parseHabitNote(replaceHabitBlock(renderHabitNote(original), updated)).record,
+    ).not.toHaveProperty('color');
   });
 
   it('accepts valid external edits, normalizing completion order internally', () => {

@@ -1,7 +1,6 @@
 import type { LocalDate, WeekKey } from './types';
 
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
-const MONTH_PATTERN = /^(\d{4})-(\d{2})$/;
 const MILLISECONDS_PER_DAY = 86_400_000;
 
 export class DateValidationError extends Error {
@@ -113,53 +112,6 @@ export function weekDates(week: WeekKey): LocalDate[] {
 
 export function daysFromCreationThroughSunday(date: LocalDate): number {
   return 7 - dayOfWeekIndex(date);
-}
-
-export function monthKeyOf(date: LocalDate): string {
-  return date.slice(0, 7);
-}
-
-function parseMonthKey(month: string): { year: number; month: number } {
-  const match = MONTH_PATTERN.exec(month);
-  if (!match) {
-    throw new DateValidationError(`Invalid month: ${month}`);
-  }
-  const year = Number(match[1]);
-  const parsedMonth = Number(match[2]);
-  if (year < 1000 || parsedMonth < 1 || parsedMonth > 12) {
-    throw new DateValidationError(`Invalid month: ${month}`);
-  }
-  return { year, month: parsedMonth };
-}
-
-export function startOfMonth(month: string): LocalDate {
-  const parsed = parseMonthKey(month);
-  return formatLocalDate(parsed.year, parsed.month, 1);
-}
-
-export function endOfMonth(month: string): LocalDate {
-  const parsed = parseMonthKey(month);
-  const lastDay = new Date(Date.UTC(parsed.year, parsed.month, 0)).getUTCDate();
-  return formatLocalDate(parsed.year, parsed.month, lastDay);
-}
-
-export function addMonths(month: string, delta: number): string {
-  const parsed = parseMonthKey(month);
-  const index = parsed.year * 12 + (parsed.month - 1) + delta;
-  const year = Math.floor(index / 12);
-  const monthIndex = ((index % 12) + 12) % 12;
-  return `${String(year).padStart(4, '0')}-${String(monthIndex + 1).padStart(2, '0')}`;
-}
-
-/** Mondays of every week intersecting the calendar month, including boundary weeks. */
-export function monthIntersectingWeeks(month: string): WeekKey[] {
-  const first = mondayOf(startOfMonth(month));
-  const last = mondayOf(endOfMonth(month));
-  const weeks: WeekKey[] = [];
-  for (let week = first; compareDates(week, last) <= 0; week = addDays(week, 7)) {
-    weeks.push(week);
-  }
-  return weeks;
 }
 
 export function isWeekKey(date: LocalDate): boolean {

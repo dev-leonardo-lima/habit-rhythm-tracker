@@ -26,8 +26,7 @@ created. See [data-model.md](data-model.md) and
 
 **Testing**: Vitest unit tests for dates, weekly targets, streaks and history; mocked Vault and
 view integration tests for persistence, conflicts, keyboard and touch interaction; at least 80%
-line and branch coverage. Manual verification in real Obsidian desktop, iOS, and Android or record
-unverified platforms and reasons as the constitution requires.
+line and branch coverage. Record applicable manual verification in the validation evidence.
 
 **Target Platform**: Supported Obsidian desktop and mobile, including iOS and Android; minimum
 Obsidian version selected and recorded in the manifest based on APIs used.
@@ -62,7 +61,7 @@ fixed-day schedules, cloud sync, and permanent habit deletion are out of scope.
   no desktop-only runtime imports; manifest permits mobile.
 - **Testing and review**: Enforce typecheck, lint, Prettier format checks, build, and 80%
   line/branch coverage. Exercise
-  storage, error paths, concurrency, week/date boundaries, and perform/record device verification.
+  storage, error paths, concurrency, and week/date boundaries, and record verification results.
 - **Simplicity and offline**: No account, service, external API, runtime network dependency, or
   per-edit recovery journal.
 
@@ -112,14 +111,15 @@ is planned separately and depends on this plugin's build and tests.
    reconstructed. Discover only valid notes in the configured habit folder; expose malformed or
    duplicate records as errors without overwriting them.
 3. Before storage implementation, validate supported Obsidian APIs in a documented proof of
-   concept for one or more open editor leaves, saved and unsaved content, and unknown editor state
-   on desktop and mobile. Record the minimum supported version and results or unverified platforms.
+   concept for one or more open editor leaves, saved and unsaved content, and unknown editor state.
+   Record the minimum supported version and the results.
    If a safe comparison cannot be established, block the mutation and ask the person to save or
    close the editor before repeating the action.
 4. For every edit, capture the exact note content used to compute the change. For creation, use a
    create-if-absent operation that fails on a path collision; never overwrite a note that appears
    after the initial path check. For existing notes, compare the current content in `Vault.process`
-   and stop on mismatch or uncertainty without changing the note. Do not create recovery records.
+   and stop on mismatch or unsafe editor state detected before writing. If a state becomes uncertain
+   only after writing, report it for inspection. Do not create recovery records.
 5. Existing recovery-* files from earlier development builds are ignored and left untouched. The
    plugin does not read, modify, append to, or automatically delete them.
 6. Use calendar-date arithmetic. The first week is capped by days remaining; target and archive
@@ -135,7 +135,7 @@ is planned separately and depends on this plugin's build and tests.
    Do not promise recovery of an unsaved intent after an unexpected exit. Error surfaces identify
    the issue in text, receive focus, and support keyboard and touch. Future
    format migrations require explicit approval and a recoverable original; unknown formats remain
-   unchanged. Record offline persistence evidence for desktop, iOS, and Android.
+   unchanged. Record offline persistence evidence.
 9. Verify release prerequisites are compatible with feature 002 without implementing that feature
    during planning. The Monday condition was added to the spec's 0/4 example to align it with the
    previously agreed reduced first-week target.
