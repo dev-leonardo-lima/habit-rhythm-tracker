@@ -85,8 +85,8 @@ any data-format, compatibility, or migration impact.
 
 Release version changes are an explicit maintainer decision. Run `npm run version:bump -- patch`,
 `minor`, or `major` before merging a release change; review the synchronized metadata and the
-[release guide](docs/releasing.md). The automation is implemented locally but has not yet been
-validated end to end on GitHub. A commit type does not automatically select or create a release.
+[release guide](docs/releasing.md). CI validates the version and publishes from `main` after all
+checks pass. A commit type does not automatically select or create a release.
 
 ## License
 

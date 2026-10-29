@@ -1,9 +1,8 @@
 # Quickstart: Validate Automated Releases
 
-The local implementation and its automated tests are present. Follow the
-[maintainer release guide](../../docs/releasing.md) for setup and recovery. The checks below are not
-a claim of external verification: an end-to-end run in a disposable GitHub repository remains needed.
-See [plan.md](plan.md), [data-model.md](data-model.md), and
+Follow the [maintainer release guide](../../docs/releasing.md) for setup and recovery. The checks
+below are not a claim of external verification until the GitHub steps are actually exercised. See
+[plan.md](plan.md), [data-model.md](data-model.md), and
 [release-contract.md](contracts/release-contract.md).
 
 ## Prerequisites
@@ -11,9 +10,7 @@ See [plan.md](plan.md), [data-model.md](data-model.md), and
 1. Complete the official-sample-based plugin and its tests/build from feature 001; ensure the
    repository has a lockfile, manifest, stylesheet if used, and version compatibility metadata.
 2. Use the Node.js version pinned by the project. Configure a disposable GitHub repository with
-   `main` as default, Actions and Issues enabled, authorized workflow permissions, and no production
-   publication target. Configure the trusted workflow's release ledger baseline and cursor to an
-   existing `main` commit; retain its initial version as a non-release baseline.
+   `main` as default and Actions enabled. No issue ledger, baseline, or cursor setup is required.
 3. Prepare test fixtures for a passing plugin and meaningful failure cases. Do not use real vaults,
    secrets in fixtures, or a production release repository.
 
@@ -24,10 +21,11 @@ not a dry run:
 
 ```sh
 npm ci
+npm run version:check
 npm run typecheck
 npm run lint
 npm run format:check
-npm test -- --coverage
+npm run test:coverage
 npm run build
 npm run version:bump -- patch
 ```
@@ -42,26 +40,26 @@ and accepts only a documented, approved exception for its matching version.
 
 ## CI and release acceptance
 
-1. Open a PR without a bump. Confirm typecheck, lint, formatting, tests, coverage and build run; after merging,
-   the main push is captured and consumed with **no release**.
-2. On a new branch run the version command, commit the changes, and open a PR. Confirm version
-   consistency and gates pass, merge, then check that the matching `main` tip has exactly one
-   published release. Its unprefixed tag resolves to that SHA; `main.js`, `manifest.json`, and, if
-   used, `styles.css` are attached, and all committed/attached versions match.
-3. Introduce a failing test, coverage shortfall, mismatched version, missing artifact, or wrong
-   tag in isolated fixtures. Confirm the affected release is blocked with a visible failure and
-   no incomplete public release appears. Exercise an approved coverage exception only as documented
+1. Push the initial validated commit to `main` with no releases in the repository. Confirm the
+   validation job passes and the release job publishes exactly the current manifest version.
+   Its unprefixed tag resolves to that SHA; `main.js`, `manifest.json`, and, if used, `styles.css`
+   are attached, and all committed/attached versions match.
+2. Push a change without changing the manifest version. Confirm validation passes and the release
+   job finds the existing release and publishes nothing.
+3. Run the version command, commit the changes, and push to `main`. Confirm validation passes and
+   exactly one new release is published with a greater version.
+4. Introduce a failing test, coverage shortfall, mismatched version, missing artifact, or wrong tag
+   in isolated fixtures. Confirm the affected release is blocked with a visible failure and no
+   incomplete public release appears. Exercise an approved coverage exception only as documented
    under the constitution.
-4. Exercise duplicate delivery, retry after upload failure, a worker crash after publish but before
-   cursor update, and two pushes whose intake or validation finishes out of order. Confirm every
-   receipt is consumed in ref-update order; one matching release per bumped push, no release for
-   unchanged versions, no overwritten release, and no older release made latest.
-5. Simulate missing receipt, inaccessible ledger, queue limit, force-push, and same version on a
-   different SHA. Confirm processing stops visibly without a cursor leap. Restore access or rerun the
-   original event, reconcile, and confirm safe recovery. Record the operator action needed when a
-   provider never delivered an event; its push boundary cannot be reconstructed reliably from Git.
-6. Check logs, issue receipts, and release assets for credentials and vault data. Verify untrusted
-   PR checks lack publish permissions.
+5. Retry an interrupted release: leave a draft with one missing asset, re-run the failed release
+   job, and confirm the draft resumes, the missing asset is uploaded, and the release publishes only
+   after the complete set is verified. Confirm a published release is never modified.
+6. Simulate a same-version/different-SHA tag, a version lower than the latest published release, and
+   two pushes close together. Confirm publication stops visibly or serializes, no duplicate release
+   appears, and the older version never becomes latest.
+7. Check the release body, workflow logs, and artifacts for credentials and vault data. Verify
+   pull-request validation lacks publish permissions and the release job runs only on `main`.
 
 ## Community directory walkthrough
 

@@ -2,6 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning.
 **Created**: 2026-10-28
+**Revised**: 2026-10-29
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -35,3 +36,6 @@
 - GitHub, the manifest, tag, and release asset names are externally imposed distribution requirements;
   the automation mechanism and workflow structure remain for planning.
 - Initial directory submission and processing depend on the maintainer and Obsidian.
+- The 2026-10-29 revision removes the event ledger, cursor, and baseline requirements. Validation and
+  release run in one automation run, with serialized, draft-first publication and the published
+  release state as the source of truth.

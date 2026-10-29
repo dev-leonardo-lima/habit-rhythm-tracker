@@ -1,25 +1,22 @@
 # Maintainer release guide
 
-CI validates pull requests and pushes to `main`. A release is eligible only when the version is
-explicitly increased in a push and that exact revision passes validation. The maintainer confirms
-the developer's `version:bump` choice during PR review; CI validates the resulting metadata and
-version transition but cannot prove which command produced a change. Conventional Commit messages
-do not select a version. No release is created for a push without a version bump.
+CI validates pull requests and every push to `main`. The same workflow run publishes a GitHub
+release only after validation passes, and only when the committed manifest version has no published
+release yet. The first validated push in a new repository publishes the current version; later
+releases require an explicit version bump before merge.
+
+There is no issue ledger, cursor, scheduled reconciler, or baseline initialization. The published
+release state (tag, release, assets, latest version) is the source of truth.
 
 ## One-time repository setup
 
-1. Create the GitHub repository, use `main` as its default branch, push the code, and enable GitHub
-   Actions and Issues. In Actions settings, allow the workflow's `GITHUB_TOKEN` to write contents
-   and issues. Protect `main`, require pull requests and the **CI / validate** status check, and
-   limit who can merge changes to workflow and release scripts. Those merged scripts run with
-   release permissions.
-2. In **Actions → Release → Run workflow**, select `main` and enter the full SHA of its current
-   commit in **baseline**. This creates the automation-owned cursor issue. Initialize only once,
-   before the first intended release. The initial push is a baseline, not an automatic release.
-   Receipts and the cursor are GitHub issues; keep them and do not edit their machine-readable data.
-   The automation closes receipt issues after creating them to keep the open issue list focused.
-3. Review the manifest's author, URLs, ID, and version before publishing. Review the CI results and
-   any coverage exception in the PR before merging.
+1. Create the GitHub repository with `main` as the default branch and enable GitHub Actions.
+2. The workflow grants `contents: write` only to the release job; no issue permissions are needed.
+3. Set the repository description, website, and topics if desired. Link the GitHub account to the
+   Obsidian Community profile before submitting the plugin.
+4. Review the manifest's author, URLs, ID, `minAppVersion`, and version before the first release.
+5. The first push to `main` runs validation and publishes the current manifest version if no release
+   exists. No separate first-release command is required.
 
 ## Create a release
 
@@ -30,13 +27,21 @@ npm run version:bump -- patch  # or minor, or major
 git diff
 ```
 
-The command updates `package.json`, the root package lock entry, `manifest.json`, and
-`versions.json`. It does not commit, create a tag, or publish. Commit those changes with the feature
-and open a pull request. CI checks version consistency, type checking, lint, formatting, coverage
-for plugin and release-tooling code (80% minimum for lines and branches), and the production build. A successful push to `main` then
-creates an unprefixed version tag and a GitHub release with `main.js`, `manifest.json`, and
-`styles.css`. The release is first a draft: the automation verifies the uploaded assets against the
-build from the validated commit before publishing it.
+The command updates the root `package.json`, the root package-lock entry, `manifest.json`, and
+`versions.json`. It does not commit, create a tag, or publish. Commit the version change with the
+feature and push or open a pull request. CI checks version consistency, type checking, linting,
+formatting, coverage, and the production build.
+
+A successful push to `main`:
+
+1. uploads `main.js`, `manifest.json`, and `styles.css` from the validated commit;
+2. reads the manifest version and checks existing releases, tags, and the latest published version;
+3. creates or resumes a draft release targeting the validated commit;
+4. uploads missing assets, verifies names and sizes, and publishes the release with an unprefixed
+   tag equal to the manifest version.
+
+The release body links the source commit and validation run. A push without a version change is
+validated but does not create a release.
 
 ### Temporary coverage exception
 
@@ -58,45 +63,46 @@ maintainer approval recorded in the PR (a review or comment) and a tracked
 }
 ```
 
-The record applies only to the matching manifest version and until the listed UTC date. Vitest
-validates its required fields, review-link format, repository, expiry, and thresholds; malformed,
-expired, or version-mismatched records fail closed. It still requires coverage at or above the
-recorded limits. CI cannot establish that the linked person actually approved the exception: a
-maintainer must verify the linked review or comment and its authority before merge. A single
-maintainer may record their own approval; no additional tester or reviewer is required by this rule.
-Remove the file after remediation to restore the standard thresholds.
+Vitest validates its required fields, review-link format, repository, expiry, and thresholds;
+malformed, expired, or version-mismatched records fail closed. The maintainer must verify the linked
+approval and its authority before merge. Remove the file after remediation to restore the standard
+thresholds.
 
-The first public Obsidian Community submission is a separate maintainer action. Follow the current
-[Obsidian submission instructions](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin)
-after the first release. The maintainer needs GitHub and Obsidian accounts, links the GitHub account
-to the Community directory, and supplies the repository and intended owner. GitHub release publication
-does not mean the plugin has been accepted or is available in the community directory.
-Track the repository, linked maintainer account, owner, submission/review status, and discovered
-release independently. Once accepted and published, later GitHub releases are subject to Obsidian's
-own update discovery and processing.
+## Recovery
 
-## Ordering and recovery
+- **Validation failed:** fix the cause and push again. No release is created for a failed commit.
+- **Release job failed:** re-run the failed job from the same workflow run. A matching draft is
+  resumed; only missing assets are uploaded, then the complete set is verified and published.
+- **Missing push event:** run the **CI** workflow manually on `main` (`workflow_dispatch`). It runs
+  the same validation and release decision for the current manifest version.
+- **Published release:** never edited by the workflow. If an asset is missing, the run fails
+  visibly; resolve it deliberately rather than overwriting the published release.
+- **Tag collision:** if the version tag points to another commit, publication stops. Do not move a
+  tag that already belongs to a release.
+- **Version regression:** a manifest version lower than the latest published version is rejected.
+- **Concurrent pushes:** the release job uses a non-cancelling concurrency group, so runs are
+  serialized. A later push with the same version is a no-op after the first publication.
 
-- Every push has an automation-owned issue recording its before/after commit pair. The reconciler
-  follows this chain from the cursor, waits for successful CI for each exact commit, and does not
-  skip failed or missing predecessors. If GitHub does not deliver an event at all, the missing push
-  boundary cannot be reconstructed automatically.
-- A cursor equal to the current `main` head is idle. If `main` has advanced but the next receipt has
-  not arrived, reconciliation waits without advancing the cursor; delayed intake may resolve it.
-  Investigate persistent gaps and rerun the original event where possible.
-- Reconciliation runs after intake, after CI completes, hourly, and on manual dispatch. Use
-  **Actions → Release → Run workflow** with an empty baseline to retry after addressing a failure.
-  Inspect the failed workflow's logs and the corresponding receipt issue first.
-- If intake failed, rerun that original **Release** push workflow so its receipt is recorded. If
-  CI failed, correct the cause and rerun that exact CI run; later pushes cannot bypass it. If its
-  build artifact expired (30 days), rerun that CI run to recreate it.
-- An interrupted upload leaves a draft and is retried without replacing existing assets. An
-  incompatible tag, foreign release, unexpected asset, changed asset, non-linear push, or missing
-  receipt stops processing. Inspect and resolve the discrepancy deliberately; published releases
-  are never deleted or overwritten by this automation. Avoid force-pushing `main`.
-- Only source metadata and build artifacts are processed. Do not put secrets or vault notes in
-  commits, issues, or release artifacts. Pull-request validation is read-only, and privileged
-  release jobs check out reviewed `main`, not pull-request code.
+## Permissions and security
 
-The workflows and failure scenarios have local automated tests. They still need an end-to-end run
-in a disposable GitHub repository with Actions and Issues enabled before relying on publication.
+- Pull-request validation has read-only repository access.
+- The release job runs only on `main`, uses `persist-credentials: false`, and receives
+  `contents: write` plus `actions: read` for the validated artifact.
+- The token comes from `GITHUB_TOKEN`; no PAT is required. The workflow never uses
+  `pull_request_target` or executes pull-request code with release permissions.
+- Logs and artifacts contain source and release metadata only, never vault content or credentials.
+
+## Community directory
+
+The first public Obsidian Community submission is a separate maintainer action:
+
+1. Sign in to [community.obsidian.md](https://community.obsidian.md) and connect the GitHub account.
+2. Go to **Plugins → New plugin**, enter the repository URL, choose the owner, accept the developer
+   policies, and submit.
+3. Address any automated review feedback by updating the repository and publishing a new version.
+4. After acceptance, users install the plugin from the community directory. Later GitHub releases
+   are discovered by Obsidian; directory availability remains Obsidian's decision.
+
+GitHub release publication does not mean the plugin has been accepted or is available in the
+directory. Track the repository, linked maintainer account, submission/review status, and discovered
+release separately.

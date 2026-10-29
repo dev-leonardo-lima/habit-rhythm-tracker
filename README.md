@@ -8,8 +8,9 @@ A local-first habit tracker for [Obsidian](https://obsidian.md/) with a clean we
 Choose how many days a week you want to practice a habit, mark your progress, and build a streak
 that makes room for rest days. Your habits live in Markdown notes in your vault.
 
-> **Project status:** In development. The plugin is not yet available from Obsidian's community
-> plugin directory; install it from a local build for now.
+> **Project status:** The first release is available on GitHub and the plugin is being submitted to
+> Obsidian's community plugin directory. Until it is listed there, install it from the latest
+> release.
 
 ## Features
 
@@ -27,24 +28,26 @@ that makes room for rest days. Your habits live in Markdown notes in your vault.
 
 ## Installation
 
-The plugin currently requires a manual build and installation. You need a local checkout, Node.js
-24 and npm 11 or later. From the repository root, run:
+1. Download `main.js`, `manifest.json`, and `styles.css` from the
+   [latest release](https://github.com/dev-leonardo-lima/habit-rhythm/releases/latest).
+2. Create the folder `<your-vault>/.obsidian/plugins/habit-rhythm/` in your vault.
+3. Copy the three downloaded files into that folder.
+4. In Obsidian, open **Settings → Community plugins** and enable **Habit Rhythm**.
+5. Open the dashboard using the ribbon icon or the **Habit Rhythm: Open habit dashboard** command.
+
+If you used an earlier development build, disable it and install this build in the new folder.
+Existing habit notes remain in their configured folder. This build has its own settings, so set the
+habits folder again if you previously changed it.
+
+To build from source, use Node.js 24 and npm 11 or later:
 
 ```sh
 npm ci
 npm run build
 ```
 
-1. Create the folder `<your-vault>/.obsidian/plugins/habit-rhythm/` in your vault.
-2. Copy `main.js`, `manifest.json`, and `styles.css` from the project root into that folder.
-3. In Obsidian, open **Settings → Community plugins** and enable **Habit Rhythm**.
-4. Open the dashboard using the ribbon icon or the **Habit Rhythm: Open habit dashboard** command.
-
-If you used an earlier development build, disable it and install this build in the new folder.
-Existing habit notes remain in their configured folder. This build has its own settings, so set the
-habits folder again if you previously changed it.
-
-For development setup and test-vault instructions, see [CONTRIBUTING.md](CONTRIBUTING.md) and
+Copy `main.js`, `manifest.json`, and `styles.css` from the project root into the plugin folder. For
+development setup and test-vault instructions, see [CONTRIBUTING.md](CONTRIBUTING.md) and
 [docs/development.md](docs/development.md).
 
 ## Quick start
