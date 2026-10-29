@@ -44,6 +44,8 @@ Earlier application evidence and reproducible checks are recorded in
   do." No second release was created.
 - **Manual dispatch recovery (pre-rebrand)**: [run 40888006877](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40888006877)
   repeated validation on `main` and reached the same no-op release decision.
+- **No-bump push (post-rebrand)**: [run 40891849223](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40891849223)
+  validated `c224cb6` and stopped with "Release 0.1.1 is already published; nothing to do."
 - **Recovery and collision scenarios**: the workflow contract test verifies the draft-first,
   asset-verification, tag-collision, version-regression, and idempotent commands. The draft-resume
   path was not exercised against GitHub in this acceptance; it remains covered by review and can be
