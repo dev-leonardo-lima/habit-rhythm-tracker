@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { Habit, LocalDate } from '../domain/types';
 import { renderHabitNote, replaceHabitBlock } from './habit-note';
 import type { VaultPort } from './vault-port';
@@ -132,7 +133,7 @@ export class GuardedWriter {
   private async doUpdate(path: string, intent: WriteIntent): Promise<WriteResult> {
     const baseContent = intent.baseContent;
     if (typeof baseContent !== 'string') {
-      return { status: 'failed', error: 'A captured note snapshot is required to update a habit.' };
+      return { status: 'failed', error: t('write.snapshotRequired') };
     }
 
     let currentContent: string;
@@ -141,7 +142,7 @@ export class GuardedWriter {
     } catch (error) {
       return {
         status: 'failed',
-        error: `Could not verify the habit note against the captured snapshot: ${errorMessage(error)}`,
+        error: t('write.verifyFailed', { detail: errorMessage(error) }),
       };
     }
     if (currentContent !== baseContent) {
@@ -192,14 +193,14 @@ export class GuardedWriter {
         if (problem) {
           return {
             status: 'uncertain',
-            error: 'An open editor changed while the note was being saved.',
+            error: t('write.editorChanged'),
             content,
           };
         }
       } catch {
         return {
           status: 'uncertain',
-          error: 'The editor state could not be verified after saving.',
+          error: t('write.editorUnverified'),
           content,
         };
       }
@@ -234,7 +235,7 @@ export class GuardedWriter {
       }
       return {
         status: 'uncertain',
-        error: `The write outcome could not be verified: ${errorMessage(error)}`,
+        error: t('write.uncertain', { detail: errorMessage(error) }),
         content,
       };
     }
@@ -254,7 +255,7 @@ export class GuardedCreator extends GuardedWriter {
       } catch (error) {
         return {
           status: 'failed',
-          error: `Could not prepare the habit folder: ${errorMessage(error)}`,
+          error: t('write.folderPrepareFailed', { detail: errorMessage(error) }),
         };
       }
     }
@@ -294,7 +295,7 @@ export class GuardedCreator extends GuardedWriter {
       }
       return {
         status: 'uncertain',
-        error: `The habit could not be created: ${errorMessage(error)}`,
+        error: t('write.createFailed', { detail: errorMessage(error) }),
         content: null,
       };
     }
@@ -308,7 +309,7 @@ export class GuardedCreator extends GuardedWriter {
     if (savedContent !== expected) {
       return {
         status: 'uncertain',
-        error: 'The created note could not be verified after writing',
+        error: t('write.createdUnverified'),
         content: savedContent,
       };
     }

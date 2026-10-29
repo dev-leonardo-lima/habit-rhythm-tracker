@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { normalizeHabitColor } from '../domain/habit-color';
 import { normalizeHabitIcon } from '../domain/habit-icon';
 import { compareDates, isValidLocalDate, isWeekKey, mondayOf } from '../domain/local-date';
@@ -57,7 +58,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function requireDate(value: unknown, label: string): LocalDate {
   if (typeof value !== 'string' || !isValidLocalDate(value)) {
-    invalid(`${label} must be a valid local date`);
+    invalid(t('note.error.invalidDate', { label }));
   }
   return value;
 }
@@ -65,27 +66,27 @@ function requireDate(value: unknown, label: string): LocalDate {
 function requireWeek(value: unknown, label: string, creationWeek: LocalDate): LocalDate {
   const date = requireDate(value, label);
   if (!isWeekKey(date)) {
-    invalid(`${label} must be a Monday`);
+    invalid(t('note.error.monday', { label }));
   }
   if (compareDates(date, creationWeek) < 0) {
-    invalid(`${label} cannot precede the creation week`);
+    invalid(t('note.error.beforeCreationWeek', { label }));
   }
   return date;
 }
 
 function parseTargets(value: unknown, creationWeek: LocalDate): TargetEntry[] {
   if (!Array.isArray(value) || value.length === 0) {
-    invalid('targets must be a nonempty array');
+    invalid(t('note.error.targetsArray'));
   }
   const targets: TargetEntry[] = [];
   let previousWeek: LocalDate | null = null;
   for (const raw of value) {
     if (!isRecord(raw)) {
-      invalid('each target must be an object');
+      invalid(t('note.error.targetObject'));
     }
-    const week = requireWeek(raw.week, 'target week', creationWeek);
+    const week = requireWeek(raw.week, t('note.field.targetWeek'), creationWeek);
     if (previousWeek !== null && compareDates(week, previousWeek) <= 0) {
-      invalid('targets must be ordered by effective week with at most one value per week');
+      invalid(t('note.error.targetOrder'));
     }
     if (
       typeof raw.days !== 'number' ||
@@ -93,58 +94,58 @@ function parseTargets(value: unknown, creationWeek: LocalDate): TargetEntry[] {
       raw.days < 1 ||
       raw.days > 7
     ) {
-      invalid('target days must be an integer from 1 through 7');
+      invalid(t('note.error.targetDays'));
     }
     previousWeek = week;
     targets.push({ week, days: raw.days });
   }
   if (targets[0]?.week !== creationWeek) {
-    invalid('the first target must take effect in the creation week');
+    invalid(t('note.error.firstTarget'));
   }
   return targets;
 }
 
 function parseStates(value: unknown, creationWeek: LocalDate): StateEntry[] {
   if (!Array.isArray(value) || value.length === 0) {
-    invalid('states must be a nonempty array');
+    invalid(t('note.error.statesArray'));
   }
   const states: StateEntry[] = [];
   let previousWeek: LocalDate | null = null;
   for (const raw of value) {
     if (!isRecord(raw)) {
-      invalid('each state must be an object');
+      invalid(t('note.error.stateObject'));
     }
-    const week = requireWeek(raw.week, 'state week', creationWeek);
+    const week = requireWeek(raw.week, t('note.field.stateWeek'), creationWeek);
     if (previousWeek !== null && compareDates(week, previousWeek) <= 0) {
-      invalid('states must be ordered by effective week with at most one value per week');
+      invalid(t('note.error.stateOrder'));
     }
     if (raw.state !== 'active' && raw.state !== 'archived') {
-      invalid('state must be active or archived');
+      invalid(t('note.error.stateValue'));
     }
     previousWeek = week;
     states.push({ week, state: raw.state });
   }
   if (states[0]?.week !== creationWeek || states[0]?.state !== 'active') {
-    invalid('the first state must be active in the creation week');
+    invalid(t('note.error.firstState'));
   }
   return states;
 }
 
 function parseCompletions(value: unknown, created: LocalDate): LocalDate[] {
   if (!Array.isArray(value)) {
-    invalid('completions must be an array');
+    invalid(t('note.error.completionsArray'));
   }
   const seen = new Set<string>();
   const completions: LocalDate[] = [];
   for (const raw of value) {
     if (typeof raw !== 'string' || !isValidLocalDate(raw)) {
-      invalid('each completion must be a valid local date');
+      invalid(t('note.error.completionDate'));
     }
     if (compareDates(raw, created) < 0) {
-      invalid('completions cannot precede the creation date');
+      invalid(t('note.error.completionBeforeCreation'));
     }
     if (seen.has(raw)) {
-      invalid('completion dates must be distinct');
+      invalid(t('note.error.completionDuplicate'));
     }
     seen.add(raw);
     completions.push(raw);
@@ -158,24 +159,24 @@ function parseCompletions(value: unknown, created: LocalDate): LocalDate[] {
  */
 export function validateHabitRecord(value: unknown): Habit {
   if (!isRecord(value)) {
-    invalid('the managed block must contain a JSON object');
+    invalid(t('note.error.jsonObject'));
   }
   if (value.schemaVersion !== HABIT_SCHEMA_VERSION) {
     if (typeof value.schemaVersion === 'number') {
       throw new HabitNoteError(
         'unsupported-schema',
-        `Unsupported habit schema version: ${String(value.schemaVersion)}`,
+        t('note.error.unsupportedSchema', { version: String(value.schemaVersion) }),
       );
     }
-    invalid('schemaVersion must be a number');
+    invalid(t('note.error.schemaNumber'));
   }
   if (!isValidIdentifier(value.id)) {
-    invalid('id must be a nonblank string without whitespace');
+    invalid(t('note.error.id'));
   }
   if (typeof value.name !== 'string' || value.name.trim().length === 0) {
-    invalid('name must be a nonblank string');
+    invalid(t('note.error.name'));
   }
-  const created = requireDate(value.created, 'created');
+  const created = requireDate(value.created, t('note.field.created'));
   const creationWeek = mondayOf(created);
   const targets = parseTargets(value.targets, creationWeek);
   const states = parseStates(value.states, creationWeek);
@@ -183,7 +184,7 @@ export function validateHabitRecord(value: unknown): Habit {
   const color = normalizeHabitColor(value.color);
   const icon = value.icon === undefined ? null : normalizeHabitIcon(value.icon);
   if (value.icon !== undefined && !icon) {
-    invalid('icon must be a nonblank icon ID without control characters');
+    invalid(t('note.error.icon'));
   }
   return {
     schemaVersion: HABIT_SCHEMA_VERSION,
@@ -202,10 +203,7 @@ function parseBlockJson(block: string): unknown {
   const trimmed = block.trim();
   const fenced = /^```json[ \t]*\r?\n([\s\S]*?)\r?\n```$/.exec(trimmed);
   if (!fenced) {
-    throw new HabitNoteError(
-      'malformed-block',
-      'The managed block must contain a single fenced JSON code block',
-    );
+    throw new HabitNoteError('malformed-block', t('note.error.fencedBlock'));
   }
   const json = fenced[1] ?? '';
   try {
@@ -213,7 +211,7 @@ function parseBlockJson(block: string): unknown {
   } catch (error) {
     throw new HabitNoteError(
       'invalid-json',
-      `The managed block contains invalid JSON: ${(error as Error).message}`,
+      t('note.error.invalidJson', { detail: (error as Error).message }),
     );
   }
 }
@@ -222,15 +220,15 @@ export function parseHabitNote(content: string): ParsedHabitNote {
   const startCount = countOccurrences(content, MANAGED_START);
   const endCount = countOccurrences(content, MANAGED_END);
   if (startCount > 1 || endCount > 1) {
-    throw new HabitNoteError('duplicate-markers', 'Habit note markers appear more than once');
+    throw new HabitNoteError('duplicate-markers', t('note.error.duplicateMarkers'));
   }
   if (startCount !== 1 || endCount !== 1) {
-    throw new HabitNoteError('missing-markers', 'Habit note markers are missing');
+    throw new HabitNoteError('missing-markers', t('note.error.missingMarkers'));
   }
   const startIndex = content.indexOf(MANAGED_START);
   const endMarkerIndex = content.indexOf(MANAGED_END);
   if (startIndex === -1 || endMarkerIndex === -1 || endMarkerIndex < startIndex) {
-    throw new HabitNoteError('missing-markers', 'Habit note markers are missing or out of order');
+    throw new HabitNoteError('missing-markers', t('note.error.markerOrder'));
   }
   const blockStart = startIndex + MANAGED_START.length;
   const block = content.slice(blockStart, endMarkerIndex);
@@ -257,9 +255,7 @@ function retainEntryFields<T extends { week: string }>(
           !retainedWeeks.has(entry.week) &&
           Object.keys(entry).some((key) => !knownFields.includes(key))
         ) {
-          invalid(
-            `Cannot remove the ${label} entry for ${entry.week} because it contains extra fields. Review the note first.`,
-          );
+          invalid(t('note.error.retainExtraFields', { label, week: entry.week }));
         }
         byWeek.set(entry.week, entry);
       }
@@ -271,11 +267,11 @@ function retainEntryFields<T extends { week: string }>(
 export function serializeHabitBlock(habit: Habit, previous?: Record<string, unknown>): string {
   const color = normalizeHabitColor(habit.color);
   if (habit.color !== undefined && !color) {
-    invalid('color must be a six-digit hex value');
+    invalid(t('note.error.color'));
   }
   const icon = habit.icon === undefined ? null : normalizeHabitIcon(habit.icon);
   if (habit.icon !== undefined && !icon) {
-    invalid('icon must be a nonblank icon ID without control characters');
+    invalid(t('note.error.icon'));
   }
   const normalized: Record<string, unknown> = {
     ...previous,
@@ -287,8 +283,18 @@ export function serializeHabitBlock(habit: Habit, previous?: Record<string, unkn
         ? previous.name
         : habit.name,
     created: habit.created,
-    targets: retainEntryFields(habit.targets, previous?.targets, ['week', 'days'], 'target'),
-    states: retainEntryFields(habit.states, previous?.states, ['week', 'state'], 'state'),
+    targets: retainEntryFields(
+      habit.targets,
+      previous?.targets,
+      ['week', 'days'],
+      t('note.label.target'),
+    ),
+    states: retainEntryFields(
+      habit.states,
+      previous?.states,
+      ['week', 'state'],
+      t('note.label.state'),
+    ),
     completions: [...habit.completions].sort(),
   };
   if (color) {

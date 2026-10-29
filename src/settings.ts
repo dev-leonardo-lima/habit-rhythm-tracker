@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import { normalizeFolder } from './storage/habit-repository';
 
 export interface HabitTrackerSettings {
@@ -21,11 +22,11 @@ export class SettingsValidationError extends Error {
 export function validateFolder(folder: string, field: 'habitsFolder' = 'habitsFolder'): string {
   const normalized = normalizeFolder(folder);
   if (!normalized) {
-    throw new SettingsValidationError(field, 'Enter a vault folder name');
+    throw new SettingsValidationError(field, t('settings.folderNameError'));
   }
   const segments = normalized.split('/');
   if (segments.some((segment) => segment === '..' || segment === '.')) {
-    throw new SettingsValidationError(field, 'Folder names cannot contain "." or ".." segments');
+    throw new SettingsValidationError(field, t('settings.folderSegmentError'));
   }
   return normalized;
 }

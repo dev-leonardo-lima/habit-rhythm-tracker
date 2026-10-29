@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { compareDates, mondayOf } from './local-date';
 import { stateForWeek } from './activity-history';
 import { effectiveTargetForWeek } from './target-history';
@@ -26,15 +27,15 @@ export function weeklyOutcome(habit: Habit, week: WeekKey, today: LocalDate): We
 export function outcomeLabel(outcome: WeekOutcome): string {
   switch (outcome) {
     case 'successful':
-      return 'Successful';
+      return t('outcome.successful');
     case 'in-progress':
-      return 'In progress';
+      return t('outcome.inProgress');
     case 'unsuccessful':
-      return 'Missed target';
+      return t('outcome.unsuccessful');
     case 'excluded':
-      return 'Archived week (excluded)';
+      return t('outcome.excluded');
     case 'not-started':
     default:
-      return 'Not started';
+      return t('outcome.notStarted');
   }
 }

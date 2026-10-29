@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { DiscoveryResult, DiscoveredHabit, Habit, NoteIssue } from '../domain/types';
 import { HabitNoteError, parseHabitNote } from './habit-note';
 import type { VaultPort } from './vault-port';
@@ -54,7 +55,7 @@ export class HabitRepository {
         return candidate;
       }
     }
-    throw new Error(`Unable to find an available path for ${name}`);
+    throw new Error(t('repository.noAvailablePath', { name }));
   }
 
   async discover(): Promise<DiscoveryResult> {
@@ -90,7 +91,7 @@ export class HabitRepository {
           issues.push({
             path: discovered.path,
             code: 'duplicate-id',
-            message: `Habit ID "${id}" is used by more than one note; every note is preserved and none is loaded.`,
+            message: t('repository.duplicateId', { id }),
           });
         }
       }
@@ -123,7 +124,7 @@ export function toIssue(path: string, error: unknown): NoteIssue {
   return {
     path,
     code: 'read-failed',
-    message: error instanceof Error ? error.message : 'Unknown note error',
+    message: error instanceof Error ? error.message : t('repository.unknownError'),
   };
 }
 

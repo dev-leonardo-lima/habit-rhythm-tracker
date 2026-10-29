@@ -1,3 +1,4 @@
+import { tp } from '../i18n';
 import { addDays, mondayOf } from './local-date';
 import { weeklyOutcome } from './weekly-outcome';
 import type { Habit, LocalDate } from './types';
@@ -81,5 +82,5 @@ export function bestStreak(habit: Habit, today: LocalDate): number {
 }
 
 export function streakLabel(streak: number): string {
-  return `${streak} ${streak === 1 ? 'week' : 'weeks'}`;
+  return tp('unit.week', streak);
 }

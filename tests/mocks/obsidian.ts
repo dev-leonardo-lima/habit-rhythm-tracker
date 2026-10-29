@@ -244,6 +244,10 @@ export function setIcon(_element: HTMLElement, _icon: string): void {
   // no-op in tests
 }
 
+export function getLanguage(): string {
+  return 'en';
+}
+
 const TEST_ICONS = ['dumbbell', 'book-open', 'heart', 'code', 'gamepad-2', 'moon'];
 
 export function getIconIds(): string[] {

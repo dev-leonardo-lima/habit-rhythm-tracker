@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { LocalDate, WeekKey } from './types';
 
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -19,13 +20,13 @@ export interface ParsedLocalDate {
 export function parseLocalDate(value: string): ParsedLocalDate {
   const match = DATE_PATTERN.exec(value);
   if (!match) {
-    throw new DateValidationError(`Invalid local date: ${value}`);
+    throw new DateValidationError(t('error.invalidLocalDate', { value }));
   }
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
   if (year < 1000 || month < 1 || month > 12 || day < 1 || day > 31) {
-    throw new DateValidationError(`Invalid local date: ${value}`);
+    throw new DateValidationError(t('error.invalidLocalDate', { value }));
   }
   const date = new Date(Date.UTC(year, month - 1, day));
   if (
@@ -33,7 +34,7 @@ export function parseLocalDate(value: string): ParsedLocalDate {
     date.getUTCMonth() !== month - 1 ||
     date.getUTCDate() !== day
   ) {
-    throw new DateValidationError(`Invalid local date: ${value}`);
+    throw new DateValidationError(t('error.invalidLocalDate', { value }));
   }
   return { year, month, day };
 }

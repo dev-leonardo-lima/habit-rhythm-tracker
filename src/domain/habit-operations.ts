@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { normalizeHabitColor } from './habit-color';
 import { normalizeHabitIcon } from './habit-icon';
 import { compareDates, isValidLocalDate, mondayOf, todayLocalDate } from './local-date';
@@ -32,17 +33,14 @@ export interface CreateHabitInput {
 export function normalizeHabitName(name: string): string {
   const normalized = name.trim();
   if (normalized.length === 0) {
-    throw new HabitOperationError('invalid-name', 'Enter a habit name');
+    throw new HabitOperationError('invalid-name', t('error.habitName'));
   }
   return normalized;
 }
 
 export function validateTarget(target: number): number {
   if (!Number.isInteger(target) || target < 1 || target > 7) {
-    throw new HabitOperationError(
-      'invalid-target',
-      'The weekly target must be an integer from 1 to 7',
-    );
+    throw new HabitOperationError('invalid-target', t('error.targetRange'));
   }
   return target;
 }
@@ -60,12 +58,12 @@ export function createHabit(input: CreateHabitInput, now: Date = new Date()): Ha
   const target = validateTarget(input.target);
   const created = input.created ?? todayLocalDate(now);
   if (!isValidLocalDate(created)) {
-    throw new HabitOperationError('invalid-date', 'The creation date is invalid');
+    throw new HabitOperationError('invalid-date', t('error.creationDate'));
   }
   const week = mondayOf(created);
   const id = input.id?.trim() ?? generateId();
   if (id.length === 0) {
-    throw new HabitOperationError('invalid-name', 'The habit identifier must not be blank');
+    throw new HabitOperationError('invalid-name', t('error.habitId'));
   }
   return {
     schemaVersion: 1,
@@ -80,13 +78,13 @@ export function createHabit(input: CreateHabitInput, now: Date = new Date()): Ha
 
 function assertEditableDate(habit: Habit, date: LocalDate, today: LocalDate): void {
   if (!isValidLocalDate(date)) {
-    throw new HabitOperationError('invalid-date', 'The selected date is invalid');
+    throw new HabitOperationError('invalid-date', t('error.selectedDate'));
   }
   if (compareDates(date, habit.created) < 0) {
-    throw new HabitOperationError('before-creation', 'The date is before the habit was created');
+    throw new HabitOperationError('before-creation', t('error.beforeCreation'));
   }
   if (compareDates(date, today) > 0) {
-    throw new HabitOperationError('after-today', 'Future dates cannot be changed');
+    throw new HabitOperationError('after-today', t('error.futureDate'));
   }
 }
 
@@ -131,10 +129,7 @@ export function setHabitColor(habit: Habit, color: string | null): Habit {
   }
   const normalized = normalizeHabitColor(color);
   if (!normalized) {
-    throw new HabitOperationError(
-      'invalid-color',
-      'Choose a valid six-digit hex color, such as #8a5cf5',
-    );
+    throw new HabitOperationError('invalid-color', t('error.color'));
   }
   return { ...habit, color: normalized };
 }
@@ -148,7 +143,7 @@ export function setHabitIcon(habit: Habit, icon: string | null): Habit {
   }
   const normalized = normalizeHabitIcon(icon);
   if (!normalized) {
-    throw new HabitOperationError('invalid-icon', 'Choose a valid icon');
+    throw new HabitOperationError('invalid-icon', t('error.icon'));
   }
   return { ...habit, icon: normalized };
 }

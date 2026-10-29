@@ -1,4 +1,5 @@
 import { TFile, TFolder, type Vault } from 'obsidian';
+import { t } from '../i18n';
 import type { VaultPort } from './vault-port';
 
 export class ObsidianVaultPort implements VaultPort {
@@ -65,7 +66,7 @@ export class ObsidianVaultPort implements VaultPort {
         continue;
       }
       if (existing) {
-        throw new Error(`A file already exists at folder path: ${current}`);
+        throw new Error(t('vault.fileAtFolderPath', { path: current }));
       }
       await this.vault.createFolder(current);
     }
@@ -74,7 +75,7 @@ export class ObsidianVaultPort implements VaultPort {
   private requireFile(path: string): TFile {
     const file = this.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) {
-      throw new Error(`Habit note not found: ${path}`);
+      throw new Error(t('vault.noteNotFound', { path }));
     }
     return file;
   }
