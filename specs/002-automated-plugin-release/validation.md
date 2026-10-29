@@ -1,8 +1,8 @@
 # Validation Evidence: Automated Plugin Validation and Release
 
-This record describes the simplified release pipeline. Local automated tests do not establish
-GitHub acceptance; the end-to-end section is filled in after the repository is recreated and the
-first release is published.
+This record describes the simplified release pipeline. The repository was recreated and the plugin
+was re-identified as `habit-rhythm-tracker` / `Habit Rhythm Tracker` after the GitHub repository was
+deleted and recreated.
 
 Earlier application evidence and reproducible checks are recorded in
 [feature 001 validation](../001-weekly-habit-dashboard/validation.md) and
@@ -11,8 +11,9 @@ Earlier application evidence and reproducible checks are recorded in
 ## Automated validation
 
 - **Environment**: macOS (arm64), Node.js 24.21.0, npm 11.19.0, actionlint 1.7.12.
-- **Source**: `76f6a541a97cd49f313c4ba1d90349f83871a3da` (`refactor(ci): replace release ledger
-  with same-run publishing`), pushed to the recreated public repository.
+- **Source**: `8cd38164b5a0c5d3baa41f05ad64ddf4580ccc3a` (`chore(release): rebrand as Habit Rhythm
+  Tracker 0.1.1`), pushed to the recreated public repository. The pipeline simplification was
+  introduced in `76f6a541a97cd49f313c4ba1d90349f83871a3da`.
 - **Local checks**: `npm run version:check`, `npm run typecheck`, ESLint, Prettier
   (`format:check`), the production build, and actionlint all passed.
 - **Tests and coverage**: 178 tests in 28 files passed. V8 measured 92.51% lines and 87.34%
@@ -28,16 +29,20 @@ Earlier application evidence and reproducible checks are recorded in
 
 ## GitHub acceptance
 
-- **First release**: [run 40887541674](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887541674)
-  passed the validation job and the release job published
-  [release 0.1.0](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/tag/0.1.0) without a
-  manual release command. The tag resolves to `76f6a541a97cd49f313c4ba1d90349f83871a3da`; the
-  assets are `main.js` (62,509 bytes), `manifest.json` (263 bytes), and `styles.css` (41,295 bytes).
-  The release body links the source SHA and validation run. No issues were created.
-- **No-bump push**: [run 40887829880](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887829880)
+- **Initial pipeline release (pre-rebrand)**: [run 40887541674](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887541674)
+  published 0.1.0 from `76f6a54` without a manual release command. That release was removed after the
+  repository was renamed and the plugin was re-identified.
+- **Current release**: [run 40891535845](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40891535845)
+  validated `8cd38164b5a0c5d3baa41f05ad64ddf4580ccc3a` and published
+  [release 0.1.1](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/tag/0.1.1). The
+  tag resolves to that SHA; the assets are `main.js` (62,541 bytes), `manifest.json` (279 bytes), and
+  `styles.css` (41,295 bytes). The manifest ID is `habit-rhythm-tracker` and the name is
+  `Habit Rhythm Tracker`. The release body links the source SHA and validation run. No issues were
+  created.
+- **No-bump push (pre-rebrand)**: [run 40887829880](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887829880)
   passed validation and the release job stopped with "Release 0.1.0 is already published; nothing to
   do." No second release was created.
-- **Manual dispatch recovery**: [run 40888006877](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40888006877)
+- **Manual dispatch recovery (pre-rebrand)**: [run 40888006877](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40888006877)
   repeated validation on `main` and reached the same no-op release decision.
 - **Recovery and collision scenarios**: the workflow contract test verifies the draft-first,
   asset-verification, tag-collision, version-regression, and idempotent commands. The draft-resume
@@ -46,9 +51,10 @@ Earlier application evidence and reproducible checks are recorded in
 
 ## Community directory
 
-Pending: refresh or recreate the directory draft after the first release and record the
-submission/review state separately from release success. GitHub release publication does not imply
-directory acceptance.
+Pending: submit the new identity (`habit-rhythm-tracker` / `Habit Rhythm Tracker`) through the
+Obsidian Community directory and record the review/listing state separately from release success.
+GitHub release publication does not imply directory acceptance. The previous draft was tied to the
+deleted repository ID and could not be relinked.
 
 ## Approved exceptions
 
