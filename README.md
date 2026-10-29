@@ -8,9 +8,9 @@ A local-first habit tracker for [Obsidian](https://obsidian.md/) with a clean we
 Choose how many days a week you want to practice a habit, mark your progress, and build a streak
 that makes room for rest days. Your habits live in Markdown notes in your vault.
 
-> **Project status:** The first release is available on GitHub and the plugin is being submitted to
-> Obsidian's community plugin directory. Until it is listed there, install it from the latest
-> release.
+> **Project status:** The first release is available on GitHub. The plugin is being prepared for
+> submission to Obsidian's community plugin directory; until it is listed there, install it from
+> the latest release.
 
 ## Features
 

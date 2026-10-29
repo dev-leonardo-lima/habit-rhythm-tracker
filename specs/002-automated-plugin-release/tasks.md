@@ -51,18 +51,18 @@ work that remains.
 
 - [X] T010 [US1] Run `npm ci`, `npm run version:check`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run test:coverage`, and `npm run build`; record results.
 - [X] T011 [US4] Validate workflow YAML syntax, pinned action SHAs, the release job's permissions, and the absence of `pull_request_target` and removed ledger scripts.
-- [ ] T012 [US2] Recreate the GitHub repository with the same name, push `main`, and confirm the first validated push publishes the current manifest version with `main.js`, `manifest.json`, and `styles.css` attached.
-- [ ] T013 [US2] Push a no-bump documentation change to `main` and confirm validation succeeds without a new release.
-- [ ] T014 [US4] Record the source SHA, validation run, release URL, tag target, asset names, no-bump skip, and any recovery evidence in `specs/002-automated-plugin-release/validation.md`.
+- [X] T012 [US2] Recreate the GitHub repository with the same name, push `main`, and confirm the first validated push publishes the current manifest version with `main.js`, `manifest.json`, and `styles.css` attached.
+- [X] T013 [US2] Push a no-bump documentation change to `main` and confirm validation succeeds without a new release.
+- [X] T014 [US4] Record the source SHA, validation run, release URL, tag target, asset names, no-bump skip, and any recovery evidence in `specs/002-automated-plugin-release/validation.md`.
 - [ ] T015 [US3] Refresh or recreate the Obsidian Community directory draft for the recreated repository and record its review/listing state separately from release success.
 
 ---
 
 ## Phase 4: Polish & Cross-Cutting Concerns
 
-- [ ] T016 [P] Update `docs/releasing.md`, `docs/development.md`, `CONTRIBUTING.md`, and `README.md` so setup, version selection, release status, and recovery match the simplified workflow.
-- [ ] T017 Run the Spec Kit cross-artifact analysis and resolve any inconsistency between `spec.md`, `plan.md`, and `tasks.md`.
-- [ ] T018 Run the final local checks after documentation changes and confirm the workflow contract test still passes.
+- [X] T016 [P] Update `docs/releasing.md`, `docs/development.md`, `CONTRIBUTING.md`, and `README.md` so setup, version selection, release status, and recovery match the simplified workflow.
+- [X] T017 Run the Spec Kit cross-artifact analysis and resolve any inconsistency between `spec.md`, `plan.md`, and `tasks.md`.
+- [X] T018 Run the final local checks after documentation changes and confirm the workflow contract test still passes.
 
 ---
 

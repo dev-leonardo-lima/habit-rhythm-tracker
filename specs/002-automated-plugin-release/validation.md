@@ -34,9 +34,15 @@ Earlier application evidence and reproducible checks are recorded in
   manual release command. The tag resolves to `76f6a541a97cd49f313c4ba1d90349f83871a3da`; the
   assets are `main.js` (62,509 bytes), `manifest.json` (263 bytes), and `styles.css` (41,295 bytes).
   The release body links the source SHA and validation run. No issues were created.
-- **No-bump push**: pending; the next documentation push exercises this path and is recorded below.
-- **Manual dispatch recovery**: pending.
-- **Recovery and collision scenarios**: pending in a disposable repository or controlled draft.
+- **No-bump push**: [run 40887829880](https://github.com/dev-leonardo-lima/habit-rhythm/actions/runs/40887829880)
+  passed validation and the release job stopped with "Release 0.1.0 is already published; nothing to
+  do." No second release was created.
+- **Manual dispatch recovery**: [run 40888006877](https://github.com/dev-leonardo-lima/habit-rhythm/actions/runs/40888006877)
+  repeated validation on `main` and reached the same no-op release decision.
+- **Recovery and collision scenarios**: the workflow contract test verifies the draft-first,
+  asset-verification, tag-collision, version-regression, and idempotent commands. The draft-resume
+  path was not exercised against GitHub in this acceptance; it remains covered by review and can be
+  exercised on the next intentional version bump.
 
 ## Community directory
 
