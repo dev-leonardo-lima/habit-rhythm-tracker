@@ -11,8 +11,8 @@ Earlier application evidence and reproducible checks are recorded in
 ## Automated validation
 
 - **Environment**: macOS (arm64), Node.js 24.21.0, npm 11.19.0, actionlint 1.7.12.
-- **Source**: working tree based on `e8698fc68d476f760ef145ff40b92c7dd7c7a966` with the
-  simplification changes; the commit SHA and workflow run are recorded below after the first push.
+- **Source**: `76f6a541a97cd49f313c4ba1d90349f83871a3da` (`refactor(ci): replace release ledger
+  with same-run publishing`), pushed to the recreated public repository.
 - **Local checks**: `npm run version:check`, `npm run typecheck`, ESLint, Prettier
   (`format:check`), the production build, and actionlint all passed.
 - **Tests and coverage**: 178 tests in 28 files passed. V8 measured 92.51% lines and 87.34%
@@ -28,9 +28,15 @@ Earlier application evidence and reproducible checks are recorded in
 
 ## GitHub acceptance
 
-Pending: the repository is being recreated with the same name. Record the first push SHA, validation
-run, release URL, tag target, asset names and sizes, the no-bump skip run, and any recovery
-exercise here.
+- **First release**: [run 40887541674](https://github.com/dev-leonardo-lima/habit-rhythm/actions/runs/40887541674)
+  passed the validation job and the release job published
+  [release 0.1.0](https://github.com/dev-leonardo-lima/habit-rhythm/releases/tag/0.1.0) without a
+  manual release command. The tag resolves to `76f6a541a97cd49f313c4ba1d90349f83871a3da`; the
+  assets are `main.js` (62,509 bytes), `manifest.json` (263 bytes), and `styles.css` (41,295 bytes).
+  The release body links the source SHA and validation run. No issues were created.
+- **No-bump push**: pending; the next documentation push exercises this path and is recorded below.
+- **Manual dispatch recovery**: pending.
+- **Recovery and collision scenarios**: pending in a disposable repository or controlled draft.
 
 ## Community directory
 
