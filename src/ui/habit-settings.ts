@@ -23,7 +23,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
   className?: string,
   text?: string,
 ): HTMLElementTagNameMap[K] {
-  const element = document.createElement(tag);
+  const element = createEl(tag);
   if (className) {
     element.className = className;
   }
@@ -37,9 +37,8 @@ function themeAccentHex(): string {
   if (typeof document === 'undefined' || !document.body) {
     return '#8a5cf5';
   }
-  const probe = document.createElement('span');
-  probe.style.display = 'none';
-  probe.style.color = 'var(--interactive-accent, #8a5cf5)';
+  const probe = createSpan();
+  probe.className = 'habit-tracker-theme-accent-probe';
   document.body.append(probe);
   const computed = getComputedStyle(probe).color;
   probe.remove();
@@ -237,7 +236,10 @@ function renderHabitSettingsItem(
     void handlers.changeColor(habit.habitId, null);
   });
   colorRow.append(resetColor);
-  appearance.append(colorRow, renderIconPicker(habit, handlers.changeIcon));
+  appearance.append(
+    colorRow,
+    renderIconPicker(habit, (id, icon) => handlers.changeIcon(id, icon)),
+  );
   body.append(appearance);
 
   const stateActions = el('div', 'habit-tracker-actions');

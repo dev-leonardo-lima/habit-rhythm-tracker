@@ -1,6 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const proto = HTMLElement.prototype as any;
 
+Object.assign(globalThis, {
+  createEl: (tag: string) => document.createElement(tag),
+  createDiv: () => document.createElement('div'),
+  createSpan: () => document.createElement('span'),
+});
+
+if (typeof Node.prototype.instanceOf !== 'function') {
+  Node.prototype.instanceOf = function instanceOf<T>(type: new (...args: any[]) => T): this is T {
+    const view = this.ownerDocument?.defaultView as (Window & typeof globalThis) | null;
+    const localType = (view as any)?.[type.name] ?? type;
+    return this instanceof localType;
+  };
+}
+
 if (typeof proto.empty !== 'function') {
   proto.empty = function empty(this: HTMLElement) {
     this.replaceChildren();

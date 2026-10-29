@@ -188,7 +188,8 @@ as complete, the failure is visible, and the retry produces no duplicate release
   a published version, or leaves version metadata inconsistent.
 - **FR-006**: Each complete release MUST include `main.js` and `manifest.json`, plus `styles.css`
   when the plugin uses it, as separately downloadable release assets; source and production build
-  MUST correspond to the validated revision and release metadata.
+  MUST correspond to the validated revision and release metadata. GitHub artifact attestations
+  MUST record the provenance of the validated release assets.
 - **FR-007**: Release metadata and compatibility information MUST comply with Obsidian's current
   release requirements, including maintaining the version compatibility mapping when the minimum
   supported Obsidian version changes.

@@ -13,7 +13,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
   className?: string,
   text?: string,
 ): HTMLElementTagNameMap[K] {
-  const element = document.createElement(tag);
+  const element = createEl(tag);
   if (className) {
     element.className = className;
   }
@@ -85,7 +85,7 @@ export function renderHabitHistory(
   const close = el('button', 'habit-tracker-history-close', 'Close');
   close.type = 'button';
   close.setAttribute('aria-label', `Close history for ${detail.name}`);
-  close.addEventListener('click', handlers.closeHabitHistory);
+  close.addEventListener('click', () => handlers.closeHabitHistory());
   heading.append(close);
   section.append(heading);
 

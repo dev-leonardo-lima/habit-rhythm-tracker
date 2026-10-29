@@ -7,6 +7,7 @@ export class FakeVault {
   readonly contents = new Map<string, string>();
   readonly fileObjects = new Map<string, TFile>();
   readonly folderObjects = new Map<string, TFolder>();
+  private readonly root = new (Folder as unknown as new (path: string) => TFolder)('');
   failNextRead: Error | null = null;
   failNextCreate: Error | null = null;
   failNextProcess: Error | null = null;
@@ -49,6 +50,10 @@ export class FakeVault {
     return null;
   }
 
+  getRoot(): TFolder {
+    return this.root;
+  }
+
   async read(file: TFile): Promise<string> {
     if (this.failNextRead) {
       const error = this.failNextRead;
@@ -72,7 +77,11 @@ export class FakeVault {
       throw new Error(`EEXIST: ${path}`);
     }
     this.contents.set(path, content);
-    return this.file(path);
+    const file = this.file(path);
+    const parent = this.folder(path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '');
+    file.parent = parent;
+    parent.children.push(file);
+    return file;
   }
 
   async process(file: TFile, transform: (content: string) => string): Promise<string> {
@@ -92,10 +101,27 @@ export class FakeVault {
 
   async delete(file: TAbstractFile): Promise<void> {
     this.contents.delete(file.path);
+    if (file.parent) {
+      file.parent.children = file.parent.children.filter((child) => child !== file);
+    }
   }
 
   async createFolder(path: string): Promise<TFolder> {
+    return this.folder(path);
+  }
+
+  private folder(path: string): TFolder {
+    if (!path) {
+      return this.root;
+    }
+    const existing = this.folderObjects.get(path);
+    if (existing) {
+      return existing;
+    }
+    const parent = this.folder(path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '');
     const folder = new (Folder as unknown as new (path: string) => TFolder)(path);
+    folder.parent = parent;
+    parent.children.push(folder);
     this.folderObjects.set(path, folder);
     return folder;
   }

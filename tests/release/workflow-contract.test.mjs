@@ -41,7 +41,12 @@ describe('GitHub Actions safety contract', () => {
     expect(release.if).toContain('refs/heads/main');
     expect(release.if).toContain("github.event_name == 'push'");
     expect(release.if).toContain("github.event_name == 'workflow_dispatch'");
-    expect(release.permissions).toEqual({ contents: 'write', actions: 'read' });
+    expect(release.permissions).toEqual({
+      contents: 'write',
+      actions: 'read',
+      'id-token': 'write',
+      attestations: 'write',
+    });
     expect(release.concurrency).toEqual({
       group: 'habit-rhythm-tracker-release',
       'cancel-in-progress': false,
@@ -75,7 +80,15 @@ describe('GitHub Actions safety contract', () => {
       name: 'plugin-${{ github.sha }}',
       path: 'release',
     });
+    const attest = release.steps.find((step) => step.uses?.startsWith('actions/attest@'));
+    expect(attest.with['subject-path'].trim().split('\n')).toEqual([
+      'release/main.js',
+      'release/manifest.json',
+      'release/styles.css',
+    ]);
+    expect(release.steps.indexOf(download)).toBeLessThan(release.steps.indexOf(attest));
     const publish = release.steps.find((step) => step.name?.includes('Publish release'));
+    expect(release.steps.indexOf(attest)).toBeLessThan(release.steps.indexOf(publish));
     const script = publish.run;
     for (const command of [
       'gh release view',

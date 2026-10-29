@@ -56,14 +56,15 @@ npm run version:bump -- patch|minor|major
   pre-existing tag pointing elsewhere or move it.
 - Assets: exact names `main.js`, `manifest.json`, and `styles.css` if used; the attached manifest,
   repository manifest, package and lockfile versions, tag and release version agree. The build uses
-  committed source and locked toolchain at the tagged revision.
+  committed source and locked toolchain at the tagged revision. GitHub artifact attestations record
+  the provenance of the validated release files.
 - Publication: create or resume a draft, verify the complete asset set and sizes, then publish.
   Publish with the version as `latest` only after the monotonicity check. Never overwrite or delete
   a published release.
 - Permissions: pull-request validation uses read-only repository access. The release job runs only
   on `main`, checks out with `persist-credentials: false`, and receives `contents: write` plus
-  `actions: read` for the artifact. Never execute pull-request source in a privileged context or
-  expose tokens in artifacts and logs.
+  `actions: read`, `attestations: write`, and `id-token: write` for artifact download and provenance.
+  Never execute pull-request source in a privileged context or expose tokens in artifacts and logs.
 - Outcome: the release body identifies the source SHA and workflow run. Directory review and
   availability are separate external states and must not be reported as completed by release alone.
 

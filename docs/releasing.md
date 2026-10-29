@@ -11,7 +11,8 @@ release state (tag, release, assets, latest version) is the source of truth.
 ## One-time repository setup
 
 1. Create the GitHub repository with `main` as the default branch and enable GitHub Actions.
-2. The workflow grants `contents: write` only to the release job; no issue permissions are needed.
+2. The workflow grants `contents: write`, `attestations: write`, and `id-token: write` only to the
+   release job; no issue permissions are needed.
 3. Set the repository description, website, and topics if desired. Link the GitHub account to the
    Obsidian Community profile before submitting the plugin.
 4. Review the manifest's author, URLs, ID, `minAppVersion`, and version before the first release.
@@ -35,9 +36,10 @@ formatting, coverage, and the production build.
 A successful push to `main`:
 
 1. uploads `main.js`, `manifest.json`, and `styles.css` from the validated commit;
-2. reads the manifest version and checks existing releases, tags, and the latest published version;
-3. creates or resumes a draft release targeting the validated commit;
-4. uploads missing assets, verifies names and sizes, and publishes the release with an unprefixed
+2. attests the validated release files using GitHub artifact attestations;
+3. reads the manifest version and checks existing releases, tags, and the latest published version;
+4. creates or resumes a draft release targeting the validated commit;
+5. uploads missing assets, verifies names and sizes, and publishes the release with an unprefixed
    tag equal to the manifest version.
 
 The release body links the source commit and validation run. A push without a version change is
@@ -87,7 +89,8 @@ thresholds.
 
 - Pull-request validation has read-only repository access.
 - The release job runs only on `main`, uses `persist-credentials: false`, and receives
-  `contents: write` plus `actions: read` for the validated artifact.
+  `contents: write`, `actions: read`, `attestations: write`, and `id-token: write` to download,
+  attest, and publish the validated artifact.
 - The token comes from `GITHUB_TOKEN`; no PAT is required. The workflow never uses
   `pull_request_target` or executes pull-request code with release permissions.
 - Logs and artifacts contain source and release metadata only, never vault content or credentials.

@@ -4,6 +4,9 @@ This record describes the simplified release pipeline. The repository was recrea
 was re-identified as `habit-rhythm-tracker` / `Habit Rhythm Tracker` after the GitHub repository was
 deleted and recreated.
 
+The working tree now prepares 0.1.2 with artifact attestations and fixes for the directory scan.
+The updated workflow and new release have not yet been run on GitHub.
+
 Earlier application evidence and reproducible checks are recorded in
 [feature 001 validation](../001-weekly-habit-dashboard/validation.md) and
 [feature 001 quickstart](../001-weekly-habit-dashboard/quickstart.md).
@@ -16,11 +19,13 @@ Earlier application evidence and reproducible checks are recorded in
   introduced in `76f6a541a97cd49f313c4ba1d90349f83871a3da`.
 - **Local checks**: `npm run version:check`, `npm run typecheck`, ESLint, Prettier
   (`format:check`), the production build, and actionlint all passed.
-- **Tests and coverage**: 178 tests in 28 files passed. V8 measured 92.51% lines and 87.34%
+- **Tests and coverage**: 178 tests in 28 files passed. V8 measured 92.54% lines and 87.16%
   branches across plugin and maintained tooling code. The workflow contract test parses
   `.github/workflows/ci.yml` and verifies triggers, read-only PR permissions, the release job
-  dependency, `contents: write` plus `actions: read` on the release job only, pinned actions,
-  artifact handoff, draft-first publication, and the absence of the removed ledger files.
+  dependency, release-job permissions, pinned actions, artifact handoff and attestation, draft-first
+  publication, and the absence of the removed ledger files.
+- **Directory scanner**: the official scanner ESLint and Stylelint rules reported no findings
+  locally. The directory must rescan a published release before its result is known.
 - **Removed scope**: the issue ledger, cursor, scheduled reconciler, baseline initialization, and
   their tests are gone. No workflow requests `issues: write`, and no `pull_request_target` trigger
   exists.
@@ -53,10 +58,10 @@ Earlier application evidence and reproducible checks are recorded in
 
 ## Community directory
 
-Pending: submit the new identity (`habit-rhythm-tracker` / `Habit Rhythm Tracker`) through the
-Obsidian Community directory and record the review/listing state separately from release success.
-GitHub release publication does not imply directory acceptance. The previous draft was tied to the
-deleted repository ID and could not be relinked.
+The maintainer submitted the new identity (`habit-rhythm-tracker` / `Habit Rhythm Tracker`) to the
+Obsidian Community directory. The automated review of release 0.1.1 failed as reported by the
+maintainer; the 0.1.2 fixes and a new directory scan are still pending publication. GitHub release
+publication and directory review remain separate states.
 
 ## Approved exceptions
 

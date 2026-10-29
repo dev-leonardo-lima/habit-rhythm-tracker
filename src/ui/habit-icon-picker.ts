@@ -48,7 +48,7 @@ export function habitIcon(id: string | null): HTMLElement | null {
   if (!svg) {
     return null;
   }
-  const badge = document.createElement('span');
+  const badge = createSpan();
   badge.className = 'habit-tracker-habit-icon';
   badge.setAttribute('aria-hidden', 'true');
   badge.append(svg);
@@ -59,20 +59,20 @@ export function renderIconPicker(
   habit: { habitId: string; name: string; icon: string | null },
   onChange: (habitId: string, icon: string | null) => void | Promise<unknown>,
 ): HTMLElement {
-  const details = document.createElement('details');
+  const details = createEl('details');
   details.className = 'habit-tracker-icon-picker';
   details.dataset.disclosureKey = `icon:${habit.habitId}`;
-  const summary = document.createElement('summary');
+  const summary = createEl('summary');
   summary.className = 'habit-tracker-icon-picker-summary';
   summary.setAttribute('aria-label', `Choose icon for ${habit.name}`);
   const badge = habitIcon(habit.icon);
   if (badge) {
     summary.append(badge);
   }
-  const current = document.createElement('span');
+  const current = createSpan();
   current.textContent = habit.icon ? (badge ? 'Change icon' : 'Icon unavailable') : 'Choose icon';
   summary.append(current);
-  const description = document.createElement('span');
+  const description = createSpan();
   description.id = `habit-tracker-icon-description-${++iconDescriptionSequence}`;
   description.className = 'habit-tracker-visually-hidden';
   description.textContent = habit.icon
@@ -83,20 +83,20 @@ export function renderIconPicker(
   summary.setAttribute('aria-describedby', description.id);
   details.append(summary, description);
 
-  const panel = document.createElement('div');
+  const panel = createDiv();
   panel.className = 'habit-tracker-icon-picker-panel';
-  const form = document.createElement('form');
+  const form = createEl('form');
   form.dataset.formKey = `icon-search:${habit.habitId}`;
   form.addEventListener('submit', (event) => event.preventDefault());
-  const pageField = document.createElement('input');
+  const pageField = createEl('input');
   pageField.type = 'hidden';
   pageField.name = 'icon-page';
   pageField.value = '1';
-  const scrollField = document.createElement('input');
+  const scrollField = createEl('input');
   scrollField.type = 'hidden';
   scrollField.name = 'icon-scroll';
   scrollField.value = '0';
-  const search = document.createElement('input');
+  const search = createEl('input');
   search.type = 'search';
   search.dataset.iconSearch = 'true';
   search.dataset.fieldKey = 'icon-search';
@@ -106,7 +106,7 @@ export function renderIconPicker(
   form.append(pageField, scrollField, search);
   panel.append(form);
 
-  const results = document.createElement('div');
+  const results = createDiv();
   results.className = 'habit-tracker-icon-results';
   results.setAttribute('role', 'group');
   results.setAttribute('aria-label', `Available icons for ${habit.name}`);
@@ -114,31 +114,31 @@ export function renderIconPicker(
     scrollField.value = String(results.scrollTop);
   });
   panel.append(results);
-  const pagination = document.createElement('nav');
+  const pagination = createEl('nav');
   pagination.className = 'habit-tracker-icon-pagination';
   pagination.setAttribute('aria-label', `Icon pages for ${habit.name}`);
-  const previous = document.createElement('button');
+  const previous = createEl('button');
   previous.type = 'button';
   previous.className = 'habit-tracker-icon-page-button';
   previous.textContent = 'Previous';
   previous.setAttribute('aria-label', `Previous icon page for ${habit.name}`);
-  const pageLabel = document.createElement('span');
+  const pageLabel = createSpan();
   pageLabel.className = 'habit-tracker-icon-page-label';
   pageLabel.setAttribute('aria-live', 'polite');
   pageLabel.tabIndex = -1;
-  const next = document.createElement('button');
+  const next = createEl('button');
   next.type = 'button';
   next.className = 'habit-tracker-icon-page-button';
   next.textContent = 'Next';
   next.setAttribute('aria-label', `Next icon page for ${habit.name}`);
   pagination.append(previous, pageLabel, next);
   panel.append(pagination);
-  const hint = document.createElement('p');
+  const hint = createEl('p');
   hint.className = 'habit-tracker-icon-hint';
   hint.setAttribute('role', 'status');
   panel.append(hint);
 
-  const clear = document.createElement('button');
+  const clear = createEl('button');
   clear.type = 'button';
   clear.className = 'habit-tracker-icon-clear';
   clear.textContent = 'Remove icon';
@@ -176,7 +176,7 @@ export function renderIconPicker(
       if (!icon) {
         continue;
       }
-      const button = document.createElement('button');
+      const button = createEl('button');
       button.type = 'button';
       button.className = 'habit-tracker-icon-option';
       button.setAttribute('aria-label', `Use ${iconLabel(id)} icon for ${habit.name}`);

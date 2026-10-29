@@ -1,6 +1,6 @@
 {
   "name": "habit-rhythm-tracker",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Weekly habit dashboard for Obsidian, stored in user-editable Markdown notes.",
   "main": "main.js",
   "type": "module",
@@ -30,6 +30,7 @@
     "@vitest/coverage-v8": "5.0.5",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
+    "eslint-plugin-obsidianmd": "0.4.2",
     "globals": "17.13.0",
     "jsdom": "30.1.3",
     "obsidian": "1.14.4",
@@ -38,5 +39,12 @@
     "typescript-eslint": "8.72.1",
     "vitest": "5.0.5",
     "yaml": "2.9.1"
+  },
+  "overrides": {
+    "eslint-plugin-obsidianmd": {
+      "obsidian": {
+        "moment": "2.31.0"
+      }
+    }
   }
 }

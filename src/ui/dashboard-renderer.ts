@@ -26,7 +26,7 @@ function el<K extends keyof HTMLElementTagNameMap>(
   className?: string,
   text?: string,
 ): HTMLElementTagNameMap[K] {
-  const element = document.createElement(tag);
+  const element = createEl(tag);
   if (className) {
     element.className = className;
   }
@@ -96,11 +96,11 @@ function fieldKey(field: HTMLInputElement | HTMLSelectElement): string | null {
 
 function captureFocus(container: HTMLElement): FocusDescriptor | null {
   const active = container.ownerDocument.activeElement;
-  if (!(active instanceof HTMLElement) || !container.contains(active)) {
+  if (!active?.instanceOf(HTMLElement) || !container.contains(active)) {
     return null;
   }
   if (
-    active instanceof HTMLInputElement &&
+    active.instanceOf(HTMLInputElement) &&
     active.type === 'checkbox' &&
     active.dataset.habitId &&
     active.dataset.date
@@ -120,7 +120,7 @@ function captureFocus(container: HTMLElement): FocusDescriptor | null {
   }
   if (active.tagName === 'SUMMARY') {
     const disclosure = active.parentElement;
-    if (disclosure instanceof HTMLDetailsElement && disclosure.dataset.disclosureKey) {
+    if (disclosure?.instanceOf(HTMLDetailsElement) && disclosure.dataset.disclosureKey) {
       return {
         kind: 'selector',
         selector: `details[data-disclosure-key="${escapeSelectorValue(disclosure.dataset.disclosureKey)}"] > summary`,
@@ -170,7 +170,7 @@ function captureUiState(container: HTMLElement): CapturedUiState {
       'input, select',
     )) {
       const keyForField = fieldKey(field);
-      const preserveState = field instanceof HTMLInputElement && field.type === 'hidden';
+      const preserveState = field.instanceOf(HTMLInputElement) && field.type === 'hidden';
       if (keyForField && (preserveState || field.value !== field.dataset.baseValue)) {
         values[keyForField] = field.value;
       }
@@ -269,14 +269,14 @@ function restoreFocus(
           captured.focus.index
         ] ?? null);
   if (
-    target instanceof HTMLButtonElement &&
+    target?.instanceOf(HTMLButtonElement) &&
     target.disabled &&
     target.classList.contains('habit-tracker-history-year-button')
   ) {
     container
       .querySelector<HTMLElement>('.habit-tracker-history-year')
       ?.focus({ preventScroll: true });
-  } else if (target instanceof HTMLButtonElement && target.disabled) {
+  } else if (target?.instanceOf(HTMLButtonElement) && target.disabled) {
     target
       .closest('details')
       ?.querySelector<HTMLElement>('summary')
@@ -428,7 +428,7 @@ export function renderDashboard(
 
   if (viewModel.detail) {
     renderHabitHistory(container, viewModel.detail, {
-      changeHistoryYear: handlers.changeHistoryYear,
+      changeHistoryYear: (delta) => handlers.changeHistoryYear(delta),
       closeHabitHistory: () => {
         const habitId = viewModel.detail?.habitId;
         handlers.closeHabitHistory();

@@ -69,10 +69,6 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
     );
   }
 
-  override onunload(): void {
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD);
-  }
-
   /**
    * Rebuilds storage services from validated settings. Existing dashboard views
    * re-subscribe through `rebind` so no view keeps a stale folder configuration.

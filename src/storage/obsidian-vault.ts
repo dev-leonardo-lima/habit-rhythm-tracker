@@ -6,11 +6,26 @@ export class ObsidianVaultPort implements VaultPort {
 
   async listMarkdownFiles(folder: string): Promise<string[]> {
     const normalized = folder.replace(/^\/+|\/+$/g, '');
-    return this.vault
-      .getMarkdownFiles()
-      .filter((file) => !normalized || file.path.startsWith(`${normalized}/`))
-      .map((file) => file.path)
-      .sort();
+    const root = normalized ? this.vault.getAbstractFileByPath(normalized) : this.vault.getRoot();
+    if (!(root instanceof TFolder)) {
+      return [];
+    }
+    const pending = [root];
+    const files: string[] = [];
+    while (pending.length > 0) {
+      const current = pending.pop();
+      if (!current) {
+        break;
+      }
+      for (const child of current.children) {
+        if (child instanceof TFolder) {
+          pending.push(child);
+        } else if (child instanceof TFile && child.extension === 'md') {
+          files.push(child.path);
+        }
+      }
+    }
+    return files.sort();
   }
 
   exists(path: string): boolean {

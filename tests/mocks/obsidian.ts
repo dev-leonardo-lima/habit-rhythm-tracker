@@ -6,6 +6,7 @@ export interface App {
 export interface Vault {
   getMarkdownFiles(): TFile[];
   getAbstractFileByPath(path: string): TAbstractFile | null;
+  getRoot(): TFolder;
   read(file: TFile): Promise<string>;
   create(path: string, content: string): Promise<TFile>;
   process(file: TFile, transform: (content: string) => string): Promise<string>;
@@ -38,6 +39,7 @@ export class TFile extends TAbstractFile {
     this.path = path;
     this.name = path.slice(path.lastIndexOf('/') + 1);
     this.basename = this.name.replace(/\.[^.]+$/, '');
+    this.extension = this.name.includes('.') ? this.name.slice(this.name.lastIndexOf('.') + 1) : '';
   }
 }
 
@@ -227,67 +229,6 @@ export class PluginSettingTab {
 
   display(): void {
     // overridden
-  }
-}
-
-export interface TextComponent {
-  inputEl: HTMLInputElement;
-  setValue(value: string): TextComponent;
-  setPlaceholder(value: string): TextComponent;
-  onChange(callback: (value: string) => void | Promise<void>): TextComponent;
-}
-
-export class Setting {
-  readonly settingEl: HTMLElement;
-  readonly nameEl: HTMLElement;
-  readonly descEl: HTMLElement;
-  readonly textComponents: TextComponent[] = [];
-
-  constructor(containerEl: HTMLElement) {
-    this.settingEl = document.createElement('div');
-    this.nameEl = document.createElement('div');
-    this.descEl = document.createElement('div');
-    this.settingEl.append(this.nameEl, this.descEl);
-    containerEl.append(this.settingEl);
-  }
-
-  setName(name: string): this {
-    this.nameEl.textContent = name;
-    return this;
-  }
-
-  setDesc(description: string): this {
-    this.descEl.textContent = description;
-    return this;
-  }
-
-  setHeading(): this {
-    return this;
-  }
-
-  addText(callback: (text: TextComponent) => void): this {
-    const inputEl = document.createElement('input');
-    this.settingEl.append(inputEl);
-    const component: TextComponent = {
-      inputEl,
-      setValue(value: string) {
-        inputEl.value = value;
-        return component;
-      },
-      setPlaceholder(value: string) {
-        inputEl.placeholder = value;
-        return component;
-      },
-      onChange(callbackFn: (value: string) => void | Promise<void>) {
-        inputEl.addEventListener('input', () => {
-          void callbackFn(inputEl.value);
-        });
-        return component;
-      },
-    };
-    this.textComponents.push(component);
-    callback(component);
-    return this;
   }
 }
 

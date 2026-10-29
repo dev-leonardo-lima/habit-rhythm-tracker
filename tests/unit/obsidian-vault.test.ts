@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ObsidianVaultPort } from '../../src/storage/obsidian-vault';
 import { createFakeApp } from '../helpers/fake-obsidian-app';
 
@@ -7,15 +7,26 @@ describe('Obsidian vault adapter', () => {
     const { vault } = createFakeApp();
     await vault.create('Habits/Gym.md', 'a');
     await vault.create('Habits/Read.md', 'b');
+    await vault.create('Habits/Nested/Meditate.md', 'nested');
+    await vault.create('Habits/image.png', 'not a note');
     await vault.create('Other/Note.md', 'c');
     const port = new ObsidianVaultPort(vault as never);
+    const enumerate = vi.spyOn(vault, 'getMarkdownFiles');
 
-    expect(await port.listMarkdownFiles('Habits')).toEqual(['Habits/Gym.md', 'Habits/Read.md']);
+    expect(await port.listMarkdownFiles('Habits')).toEqual([
+      'Habits/Gym.md',
+      'Habits/Nested/Meditate.md',
+      'Habits/Read.md',
+    ]);
     expect(await port.listMarkdownFiles('')).toEqual([
       'Habits/Gym.md',
+      'Habits/Nested/Meditate.md',
       'Habits/Read.md',
       'Other/Note.md',
     ]);
+    expect(await port.listMarkdownFiles('Missing')).toEqual([]);
+    expect(await port.listMarkdownFiles('Habits/Gym.md')).toEqual([]);
+    expect(enumerate).not.toHaveBeenCalled();
     expect(port.exists('Habits/Gym.md')).toBe(true);
     expect(port.exists('Habits/Missing.md')).toBe(false);
   });

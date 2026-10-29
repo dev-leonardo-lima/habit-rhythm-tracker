@@ -26,7 +26,7 @@ export function renderHabitForm(
   options: HabitFormOptions = {},
 ): void {
   formCounter += 1;
-  const form = document.createElement('form');
+  const form = createEl('form');
   form.className = 'habit-tracker-form habit-tracker-create-form';
   form.dataset.testid = 'create-habit-form';
   form.dataset.formKey = 'create';
@@ -34,15 +34,15 @@ export function renderHabitForm(
   form.noValidate = true;
 
   if (options.heading !== false) {
-    const heading = document.createElement('h2');
+    const heading = createEl('h2');
     heading.textContent = 'New habit';
     form.append(heading);
   }
 
-  const nameLabel = document.createElement('label');
+  const nameLabel = createEl('label');
   nameLabel.className = 'habit-tracker-field';
   nameLabel.append(document.createTextNode('Habit name'));
-  const nameInput = document.createElement('input');
+  const nameInput = createEl('input');
   nameInput.type = 'text';
   nameInput.name = `habit-name-${formCounter}`;
   nameInput.required = true;
@@ -52,14 +52,14 @@ export function renderHabitForm(
   nameLabel.append(nameInput);
   form.append(nameLabel);
 
-  const targetLabel = document.createElement('label');
+  const targetLabel = createEl('label');
   targetLabel.className = 'habit-tracker-field';
   targetLabel.append(document.createTextNode('Weekly target (days)'));
-  const targetSelect = document.createElement('select');
+  const targetSelect = createEl('select');
   targetSelect.name = `habit-target-${formCounter}`;
   targetSelect.setAttribute('aria-label', 'Weekly target');
   for (let day = 1; day <= 7; day += 1) {
-    const option = document.createElement('option');
+    const option = createEl('option');
     option.value = String(day);
     option.textContent = `${day} ${day === 1 ? 'day' : 'days'} / week`;
     if (day === 7) {
@@ -70,14 +70,14 @@ export function renderHabitForm(
   targetLabel.append(targetSelect);
   form.append(targetLabel);
 
-  const submit = document.createElement('button');
+  const submit = createEl('button');
   submit.type = 'submit';
   submit.className = 'habit-tracker-primary';
   submit.textContent = 'Create habit';
   submit.setAttribute('aria-label', 'Create habit');
   form.append(submit);
 
-  const error = document.createElement('p');
+  const error = createEl('p');
   error.className = 'habit-tracker-form-error';
   error.setAttribute('role', 'alert');
   error.hidden = true;

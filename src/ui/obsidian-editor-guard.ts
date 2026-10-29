@@ -19,11 +19,7 @@ export class ObsidianEditorGuard implements EditorGuard {
 
   async prepare(path: string): Promise<void> {
     for (const leaf of this.app.workspace.getLeavesOfType('markdown')) {
-      if (
-        leaf.isDeferred &&
-        this.storedPath(leaf) === path &&
-        typeof leaf.loadIfDeferred === 'function'
-      ) {
+      if (leaf.isDeferred && this.storedPath(leaf) === path) {
         await leaf.loadIfDeferred();
       }
     }

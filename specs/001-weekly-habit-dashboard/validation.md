@@ -14,17 +14,23 @@ the original verification, not features retained in the current interface.
 
 **Latest management and history refinement**: Automated tests cover the editor, icon selection,
 history, draft preservation, and focus. The build was installed in the isolated test vault and the
-user reported the revised UI was improved. The latest layout was not independently inspected through
-desktop automation because the computer-use host was unavailable; no new desktop/narrow
-visual smoke result is claimed. Follow the current [quickstart](quickstart.md) for those checks.
+user reported the revised UI was improved. At that time, the layout was not independently inspected
+through desktop automation; the later directory-review smoke check is described below.
 
 **Repository review corrections**: The plugin ID is now `habit-rhythm-tracker`. Automated
 regression tests cover unknown JSON property preservation, invalid color retention, duplicate IDs
 added after refresh, sequential rapid actions, stale refresh results, historical archived-week
 correction, draft refresh behavior, deferred editors, and editor changes during a guarded write.
-The changed build has not yet been independently retested in a real desktop Obsidian window.
+The directory-review corrections in the working tree were independently smoke-tested in a real
+desktop Obsidian window.
 
-**Obsidian mobile emulation**: On 2026-10-29, the current build was exercised in Obsidian 1.14.5
+**Directory-review smoke check**: The 0.1.2 build was exercised in Obsidian 1.14.5 in an isolated
+vault. Habit creation and marking persisted; history opened; the settings search found the folder
+setting and its validation rejected an empty folder. Disabling and re-enabling the plugin preserved
+the dashboard leaf. A pop-out dashboard retained focus and its draft after refresh. Management
+columns aligned, and theme and custom habit colors rendered and saved correctly.
+
+**Obsidian mobile emulation**: On 2026-10-29, an earlier build was exercised in Obsidian 1.14.5
 at 390 × 844 in an isolated test vault. Marking and unmarking persisted, week navigation worked,
 and habit history opened.
 
@@ -36,9 +42,9 @@ and habit history opened.
 | `npm run typecheck`                    | PASS   | Strict TypeScript, including tests.                                      |
 | `npm run lint`                         | PASS   | ESLint flat config.                                                      |
 | `npm run format:check`                 | PASS   | Prettier check after formatting maintained files.                        |
-| `npm run test:coverage`                | PASS   | 32 files, 213 tests; 91.84% lines and 86.8% branches across plugin and release-tooling code (minimum 80% each). |
+| `npm run test:coverage`                | PASS   | 28 files, 178 tests; 92.54% lines and 87.16% branches across plugin and release-tooling code (minimum 80% each). |
 | `npm run build`                        | PASS   | esbuild production bundle produced `main.js`.                            |
-| Manifest minimum version and mobile    | PASS   | `manifest.json` sets `isDesktopOnly: false`, `minAppVersion: 1.6.0`.     |
+| Manifest minimum version and mobile    | PASS   | `manifest.json` sets `isDesktopOnly: false`, `minAppVersion: 1.14.4`.     |
 | Impeccable layout detector             | PASS   | No layout findings for the settings, history, icon picker, and CSS files. |
 
 The final numbers are re-checked after the last source change; this table is the validation record
@@ -80,7 +86,7 @@ manual guide and supplement manual verification in Obsidian.
 | Yearly history, navigation, archived and future marks, current/best streaks          | `tests/unit/habit-history.test.ts`, `tests/integration/habit-history-ui.test.ts`                           | PASS (automated)                        |
 | Icon search, 27-result pagination, guarded save/removal and unavailable icon retention| `tests/integration/icon-pagination.test.ts`, `tests/integration/icons-dashboard.test.ts`                   | PASS (automated)                        |
 | One editor at a time; draft, summary focus and accessible icon description            | `tests/integration/habit-history-ui.test.ts`, `tests/integration/icons-dashboard.test.ts`                  | PASS (automated DOM)                    |
-| Calendar width, square cells and narrow scrolling; grouped appearance controls        | `styles.css`, `specs/001-weekly-habit-dashboard/quickstart.md`                                            | Layout code reviewed; latest visual smoke pending |
+| Calendar width, square cells and narrow scrolling; grouped appearance controls        | `styles.css`, `specs/001-weekly-habit-dashboard/quickstart.md`                                            | Automated DOM; management alignment checked on desktop |
 
 ## Desktop Obsidian smoke verification
 
@@ -168,7 +174,7 @@ refreshes, with the New habit row visible; automated interaction tests cover the
 
 | Platform                     | Result      | Reason / limitation                                                                                                                                                                                                                     |
 | ---------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Obsidian desktop             | PASS (earlier smoke) | Obsidian 1.14.5 on macOS: centered week header without count or More menu, always-visible New habit row, gutter alignment, seven-day grid, year/range and cross-year labels, week navigation, creation, completion, circular per-habit color set/remove, capsule hover/focus geometry, editor fail-closed behavior, lifecycle, schema rejection, previous-week correction, restart, focus/draft preservation, and desktop/760/430 px layouts were exercised in an isolated vault. The earlier build included an undo control, since removed. The latest management and activity layout needs a new independent visual smoke check. Native color-panel selection was not automated; the control was keyboard-focused and the change event was exercised. |
+| Obsidian desktop             | PASS (earlier smoke) | Obsidian 1.14.5 on macOS: centered week header without count or More menu, always-visible New habit row, gutter alignment, seven-day grid, year/range and cross-year labels, week navigation, creation, completion, circular per-habit color set/remove, capsule hover/focus geometry, editor fail-closed behavior, lifecycle, schema rejection, previous-week correction, restart, focus/draft preservation, and desktop/760/430 px layouts were exercised in an isolated vault. The earlier build included an undo control, since removed. The later 0.1.2 desktop smoke check is recorded above. Native color-panel selection was not automated; the control was keyboard-focused and the change event was exercised. |
 | Offline behavior             | PARTIAL     | Automated tests exercise core flows without network access. The desktop smoke test used a local vault, but network access was not disabled. |
 | Accessibility                | PARTIAL     | Labels, focus, disabled states, keyboard-operable native controls, and real keyboard checkbox/undo operation were observed. Screen-reader and formal touch accessibility checks were not performed. |
 | Editor state proof of concept | PASS (desktop) | A dirty single buffer and two open leaves with differing buffers both blocked the write without changing the note. |
@@ -199,8 +205,7 @@ refreshes, with the New habit row visible; automated interaction tests cover the
 ## Known limitations
 
 - Desktop Obsidian 1.14.5 on macOS passed a weekly-view smoke verification at desktop, 760 px, and
-  430 px widths on an earlier build; the latest management and activity layout has not received a
-  new independent visual smoke check.
+  430 px widths on an earlier build. The 0.1.2 desktop smoke check is described above.
 - No screen-reader, formal touch accessibility, or human usability timing study was performed.
 - Network access was not disabled during the desktop smoke test, although the plugin has no network
   code and used only the local test vault.

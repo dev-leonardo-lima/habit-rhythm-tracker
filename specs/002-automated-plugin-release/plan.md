@@ -104,8 +104,8 @@ package.json, package-lock.json, manifest.json, versions.json
 
 **Structure Decision**: Extend the single official-sample-based plugin repository rather than add a
 service. Validation and release live in one workflow. The release job downloads the exact artifact
-produced by the validation job in the same run, then creates a draft, uploads the required assets,
-verifies them, and publishes.
+produced by the validation job in the same run, attests the required files, then creates a draft,
+uploads the required assets, verifies them, and publishes.
 
 ### Release flow and design gates
 
@@ -116,8 +116,9 @@ verifies them, and publishes.
 2. The validation job runs on pull requests and every `main` push. It checks version consistency,
    typecheck, lint, formatting, tests, coverage, and the production build. On `main` it uploads the
    exact `main.js`, `manifest.json`, and `styles.css` from that commit.
-3. The release job runs only on `main` after validation succeeds. It downloads that artifact, reads
-   the manifest version, and inspects the existing release, tag, and latest published version.
+3. The release job runs only on `main` after validation succeeds. It downloads that artifact,
+   attests its files, reads the manifest version, and inspects the existing release, tag, and latest
+   published version.
    - If a published release for the version exists, verify the required assets and stop.
    - If a matching draft exists, upload missing assets, verify, and publish.
    - If no release exists and the version is greater than the latest published version, create a

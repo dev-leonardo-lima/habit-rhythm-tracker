@@ -48,7 +48,7 @@ export function validateTarget(target: number): number {
 }
 
 function generateId(): string {
-  const cryptoApi = globalThis.crypto;
+  const cryptoApi = typeof window === 'undefined' ? undefined : window.crypto;
   if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
     return cryptoApi.randomUUID();
   }

@@ -59,7 +59,8 @@ and accepts only a documented, approved exception for its matching version.
    two pushes close together. Confirm publication stops visibly or serializes, no duplicate release
    appears, and the older version never becomes latest.
 7. Check the release body, workflow logs, and artifacts for credentials and vault data. Verify
-   pull-request validation lacks publish permissions and the release job runs only on `main`.
+   pull-request validation lacks publish permissions, the release job runs only on `main`, and the
+   published files have GitHub artifact attestations.
 
 ## Community directory walkthrough
 

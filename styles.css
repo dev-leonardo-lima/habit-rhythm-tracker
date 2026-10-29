@@ -258,8 +258,6 @@
   margin-top: 14px;
   border: 1px solid var(--ht-line);
   border-radius: 10px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--background-modifier-border) transparent;
 }
 
 .habit-tracker-grid-scroll::-webkit-scrollbar {
@@ -314,10 +312,10 @@
   background: var(--background-secondary);
 }
 
-.habit-tracker-corner {
+.habit-tracker-grid .habit-tracker-corner {
   position: sticky;
   left: 0;
-  z-index: 5 !important;
+  z-index: 5;
   width: var(--ht-name-width);
   padding: 0 14px 10px;
   background: var(--background-secondary);
@@ -641,31 +639,25 @@
   opacity: 0.3;
 }
 
-.habit-tracker-day:has(.habit-tracker-checkbox:focus-visible)::before {
+.habit-tracker-day:focus-within::before {
   box-shadow: inset 0 0 0 2px var(--interactive-accent);
 }
 
-.habit-tracker-day.is-completed:has(.habit-tracker-checkbox:focus-visible)::before {
+.habit-tracker-day.is-completed:focus-within::before {
   border-radius: 0;
 }
 
-.habit-tracker-day.is-completed.is-run-start:not(.is-run-end):has(
-    .habit-tracker-checkbox:focus-visible
-  )::before {
+.habit-tracker-day.is-completed.is-run-start:not(.is-run-end):focus-within::before {
   border-radius: calc((var(--ht-mark-height) + 10px) / 2) 0 0
     calc((var(--ht-mark-height) + 10px) / 2);
 }
 
-.habit-tracker-day.is-completed.is-run-end:not(.is-run-start):has(
-    .habit-tracker-checkbox:focus-visible
-  )::before {
+.habit-tracker-day.is-completed.is-run-end:not(.is-run-start):focus-within::before {
   border-radius: 0 calc((var(--ht-mark-height) + 10px) / 2) calc((var(--ht-mark-height) + 10px) / 2)
     0;
 }
 
-.habit-tracker-day.is-completed.is-run-start.is-run-end:has(
-    .habit-tracker-checkbox:focus-visible
-  )::before {
+.habit-tracker-day.is-completed.is-run-start.is-run-end:focus-within::before {
   border-radius: calc((var(--ht-mark-height) + 10px) / 2);
 }
 
@@ -892,7 +884,6 @@
   max-width: 100%;
   margin-top: 10px;
   overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .habit-tracker-history-grid {
@@ -1036,6 +1027,7 @@
 }
 
 .habit-tracker-settings-summary {
+  grid-template-columns: minmax(120px, calc(40% - 40px)) minmax(210px, 1fr) 60px;
   cursor: pointer;
   list-style: none;
   border-radius: 4px;
@@ -1221,7 +1213,9 @@
 }
 
 .habit-tracker-settings-meta {
-  display: contents;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(70px, 1fr));
+  gap: 10px;
   color: var(--text-muted);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
@@ -1255,6 +1249,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 0 16px;
+}
+
+.habit-tracker-theme-accent-probe {
+  display: none;
+  color: var(--interactive-accent, #8a5cf5);
 }
 
 .habit-tracker-settings-appearance {
@@ -1326,7 +1325,7 @@
     0 0 0 2px var(--background-modifier-hover);
 }
 
-.habit-tracker-color-picker:has(.habit-tracker-color-input:focus-visible) {
+.habit-tracker-color-picker:focus-within {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 1px;
 }
@@ -1925,20 +1924,19 @@
   }
 }
 
-@supports not selector(:has(*)) {
-  .habit-tracker-checkbox:focus {
-    opacity: 1;
-    outline: 2px solid var(--interactive-accent);
-    outline-offset: -3px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .habit-tracker-dashboard *,
-  .habit-tracker-dashboard *::before,
-  .habit-tracker-dashboard *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
+  .habit-tracker-dashboard .habit-tracker-icon-button,
+  .habit-tracker-dashboard .habit-tracker-actions button,
+  .habit-tracker-dashboard .habit-tracker-form button,
+  .habit-tracker-dashboard .habit-tracker-inline-form button,
+  .habit-tracker-dashboard .habit-tracker-disclosure-summary::before,
+  .habit-tracker-dashboard .habit-tracker-day::before,
+  .habit-tracker-dashboard .habit-tracker-day-mark {
+    transition: none;
+  }
+
+  .habit-tracker-dashboard .habit-tracker-grid-scroll,
+  .habit-tracker-dashboard .habit-tracker-history-scroll {
+    scroll-behavior: auto;
   }
 }

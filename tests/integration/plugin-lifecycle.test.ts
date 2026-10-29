@@ -22,7 +22,7 @@ type MockLeaf = WorkspaceLeaf & { state?: { type: string; active?: boolean } | n
 const manifest = {
   id: 'habit-rhythm-tracker',
   version: '0.1.0',
-  minAppVersion: '1.6.0',
+  minAppVersion: '1.14.4',
   isDesktopOnly: false,
 };
 
@@ -89,8 +89,10 @@ describe('plugin lifecycle and Obsidian views', () => {
       throw new Error('missing leaf');
     }
     (leaf as MockLeaf).state = { type: VIEW_TYPE_HABIT_DASHBOARD };
+    const detach = vi.spyOn(workspace, 'detachLeavesOfType');
     plugin.onunload();
-    expect(workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)).toHaveLength(0);
+    expect(detach).not.toHaveBeenCalled();
+    expect(workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)).toEqual([leaf]);
   });
 
   it('falls back to a tab leaf and handles a workspace without leaves', async () => {
@@ -160,7 +162,7 @@ describe('plugin lifecycle and Obsidian views', () => {
     expect(plugin.settings.habitsFolder).toBe('Health');
   });
 
-  it('renders and validates the settings tab', async () => {
+  it('defines searchable settings and validates folder changes', async () => {
     const { app } = createFakeApp();
     const plugin = new HabitTrackerPlugin(app, manifest as never) as MockPlugin;
     plugin.loadedData = { habitsFolder: 'Habits' };
@@ -168,26 +170,23 @@ describe('plugin lifecycle and Obsidian views', () => {
     await plugin.onload();
     const spy = vi.spyOn(plugin, 'updateSettings');
     const tab = new HabitTrackerSettingTab(app, plugin);
-    tab.display();
+    const definition = tab.getSettingDefinitions()[0];
+    if (!definition || !('control' in definition) || definition.control?.type !== 'text') {
+      throw new Error('missing text setting');
+    }
+    expect(definition.name).toBe('Habits folder');
+    expect(definition.control.key).toBe('habitsFolder');
+    expect(tab.getControlValue('habitsFolder')).toBe('Habits');
+    expect(await definition.control.validate?.('')).toBe('Enter a vault folder name');
+    expect(await definition.control.validate?.('Health')).toBeUndefined();
 
-    const inputs = [...tab.containerEl.querySelectorAll('input')];
-    expect(inputs).toHaveLength(1);
-    expect(inputs[0]?.value).toBe('Habits');
-    inputs[0]!.value = 'Health';
-    inputs[0]!.dispatchEvent(new Event('input'));
-    await flush();
+    await tab.setControlValue('habitsFolder', 'Health');
     expect(spy).toHaveBeenCalledWith({ habitsFolder: 'Health' });
     expect(plugin.settings.habitsFolder).toBe('Health');
-
-    const restore = vi.spyOn(plugin, 'updateSettings');
-    restore.mockRejectedValueOnce(new Error('Enter a vault folder name'));
-    inputs[0]!.value = '';
-    inputs[0]!.dispatchEvent(new Event('input'));
-    await flush();
-    expect(inputs[0]?.classList.contains('is-invalid')).toBe(true);
-    expect(tab.containerEl.querySelector('[role="alert"]')?.textContent).toContain(
+    await expect(tab.setControlValue('habitsFolder', '')).rejects.toThrow(
       'Enter a vault folder name',
     );
+    expect(plugin.settings.habitsFolder).toBe('Health');
   });
 
   it('opens a dashboard view, re-renders on changes and unsubscribes on close', async () => {

@@ -96,7 +96,7 @@ format migrations require explicit approval and a recoverable copy of the origin
 
 ## Compatibility
 
-The plugin supports Obsidian desktop and mobile and requires Obsidian **1.6.0 or later**.
+The plugin supports Obsidian desktop and mobile and requires Obsidian **1.14.4 or later**.
 
 ## Troubleshooting
 
