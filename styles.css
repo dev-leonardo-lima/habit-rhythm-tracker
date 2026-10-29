@@ -1227,6 +1227,10 @@
   white-space: nowrap;
 }
 
+.habit-tracker-settings-meta-label {
+  display: none;
+}
+
 .habit-tracker-settings-edit {
   justify-self: end;
   padding: 5px 8px;
@@ -1701,12 +1705,10 @@
     gap: 4px 10px;
   }
 
-  .habit-tracker-settings-progress::after {
-    content: ' this week';
-  }
-
-  .habit-tracker-settings-streak::before {
-    content: 'Streak: ';
+  .habit-tracker-settings-meta-label {
+    display: inline;
+    margin-right: 3px;
+    color: var(--text-faint);
   }
 
   .habit-tracker-settings-edit {
@@ -1892,12 +1894,10 @@
       gap: 4px 10px;
     }
 
-    .habit-tracker-settings-progress::after {
-      content: ' this week';
-    }
-
-    .habit-tracker-settings-streak::before {
-      content: 'Streak: ';
+    .habit-tracker-settings-meta-label {
+      display: inline;
+      margin-right: 3px;
+      color: var(--text-faint);
     }
 
     .habit-tracker-settings-edit {

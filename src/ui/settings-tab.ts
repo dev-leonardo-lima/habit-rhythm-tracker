@@ -1,4 +1,5 @@
 import { PluginSettingTab, type App, type SettingDefinitionItem } from 'obsidian';
+import { t } from '../i18n';
 import { validateFolder, type HabitTrackerSettings } from '../settings';
 
 export interface SettingsHost {
@@ -17,17 +18,17 @@ export class HabitTrackerSettingTab extends PluginSettingTab {
   override getSettingDefinitions(): SettingDefinitionItem[] {
     return [
       {
-        name: 'Habits folder',
-        desc: 'One Markdown note per habit is discovered in this folder.',
+        name: t('settings.folderName'),
+        desc: t('settings.folderDescription'),
         control: {
           type: 'text',
           key: 'habitsFolder',
-          placeholder: 'Habits',
+          placeholder: t('settings.folderPlaceholder'),
           validate: (value) => {
             try {
               validateFolder(value);
             } catch (error) {
-              return error instanceof Error ? error.message : 'Invalid folder settings';
+              return error instanceof Error ? error.message : t('settings.invalidFolder');
             }
           },
         },

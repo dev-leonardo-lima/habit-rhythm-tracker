@@ -28,8 +28,10 @@ import { completedDatesInWeek, completedCountInWeek } from '../domain/week-progr
 import type { HabitRepository } from '../storage/habit-repository';
 import type { WriteResult } from '../storage/guarded-write';
 import type { GuardedCreator, GuardedWriter } from '../storage/guarded-write';
+import { t } from '../i18n';
 import { CalendarController } from './calendar-controller';
 import {
+  fullDate,
   shortDate,
   weekLabel as formatWeekLabel,
   weekRangeLabel as formatWeekRangeLabel,
@@ -136,11 +138,11 @@ export interface DashboardViewModel {
 function messageForWriteFailure(result: Exclude<WriteResult, { status: 'applied' }>): string {
   switch (result.status) {
     case 'conflict':
-      return 'The note changed while the edit was being saved. The save stopped and the existing note was left unchanged. Review it and try again.';
+      return t('message.conflict');
     case 'editor-blocked':
-      return 'The habit note has unsaved or unverifiable editor content. Save or close the note, then try again.';
+      return t('message.editorBlocked');
     case 'uncertain':
-      return `The write outcome is uncertain. Review the note before trying again. ${result.error}`;
+      return t('message.uncertain', { detail: result.error });
     case 'failed':
       return result.error;
   }
@@ -235,7 +237,9 @@ export class DashboardController {
       this.loading = false;
       this.message = {
         kind: 'error',
-        text: `Could not load habits: ${error instanceof Error ? error.message : String(error)}`,
+        text: t('message.loadFailed', {
+          detail: error instanceof Error ? error.message : String(error),
+        }),
       };
       this.emit();
     }
@@ -353,18 +357,22 @@ export class DashboardController {
         const beforeCreation = compareDates(date, habit.created) < 0;
         const disabled = future || beforeCreation;
         const reason = future
-          ? 'future dates cannot be changed'
+          ? t('dashboard.reasonFuture')
           : beforeCreation
-            ? 'before the habit was created'
-            : 'available';
+            ? t('dashboard.reasonBeforeCreation')
+            : t('dashboard.reasonAvailable');
         return {
           date,
           completed: isCompleted,
           disabled,
           reason,
-          ariaLabel: `${habit.name}, ${weekdayName(index)} ${date}, ${
-            isCompleted ? 'completed' : 'not completed'
-          }, ${reason}`,
+          ariaLabel: t('dashboard.cellAria', {
+            name: habit.name,
+            weekday: weekdayName(index),
+            date: fullDate(date),
+            status: isCompleted ? t('dashboard.cellCompleted') : t('dashboard.cellNotCompleted'),
+            reason,
+          }),
           isToday: date === today,
         };
       }),
@@ -580,9 +588,7 @@ export class DashboardController {
     const discovery = await this.repository.discover();
     const found = discovery.habits.find((entry) => entry.habit.id === habitId);
     if (!found) {
-      throw new Error(
-        'The habit was not found or has a duplicate ID. Review note problems and try again.',
-      );
+      throw new Error(t('error.habitMissing'));
     }
     return found;
   }

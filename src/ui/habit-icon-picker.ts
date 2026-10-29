@@ -1,4 +1,5 @@
 import { getIcon, getIconIds } from 'obsidian';
+import { t } from '../i18n';
 import { normalizeHabitIcon } from '../domain/habit-icon';
 
 const SUGGESTED_ICONS = [
@@ -64,22 +65,26 @@ export function renderIconPicker(
   details.dataset.disclosureKey = `icon:${habit.habitId}`;
   const summary = createEl('summary');
   summary.className = 'habit-tracker-icon-picker-summary';
-  summary.setAttribute('aria-label', `Choose icon for ${habit.name}`);
+  summary.setAttribute('aria-label', t('icon.chooseAria', { name: habit.name }));
   const badge = habitIcon(habit.icon);
   if (badge) {
     summary.append(badge);
   }
   const current = createSpan();
-  current.textContent = habit.icon ? (badge ? 'Change icon' : 'Icon unavailable') : 'Choose icon';
+  current.textContent = habit.icon
+    ? badge
+      ? t('icon.change')
+      : t('icon.unavailable')
+    : t('icon.choose');
   summary.append(current);
   const description = createSpan();
   description.id = `habit-tracker-icon-description-${++iconDescriptionSequence}`;
   description.className = 'habit-tracker-visually-hidden';
   description.textContent = habit.icon
     ? badge
-      ? `Selected icon: ${iconLabel(habit.icon)}`
-      : 'The selected icon is unavailable on this device'
-    : 'No icon selected';
+      ? t('icon.selectedAria', { icon: iconLabel(habit.icon) })
+      : t('icon.selectedUnavailable')
+    : t('icon.noneSelected');
   summary.setAttribute('aria-describedby', description.id);
   details.append(summary, description);
 
@@ -100,8 +105,8 @@ export function renderIconPicker(
   search.type = 'search';
   search.dataset.iconSearch = 'true';
   search.dataset.fieldKey = 'icon-search';
-  search.setAttribute('aria-label', `Search icons for ${habit.name}`);
-  search.placeholder = 'Search icons';
+  search.setAttribute('aria-label', t('icon.searchAria', { name: habit.name }));
+  search.placeholder = t('icon.searchPlaceholder');
   search.autocomplete = 'off';
   form.append(pageField, scrollField, search);
   panel.append(form);
@@ -109,19 +114,19 @@ export function renderIconPicker(
   const results = createDiv();
   results.className = 'habit-tracker-icon-results';
   results.setAttribute('role', 'group');
-  results.setAttribute('aria-label', `Available icons for ${habit.name}`);
+  results.setAttribute('aria-label', t('icon.availableAria', { name: habit.name }));
   results.addEventListener('scroll', () => {
     scrollField.value = String(results.scrollTop);
   });
   panel.append(results);
   const pagination = createEl('nav');
   pagination.className = 'habit-tracker-icon-pagination';
-  pagination.setAttribute('aria-label', `Icon pages for ${habit.name}`);
+  pagination.setAttribute('aria-label', t('icon.pagesAria', { name: habit.name }));
   const previous = createEl('button');
   previous.type = 'button';
   previous.className = 'habit-tracker-icon-page-button';
-  previous.textContent = 'Previous';
-  previous.setAttribute('aria-label', `Previous icon page for ${habit.name}`);
+  previous.textContent = t('action.previous');
+  previous.setAttribute('aria-label', t('icon.previousPageAria', { name: habit.name }));
   const pageLabel = createSpan();
   pageLabel.className = 'habit-tracker-icon-page-label';
   pageLabel.setAttribute('aria-live', 'polite');
@@ -129,8 +134,8 @@ export function renderIconPicker(
   const next = createEl('button');
   next.type = 'button';
   next.className = 'habit-tracker-icon-page-button';
-  next.textContent = 'Next';
-  next.setAttribute('aria-label', `Next icon page for ${habit.name}`);
+  next.textContent = t('action.next');
+  next.setAttribute('aria-label', t('icon.nextPageAria', { name: habit.name }));
   pagination.append(previous, pageLabel, next);
   panel.append(pagination);
   const hint = createEl('p');
@@ -141,8 +146,8 @@ export function renderIconPicker(
   const clear = createEl('button');
   clear.type = 'button';
   clear.className = 'habit-tracker-icon-clear';
-  clear.textContent = 'Remove icon';
-  clear.setAttribute('aria-label', `Remove icon for ${habit.name}`);
+  clear.textContent = t('action.removeIcon');
+  clear.setAttribute('aria-label', t('icon.removeAria', { name: habit.name }));
   clear.disabled = habit.icon === null;
   clear.addEventListener('click', () => void onChange(habit.habitId, null));
   panel.append(clear);
@@ -179,7 +184,10 @@ export function renderIconPicker(
       const button = createEl('button');
       button.type = 'button';
       button.className = 'habit-tracker-icon-option';
-      button.setAttribute('aria-label', `Use ${iconLabel(id)} icon for ${habit.name}`);
+      button.setAttribute(
+        'aria-label',
+        t('icon.useAria', { icon: iconLabel(id), name: habit.name }),
+      );
       button.setAttribute('aria-pressed', String(id === habit.icon));
       button.title = iconLabel(id);
       button.append(icon);
@@ -190,11 +198,15 @@ export function renderIconPicker(
     pagination.hidden = totalPages <= 1;
     previous.disabled = page === 1;
     next.disabled = page === totalPages;
-    pageLabel.textContent = `Page ${page} of ${totalPages}`;
+    pageLabel.textContent = t('icon.page', { page, total: totalPages });
     hint.textContent =
       matches.length === 0
-        ? 'No icons found. Try another search.'
-        : `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, matches.length)} of ${matches.length} icons.`;
+        ? t('icon.noResults')
+        : t('icon.showing', {
+            start: start + 1,
+            end: Math.min(start + PAGE_SIZE, matches.length),
+            total: matches.length,
+          });
   }
 
   function changePage(delta: number, button: HTMLButtonElement): void {

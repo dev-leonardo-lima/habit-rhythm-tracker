@@ -1,3 +1,4 @@
+import { t, tp } from '../i18n';
 import { normalizeHabitName, validateTarget } from '../domain/habit-operations';
 
 let formCounter = 0;
@@ -30,38 +31,40 @@ export function renderHabitForm(
   form.className = 'habit-tracker-form habit-tracker-create-form';
   form.dataset.testid = 'create-habit-form';
   form.dataset.formKey = 'create';
-  form.setAttribute('aria-label', 'Create a habit');
+  form.setAttribute('aria-label', t('form.aria'));
   form.noValidate = true;
 
   if (options.heading !== false) {
     const heading = createEl('h2');
-    heading.textContent = 'New habit';
+    heading.textContent = t('form.heading');
     form.append(heading);
   }
 
   const nameLabel = createEl('label');
   nameLabel.className = 'habit-tracker-field';
-  nameLabel.append(document.createTextNode('Habit name'));
+  nameLabel.append(document.createTextNode(t('form.name')));
   const nameInput = createEl('input');
   nameInput.type = 'text';
   nameInput.name = `habit-name-${formCounter}`;
+  nameInput.dataset.fieldKey = 'name';
   nameInput.required = true;
   nameInput.autocomplete = 'off';
-  nameInput.placeholder = 'e.g. Gym';
-  nameInput.setAttribute('aria-label', 'Habit name');
+  nameInput.placeholder = t('form.namePlaceholder');
+  nameInput.setAttribute('aria-label', t('form.name'));
   nameLabel.append(nameInput);
   form.append(nameLabel);
 
   const targetLabel = createEl('label');
   targetLabel.className = 'habit-tracker-field';
-  targetLabel.append(document.createTextNode('Weekly target (days)'));
+  targetLabel.append(document.createTextNode(t('form.target')));
   const targetSelect = createEl('select');
   targetSelect.name = `habit-target-${formCounter}`;
-  targetSelect.setAttribute('aria-label', 'Weekly target');
+  targetSelect.dataset.fieldKey = 'target';
+  targetSelect.setAttribute('aria-label', t('form.targetAria'));
   for (let day = 1; day <= 7; day += 1) {
     const option = createEl('option');
     option.value = String(day);
-    option.textContent = `${day} ${day === 1 ? 'day' : 'days'} / week`;
+    option.textContent = tp('form.targetOption', day);
     if (day === 7) {
       option.selected = true;
     }
@@ -73,8 +76,8 @@ export function renderHabitForm(
   const submit = createEl('button');
   submit.type = 'submit';
   submit.className = 'habit-tracker-primary';
-  submit.textContent = 'Create habit';
-  submit.setAttribute('aria-label', 'Create habit');
+  submit.textContent = t('form.submit');
+  submit.setAttribute('aria-label', t('form.submit'));
   form.append(submit);
 
   const error = createEl('p');

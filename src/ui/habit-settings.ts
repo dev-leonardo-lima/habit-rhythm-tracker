@@ -1,3 +1,4 @@
+import { t, tp } from '../i18n';
 import type { HabitSummaryViewModel } from './dashboard-controller';
 import { habitIcon, renderIconPicker } from './habit-icon-picker';
 
@@ -60,27 +61,21 @@ export function renderHabitSettings(
   const section = el('section', 'habit-tracker-settings');
   section.dataset.testid = 'habit-settings';
   if (options.heading !== false) {
-    section.append(el('h2', undefined, 'Manage habits'));
+    section.append(el('h2', undefined, t('manage.heading')));
   }
-  section.append(
-    el(
-      'p',
-      'habit-tracker-hint',
-      'Target changes and archiving take effect next Monday. Reactivation applies in the current week.',
-    ),
-  );
+  section.append(el('p', 'habit-tracker-hint', t('manage.hint')));
   if (habits.length === 0) {
-    section.append(el('p', 'habit-tracker-empty', 'No habits to manage yet.'));
+    section.append(el('p', 'habit-tracker-empty', t('manage.empty')));
     container.append(section);
     return;
   }
   const columns = el('div', 'habit-tracker-settings-columns');
   columns.setAttribute('aria-hidden', 'true');
   columns.append(
-    el('span', undefined, 'Habit'),
-    el('span', undefined, 'Target'),
-    el('span', undefined, 'This week'),
-    el('span', undefined, 'Streak'),
+    el('span', undefined, t('manage.columnHabit')),
+    el('span', undefined, t('manage.columnTarget')),
+    el('span', undefined, t('manage.columnThisWeek')),
+    el('span', undefined, t('manage.columnStreak')),
     el('span', undefined, ''),
   );
   section.append(columns);
@@ -121,14 +116,27 @@ function renderHabitSettingsItem(
     item.style.setProperty('--ht-habit-color', habit.color);
   }
   const summary = el('summary', 'habit-tracker-settings-summary');
-  const targetText = habit.state === 'archived' ? 'Archived' : `${habit.target ?? '—'}/wk`;
+  const targetText =
+    habit.state === 'archived'
+      ? t('manage.archived')
+      : t('manage.targetShort', { target: habit.target ?? '—' });
   const progressText =
-    habit.state === 'archived' ? '—' : `${habit.completedThisWeek} / ${habit.target ?? '—'}`;
-  const streakText = `${habit.streak} ${habit.streak === 1 ? 'week' : 'weeks'}`;
+    habit.state === 'archived'
+      ? '—'
+      : t('manage.progress', {
+          completed: habit.completedThisWeek,
+          target: habit.target ?? '—',
+        });
+  const streakText = tp('unit.week', habit.streak);
   const accessibleSummary = el(
     'span',
     'habit-tracker-visually-hidden',
-    `Edit ${habit.name}; ${targetText}; this week ${progressText}; current streak ${streakText}`,
+    t('manage.summaryAria', {
+      name: habit.name,
+      target: targetText,
+      progress: progressText,
+      streak: streakText,
+    }),
   );
   accessibleSummary.id = `habit-tracker-settings-summary-${++summarySequence}`;
   summary.setAttribute('aria-labelledby', accessibleSummary.id);
@@ -141,13 +149,21 @@ function renderHabitSettingsItem(
   name.append(el('span', 'habit-tracker-settings-name-text', habit.name));
   summary.append(name);
   const meta = el('span', 'habit-tracker-settings-meta');
+  const metaItem = (className: string, label: string, value: string): HTMLElement => {
+    const item = el('span', className);
+    item.append(
+      el('span', 'habit-tracker-settings-meta-label', label),
+      document.createTextNode(value),
+    );
+    return item;
+  };
   meta.append(
-    el('span', 'habit-tracker-settings-target', targetText),
-    el('span', 'habit-tracker-settings-progress', progressText),
-    el('span', 'habit-tracker-settings-streak', streakText),
+    metaItem('habit-tracker-settings-target', t('manage.columnTarget'), targetText),
+    metaItem('habit-tracker-settings-progress', t('manage.columnThisWeek'), progressText),
+    metaItem('habit-tracker-settings-streak', t('manage.columnStreak'), streakText),
   );
   summary.append(meta);
-  summary.append(el('span', 'habit-tracker-settings-edit', 'Edit'));
+  summary.append(el('span', 'habit-tracker-settings-edit', t('action.edit')));
   item.append(summary);
 
   const body = el('div', 'habit-tracker-settings-body');
@@ -156,18 +172,18 @@ function renderHabitSettingsItem(
   renameForm.dataset.formKey = `rename:${habit.habitId}`;
   renameForm.noValidate = true;
   const renameLabel = el('label');
-  renameLabel.append(document.createTextNode('Name'));
+  renameLabel.append(document.createTextNode(t('manage.name')));
   const nameInput = el('input');
   nameInput.type = 'text';
   nameInput.dataset.fieldKey = 'name';
   nameInput.value = habit.name;
   nameInput.required = true;
-  nameInput.setAttribute('aria-label', `Habit name for ${habit.name}`);
+  nameInput.setAttribute('aria-label', t('manage.nameAria', { name: habit.name }));
   renameLabel.append(nameInput);
   renameForm.append(renameLabel);
-  const renameButton = el('button', undefined, 'Rename');
+  const renameButton = el('button', undefined, t('action.rename'));
   renameButton.type = 'submit';
-  renameButton.setAttribute('aria-label', `Rename ${habit.name}`);
+  renameButton.setAttribute('aria-label', t('manage.renameAria', { name: habit.name }));
   renameForm.append(renameButton);
   renameForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -178,12 +194,12 @@ function renderHabitSettingsItem(
   const targetForm = el('form', 'habit-tracker-inline-form');
   targetForm.dataset.formKey = `target:${habit.habitId}`;
   const targetLabel = el('label');
-  targetLabel.append(document.createTextNode('Target from next week'));
+  targetLabel.append(document.createTextNode(t('manage.targetLabel')));
   const targetSelect = el('select');
   targetSelect.dataset.fieldKey = 'target';
-  targetSelect.setAttribute('aria-label', `Weekly target for ${habit.name} from next week`);
+  targetSelect.setAttribute('aria-label', t('manage.targetAria', { name: habit.name }));
   for (let day = 1; day <= 7; day += 1) {
-    const option = el('option', undefined, `${day} ${day === 1 ? 'day' : 'days'} / week`);
+    const option = el('option', undefined, tp('form.targetOption', day));
     option.value = String(day);
     if ((habit.pendingTarget ?? habit.target ?? 7) === day) {
       option.selected = true;
@@ -192,9 +208,9 @@ function renderHabitSettingsItem(
   }
   targetLabel.append(targetSelect);
   targetForm.append(targetLabel);
-  const targetButton = el('button', undefined, 'Save target');
+  const targetButton = el('button', undefined, t('action.saveTarget'));
   targetButton.type = 'submit';
-  targetButton.setAttribute('aria-label', `Schedule target for ${habit.name}`);
+  targetButton.setAttribute('aria-label', t('manage.saveTargetAria', { name: habit.name }));
   targetForm.append(targetButton);
   targetForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -204,19 +220,17 @@ function renderHabitSettingsItem(
   body.append(fields);
 
   if (habit.pendingTarget !== null) {
-    body.append(
-      el('p', 'habit-tracker-hint', `${habit.pendingTarget}-day target scheduled for next week.`),
-    );
+    body.append(el('p', 'habit-tracker-hint', tp('manage.pendingTarget', habit.pendingTarget)));
   }
 
   const appearance = el('div', 'habit-tracker-settings-appearance');
   const colorRow = el('div', 'habit-tracker-color-row');
-  colorRow.append(el('span', 'habit-tracker-color-label', 'Color'));
+  colorRow.append(el('span', 'habit-tracker-color-label', t('manage.color')));
   const colorPicker = el('label', 'habit-tracker-color-picker');
   const colorInput = el('input', 'habit-tracker-color-input');
   colorInput.type = 'color';
   colorInput.value = habit.color ?? themeAccentHex();
-  colorInput.setAttribute('aria-label', `Choose color for ${habit.name}`);
+  colorInput.setAttribute('aria-label', t('manage.colorAria', { name: habit.name }));
   const swatch = el('span', 'habit-tracker-color-swatch');
   swatch.style.background = habit.color ?? 'var(--interactive-accent)';
   swatch.setAttribute('aria-hidden', 'true');
@@ -225,12 +239,14 @@ function renderHabitSettingsItem(
     void handlers.changeColor(habit.habitId, colorInput.value);
   });
   colorRow.append(colorPicker);
-  const resetColor = el('button', 'habit-tracker-color-reset', 'Use theme color');
+  const resetColor = el('button', 'habit-tracker-color-reset', t('action.useThemeColor'));
   resetColor.type = 'button';
   resetColor.disabled = habit.color === null;
   resetColor.setAttribute(
     'aria-label',
-    habit.color ? `Use theme color for ${habit.name}` : `${habit.name} uses the theme color`,
+    habit.color
+      ? t('manage.useThemeColorAria', { name: habit.name })
+      : t('manage.themeColorActiveAria', { name: habit.name }),
   );
   resetColor.addEventListener('click', () => {
     void handlers.changeColor(habit.habitId, null);
@@ -243,29 +259,29 @@ function renderHabitSettingsItem(
   body.append(appearance);
 
   const stateActions = el('div', 'habit-tracker-actions');
-  const history = el('button', undefined, 'View history');
+  const history = el('button', undefined, t('action.viewHistory'));
   history.type = 'button';
   history.dataset.historyHabitId = habit.habitId;
-  history.setAttribute('aria-label', `View history for ${habit.name}`);
+  history.setAttribute('aria-label', t('dashboard.viewHistoryAria', { name: habit.name }));
   history.addEventListener('click', () => handlers.toggleHabitHistory(habit.habitId));
   stateActions.append(history);
   if (habit.pendingArchive) {
-    const cancel = el('button', undefined, 'Cancel pending archive');
-    cancel.setAttribute('aria-label', `Cancel pending archive for ${habit.name}`);
+    const cancel = el('button', undefined, t('action.cancelPendingArchive'));
+    cancel.setAttribute('aria-label', t('manage.cancelPendingArchiveAria', { name: habit.name }));
     cancel.addEventListener('click', () => {
       void handlers.cancelPendingArchive(habit.habitId);
     });
     stateActions.append(cancel);
   } else if (habit.state === 'archived') {
-    const reactivate = el('button', undefined, 'Reactivate this week');
-    reactivate.setAttribute('aria-label', `Reactivate ${habit.name} this week`);
+    const reactivate = el('button', undefined, t('action.reactivate'));
+    reactivate.setAttribute('aria-label', t('manage.reactivateAria', { name: habit.name }));
     reactivate.addEventListener('click', () => {
       void handlers.reactivateHabit(habit.habitId);
     });
     stateActions.append(reactivate);
   } else {
-    const archive = el('button', undefined, 'Archive from next week');
-    archive.setAttribute('aria-label', `Archive ${habit.name} from next week`);
+    const archive = el('button', undefined, t('action.archive'));
+    archive.setAttribute('aria-label', t('manage.archiveAria', { name: habit.name }));
     archive.addEventListener('click', () => {
       void handlers.archiveHabit(habit.habitId);
     });

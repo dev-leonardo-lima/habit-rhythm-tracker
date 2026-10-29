@@ -33,7 +33,7 @@ describe('habit history and compact management', () => {
       '2 days',
     );
     expect(
-      container.querySelector('[aria-label*="30 Oct 2026: saved future mark"]'),
+      container.querySelector('[aria-label*="October 30, 2026: saved future mark"]'),
     ).not.toBeNull();
     expect(
       container.querySelector('[data-history-anchor]')?.getAttribute('data-history-anchor'),
@@ -66,7 +66,7 @@ describe('habit history and compact management', () => {
     expect(
       container.querySelector('[data-history-anchor]')?.getAttribute('data-history-anchor'),
     ).toBe('2025-12-31');
-    expect(container.querySelector('[aria-label*="30 Dec 2025: marked"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label*="December 30, 2025: marked"]')).not.toBeNull();
     expect(
       container.querySelector<HTMLButtonElement>('button[aria-label="Previous history year"]')
         ?.disabled,
@@ -78,7 +78,7 @@ describe('habit history and compact management', () => {
     expect(container.querySelector('[data-testid="habit-history"]')?.textContent).toContain(
       '3 days',
     );
-    expect(container.querySelector('[aria-label*="28 Oct 2026: marked"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label*="October 28, 2026: marked"]')).not.toBeNull();
     container
       .querySelector<HTMLButtonElement>('button[aria-label="Close history for Gym"]')
       ?.click();

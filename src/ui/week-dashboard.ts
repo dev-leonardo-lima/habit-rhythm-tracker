@@ -5,7 +5,9 @@ import type {
   HabitSummaryViewModel,
   WeekViewModel,
 } from './dashboard-controller';
+import { t, tp } from '../i18n';
 import { habitIcon } from './habit-icon-picker';
+import { fullDate } from './text';
 
 export interface WeekDashboardHandlers {
   toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
@@ -66,8 +68,8 @@ function placeholderCells(week: WeekViewModel): HabitCellViewModel[] {
     date: day.date,
     completed: false,
     disabled: true,
-    reason: 'not tracked this week',
-    ariaLabel: `${day.weekday} ${day.date}, not tracked this week`,
+    reason: t('dashboard.notTracked'),
+    ariaLabel: t('dashboard.notTrackedAria', { weekday: day.weekday, date: fullDate(day.date) }),
     isToday: day.isToday,
   }));
 }
@@ -79,7 +81,7 @@ function summaryFallback(
   return {
     habitId,
     path: firstRow?.path ?? '',
-    name: firstRow?.name ?? 'Habit',
+    name: firstRow?.name ?? t('dashboard.fallbackHabitName'),
     color: firstRow?.color ?? null,
     icon: firstRow?.icon ?? null,
     created: firstRow?.created ?? '',
@@ -131,9 +133,9 @@ function nameCell(
   const name = el('button', 'habit-tracker-habit-name');
   name.type = 'button';
   name.dataset.historyHabitId = summary.habitId;
-  name.setAttribute('aria-label', `View history for ${summary.name}`);
+  name.setAttribute('aria-label', t('dashboard.viewHistoryAria', { name: summary.name }));
   name.setAttribute('aria-expanded', String(historyOpen));
-  name.title = `View history for ${summary.name}`;
+  name.title = t('dashboard.viewHistoryAria', { name: summary.name });
   name.addEventListener('click', () => handlers.toggleHabitHistory(summary.habitId));
   const icon = habitIcon(summary.icon);
   if (icon) {
@@ -148,30 +150,32 @@ function nameCell(
       el(
         'span',
         'habit-tracker-habit-status',
-        `${selectedRow.completed} / ${selectedRow.target ?? '—'} · ${selectedRow.outcomeText}`,
+        t('dashboard.progressStatus', {
+          completed: selectedRow.completed,
+          target: selectedRow.target ?? '—',
+          outcome: selectedRow.outcomeText,
+        }),
       ),
     );
   } else if (summary.state === 'archived') {
-    meta.append(el('span', 'habit-tracker-habit-status', 'Archived'));
+    meta.append(el('span', 'habit-tracker-habit-status', t('dashboard.archived')));
   }
   if (meta.childElementCount > 0) {
     meta.append(document.createTextNode(' '));
   }
-  meta.append(
-    el(
-      'span',
-      'habit-tracker-meta-streak',
-      `Streak: ${summary.streak} ${summary.streak === 1 ? 'week' : 'weeks'}`,
-    ),
-  );
+  meta.append(el('span', 'habit-tracker-meta-streak', tp('dashboard.streak', summary.streak)));
   cell.append(meta);
 
   if (summary.pendingTarget !== null) {
     cell.append(
-      el('div', 'habit-tracker-habit-note', `${summary.pendingTarget}/wk from next week`),
+      el(
+        'div',
+        'habit-tracker-habit-note',
+        t('dashboard.pendingTarget', { target: summary.pendingTarget }),
+      ),
     );
   } else if (summary.pendingArchive) {
-    cell.append(el('div', 'habit-tracker-habit-note', 'Archive next week'));
+    cell.append(el('div', 'habit-tracker-habit-note', t('dashboard.pendingArchive')));
   }
   return cell;
 }
@@ -231,7 +235,7 @@ function dayCell(
   checkbox.dataset.habitId = habitId;
   checkbox.dataset.date = cell.date;
   checkbox.setAttribute('aria-label', cell.ariaLabel);
-  if (cell.reason !== 'available') {
+  if (cell.reason !== t('dashboard.reasonAvailable')) {
     checkbox.title = cell.reason;
   }
   checkbox.addEventListener('change', () => {
@@ -253,7 +257,7 @@ export function renderHabitGrid(
 ): void {
   const week = viewModel.weeks[0];
   if (!week) {
-    container.append(el('p', 'habit-tracker-empty', 'No week to display.'));
+    container.append(el('p', 'habit-tracker-empty', t('dashboard.noWeek')));
     return;
   }
   const rows = habitRows(viewModel);
@@ -262,9 +266,7 @@ export function renderHabitGrid(
       el(
         'p',
         'habit-tracker-empty',
-        viewModel.habits.length === 0
-          ? 'No habits yet. Create one to start tracking this week.'
-          : 'No habits to track for this week.',
+        viewModel.habits.length === 0 ? t('dashboard.noHabits') : t('dashboard.noRows'),
       ),
     );
     return;
@@ -273,12 +275,16 @@ export function renderHabitGrid(
   const table = el('table', 'habit-tracker-grid');
   table.dataset.testid = 'week-table';
   table.dataset.week = week.week;
-  table.setAttribute('aria-label', `Habits for the week of ${week.label}`);
+  table.setAttribute('aria-label', t('dashboard.weekTableAria', { week: week.label }));
   // Explicit roles retain the table structure when the narrow layout changes
   // the CSS display of its rows in WebKit-based mobile clients.
   table.setAttribute('role', 'table');
   table.append(
-    el('caption', 'habit-tracker-visually-hidden', `Habits for the week of ${week.label}`),
+    el(
+      'caption',
+      'habit-tracker-visually-hidden',
+      t('dashboard.weekTableAria', { week: week.label }),
+    ),
   );
 
   const colgroup = el('colgroup');
@@ -293,7 +299,7 @@ export function renderHabitGrid(
   thead.setAttribute('role', 'rowgroup');
   const dayRow = el('tr', 'habit-tracker-day-row');
   dayRow.setAttribute('role', 'row');
-  const corner = el('th', 'habit-tracker-corner', 'Habit');
+  const corner = el('th', 'habit-tracker-corner', t('dashboard.columnHabit'));
   corner.scope = 'col';
   corner.setAttribute('role', 'columnheader');
   dayRow.append(corner);

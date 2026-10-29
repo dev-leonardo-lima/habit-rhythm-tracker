@@ -1,4 +1,5 @@
 import { Plugin } from 'obsidian';
+import { t } from './i18n';
 import { DashboardController } from './ui/dashboard-controller';
 import { HabitDashboardView, VIEW_TYPE_HABIT_DASHBOARD } from './ui/dashboard-view';
 import { ObsidianEditorGuard } from './ui/obsidian-editor-guard';
@@ -25,12 +26,12 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
       VIEW_TYPE_HABIT_DASHBOARD,
       (leaf) => new HabitDashboardView(leaf, () => this.getController()),
     );
-    this.addRibbonIcon('check-square', 'Open habit dashboard', () => {
+    this.addRibbonIcon('check-square', t('command.openDashboard'), () => {
       void this.activateDashboard();
     });
     this.addCommand({
       id: 'open-habit-dashboard',
-      name: 'Open habit dashboard',
+      name: t('command.openDashboard'),
       callback: () => {
         void this.activateDashboard();
       },
@@ -101,7 +102,7 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
 
   private getController(): DashboardController {
     if (!this.controller) {
-      throw new Error('Habit Rhythm Tracker has not finished loading');
+      throw new Error(t('error.loadingGuard'));
     }
     return this.controller;
   }

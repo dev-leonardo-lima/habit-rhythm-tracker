@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { DashboardViewModel } from './dashboard-controller';
 import { renderHabitForm } from './habit-form';
 import { renderHabitSettings } from './habit-settings';
@@ -297,7 +298,7 @@ function renderHeader(
   const header = el('header', 'habit-tracker-header');
   const heading = el('div', 'habit-tracker-heading');
   const nav = el('div', 'habit-tracker-week-nav');
-  nav.append(iconButton('‹', 'Previous week', () => handlers.previousWeek()));
+  nav.append(iconButton('‹', t('dashboard.previousWeek'), () => handlers.previousWeek()));
   const weekBlock = el('div', 'habit-tracker-week-block');
   const label = el('h1', 'habit-tracker-week-label');
   label.dataset.testid = 'week-label';
@@ -311,11 +312,11 @@ function renderHeader(
   weekBlock.append(label);
   const meta = el('div', 'habit-tracker-week-meta');
   if (isCurrentWeek) {
-    meta.append(el('span', 'habit-tracker-week-context is-current', 'This week'));
+    meta.append(el('span', 'habit-tracker-week-context is-current', t('dashboard.thisWeek')));
   }
   weekBlock.append(meta);
   nav.append(weekBlock);
-  nav.append(iconButton('›', 'Next week', () => handlers.nextWeek()));
+  nav.append(iconButton('›', t('dashboard.nextWeek'), () => handlers.nextWeek()));
   heading.append(nav);
   header.append(heading);
   container.append(header);
@@ -343,15 +344,9 @@ function renderMessage(container: HTMLElement, viewModel: DashboardViewModel): v
 
 function renderIssues(container: HTMLElement, viewModel: DashboardViewModel): void {
   if (viewModel.issues.length > 0) {
-    const issues = disclosure('issues', 'Note problems', viewModel.issues.length);
+    const issues = disclosure('issues', t('dashboard.noteProblems'), viewModel.issues.length);
     const body = disclosureBody(issues);
-    body.append(
-      el(
-        'p',
-        'habit-tracker-hint',
-        'These notes were not loaded or overwritten. Fix the note in the vault, then refresh.',
-      ),
-    );
+    body.append(el('p', 'habit-tracker-hint', t('dashboard.noteProblemsHint')));
     const list = el('ul', 'habit-tracker-issue-list');
     for (const issue of viewModel.issues) {
       list.append(el('li', undefined, `${issue.path}: ${issue.message}`));
@@ -373,7 +368,7 @@ function renderManageDisclosure(
   if (viewModel.habits.length === 0) {
     return;
   }
-  const manage = disclosure('manage', 'Manage habits');
+  const manage = disclosure('manage', t('dashboard.manageHabits'));
   const body = disclosureBody(manage);
   renderHabitSettings(body, viewModel.habits, handlers, { heading: false });
   container.append(manage);
@@ -403,7 +398,7 @@ export function renderDashboard(
   renderMessage(container, viewModel);
 
   if (viewModel.loading) {
-    const loading = el('p', 'habit-tracker-loading', 'Loading habits…');
+    const loading = el('p', 'habit-tracker-loading', t('dashboard.loading'));
     loading.setAttribute('role', 'status');
     container.append(loading);
   }
@@ -413,14 +408,8 @@ export function renderDashboard(
 
   if (!viewModel.loading && viewModel.habits.length === 0) {
     const empty = el('div', 'habit-tracker-empty-state');
-    empty.append(el('p', 'habit-tracker-empty-title', 'Start with one habit'));
-    empty.append(
-      el(
-        'p',
-        'habit-tracker-empty-copy',
-        'Add your first habit above, then mark the days you complete it.',
-      ),
-    );
+    empty.append(el('p', 'habit-tracker-empty-title', t('dashboard.emptyTitle')));
+    empty.append(el('p', 'habit-tracker-empty-copy', t('dashboard.emptyCopy')));
     container.append(empty);
   } else if (viewModel.habits.length > 0) {
     renderHabitGrid(container, viewModel, presentationHandlers);

@@ -1,4 +1,5 @@
 import { ItemView, type WorkspaceLeaf } from 'obsidian';
+import { t } from '../i18n';
 import type { DashboardController } from './dashboard-controller';
 import { createDashboardHandlers } from './controller-handlers';
 import { renderDashboard } from './dashboard-renderer';
@@ -22,7 +23,7 @@ export class HabitDashboardView extends ItemView {
   }
 
   override getDisplayText(): string {
-    return 'Habit dashboard';
+    return t('view.dashboard.title');
   }
 
   override getIcon(): string {
