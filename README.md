@@ -8,9 +8,10 @@ A local-first habit tracker for [Obsidian](https://obsidian.md/) with a clean we
 Choose how many days a week you want to practice a habit, mark your progress, and build a streak
 that makes room for rest days. Your habits live in Markdown notes in your vault.
 
-> **Project status:** The first release is available on GitHub. The plugin is being prepared for
-> submission to Obsidian's community plugin directory; until it is listed there, install it from
-> the latest release.
+> **Project status:** Available in
+> [Obsidian's community plugin directory](https://community.obsidian.md/plugins/habit-rhythm-tracker).
+> Install it from **Settings → Community plugins → Browse**, or download the latest release from
+> GitHub.
 
 ## Features
 
@@ -28,13 +29,18 @@ that makes room for rest days. Your habits live in Markdown notes in your vault.
 
 ## Installation
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the
-   [latest release](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/latest).
-2. Create the folder `<your-vault>/.obsidian/plugins/habit-rhythm-tracker/` in your vault.
-3. Copy the three downloaded files into that folder.
-4. In Obsidian, open **Settings → Community plugins** and enable **Habit Rhythm Tracker**.
-5. Open the dashboard using the ribbon icon or the **Habit Rhythm Tracker: Open habit dashboard**
+Install the plugin from Obsidian's community plugin directory:
+
+1. Open **Settings → Community plugins → Browse**.
+2. Search for **Habit Rhythm Tracker**.
+3. Select **Install**, then **Enable**.
+4. Open the dashboard using the ribbon icon or the **Habit Rhythm Tracker: Open habit dashboard**
    command.
+
+To install a specific version manually, download `main.js`, `manifest.json`, and `styles.css` from
+the [latest release](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/latest).
+Create `<your-vault>/.obsidian/plugins/habit-rhythm-tracker/`, copy the three files into it, and
+enable **Habit Rhythm Tracker** under **Settings → Community plugins**.
 
 If you used an earlier development build, disable it and install this build in the new folder.
 Existing habit notes remain in their configured folder. This build has its own settings, so set the

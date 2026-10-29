@@ -97,7 +97,14 @@ thresholds.
 
 ## Community directory
 
-The first public Obsidian Community submission is a separate maintainer action:
+The plugin is listed at
+[community.obsidian.md/plugins/habit-rhythm-tracker](https://community.obsidian.md/plugins/habit-rhythm-tracker).
+The directory stores its own copies of the title, description, and screenshots; pushing to GitHub
+does not update the listing. To change them, sign in to
+[community.obsidian.md](https://community.obsidian.md), open the developer dashboard, and edit the
+plugin.
+
+The initial submission was a separate maintainer action:
 
 1. Sign in to [community.obsidian.md](https://community.obsidian.md) and connect the GitHub account.
 2. Go to **Plugins → New plugin**, enter the repository URL, choose the owner, accept the developer
@@ -106,6 +113,6 @@ The first public Obsidian Community submission is a separate maintainer action:
 4. After acceptance, users install the plugin from the community directory. Later GitHub releases
    are discovered by Obsidian; directory availability remains Obsidian's decision.
 
-GitHub release publication does not mean the plugin has been accepted or is available in the
+GitHub release publication does not mean a plugin has been accepted or is available in the
 directory. Track the repository, linked maintainer account, submission/review status, and discovered
 release separately.

@@ -29,7 +29,7 @@ version pinned in `.nvmrc`.
 
 3. Create `.obsidian/plugins/habit-rhythm-tracker/` inside your test vault and copy `main.js`,
    `manifest.json`, and `styles.css` into it.
-4. Enable **Habit Rhythm Tracker** in Obsidian's community plugin settings and open its dashboard
+4. Enable **Habit Rhythm Tracker** under **Settings → Community plugins** and open its dashboard
    from the ribbon or command palette.
 
 Run `npm run dev -- --watch` to rebuild `main.js` when source files change. Copy the rebuilt file
