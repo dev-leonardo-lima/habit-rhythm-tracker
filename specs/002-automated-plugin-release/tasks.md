@@ -50,7 +50,7 @@ work that remains.
 **Purpose**: Prove the local checks and the real GitHub flow before the directory submission.
 
 - [X] T010 [US1] Run `npm ci`, `npm run version:check`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run test:coverage`, and `npm run build`; record results.
-- [X] T011 [US4] Validate workflow YAML syntax, pinned action SHAs, the release job's permissions, and the absence of `pull_request_target` and removed ledger scripts.
+- [X] T011 [US4] Validate workflow YAML syntax, versioned action tags, the release job's permissions, and the absence of `pull_request_target` and removed ledger scripts.
 - [X] T012 [US2] Recreate the GitHub repository with the same name, push `main`, and confirm the first validated push publishes the current manifest version with `main.js`, `manifest.json`, and `styles.css` attached.
 - [X] T013 [US2] Push a no-bump documentation change to `main` and confirm validation succeeds without a new release.
 - [X] T014 [US4] Record the source SHA, validation run, release URL, tag target, asset names, no-bump skip, and any recovery evidence in `specs/002-automated-plugin-release/validation.md`.

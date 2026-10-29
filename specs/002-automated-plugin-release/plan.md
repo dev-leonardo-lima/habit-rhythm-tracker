@@ -22,7 +22,7 @@ the same concrete release in project configuration and automation at implementat
 GitHub Actions and GitHub Releases; the GitHub CLI (`gh`) for draft-first release publication;
 Prettier for formatting checks; a JavaScript test runner with coverage (Vitest and V8 coverage).
 The `yaml` development dependency parses workflow files in security contract tests and is not
-included in the plugin runtime. Use pinned action commit SHAs and lockfile.
+included in the plugin runtime. Use major-version tags for actions and a lockfile for dependencies.
 
 **Storage**: Git repository metadata (`package.json`, `package-lock.json`, `manifest.json`,
 `versions.json`); release artifacts and tags. No automation-owned issues, event ledger, or cursor.

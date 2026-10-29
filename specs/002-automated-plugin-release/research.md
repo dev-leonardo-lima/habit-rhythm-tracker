@@ -123,10 +123,10 @@ path that should be tested).
 
 ## Toolchain and testing
 
-**Decision**: Align TypeScript, npm, and esbuild with the official sample. Pin Node.js 24 and action
-versions; use Vitest with coverage for plugin and release logic, isolated Git repositories for
-version fixtures, workflow contract tests for triggers and permissions, and one end-to-end release
-exercise.
+**Decision**: Align TypeScript, npm, and esbuild with the official sample. Pin Node.js 24 and use
+major-version action tags; use Vitest with coverage for plugin and release logic, isolated Git
+repositories for version fixtures, workflow contract tests for triggers and permissions, and one
+end-to-end release exercise.
 
 **Rationale**: A pinned build and lockfile keep release artifacts repeatable; workflow tests catch
 permission and trigger regressions without publishing real artifacts. Vitest supports TypeScript and

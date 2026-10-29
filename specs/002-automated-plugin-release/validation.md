@@ -4,8 +4,8 @@ This record describes the simplified release pipeline. The repository was recrea
 was re-identified as `habit-rhythm-tracker` / `Habit Rhythm Tracker` after the GitHub repository was
 deleted and recreated.
 
-The working tree now prepares 0.1.2 with artifact attestations and fixes for the directory scan.
-The updated workflow and new release have not yet been run on GitHub.
+Release 0.1.2 includes artifact attestations and fixes for the directory scan. Its workflow passed
+on GitHub. The later change to major-version action tags was validated locally in this record.
 
 Earlier application evidence and reproducible checks are recorded in
 [feature 001 validation](../001-weekly-habit-dashboard/validation.md) and
@@ -22,8 +22,8 @@ Earlier application evidence and reproducible checks are recorded in
 - **Tests and coverage**: 178 tests in 28 files passed. V8 measured 92.54% lines and 87.16%
   branches across plugin and maintained tooling code. The workflow contract test parses
   `.github/workflows/ci.yml` and verifies triggers, read-only PR permissions, the release job
-  dependency, release-job permissions, pinned actions, artifact handoff and attestation, draft-first
-  publication, and the absence of the removed ledger files.
+  dependency, release-job permissions, versioned actions, artifact handoff and attestation,
+  draft-first publication, and the absence of the removed ledger files.
 - **Directory scanner**: the official scanner ESLint and Stylelint rules reported no findings
   locally. The directory must rescan a published release before its result is known.
 - **Removed scope**: the issue ledger, cursor, scheduled reconciler, baseline initialization, and
@@ -37,13 +37,17 @@ Earlier application evidence and reproducible checks are recorded in
 - **Initial pipeline release (pre-rebrand)**: [run 40887541674](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887541674)
   published 0.1.0 from `76f6a54` without a manual release command. That release was removed after the
   repository was renamed and the plugin was re-identified.
-- **Current release**: [run 40891535845](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40891535845)
+- **Previous release**: [run 40891535845](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40891535845)
   validated `8cd38164b5a0c5d3baa41f05ad64ddf4580ccc3a` and published
   [release 0.1.1](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/tag/0.1.1). The
   tag resolves to that SHA; the assets are `main.js` (62,541 bytes), `manifest.json` (279 bytes), and
   `styles.css` (41,295 bytes). The manifest ID is `habit-rhythm-tracker` and the name is
   `Habit Rhythm Tracker`. The release body links the source SHA and validation run. No issues were
   created.
+- **Current release**: [run 40915830880](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40915830880)
+  validated `dc565e24ac917ba3bb3ae68ebb1b87b4d75f6d97` and published
+  [release 0.1.2](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/tag/0.1.2).
+  Attestations for its three assets were verified with the GitHub CLI.
 - **No-bump push (pre-rebrand)**: [run 40887829880](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887829880)
   passed validation and the release job stopped with "Release 0.1.0 is already published; nothing to
   do." No second release was created.
@@ -60,8 +64,8 @@ Earlier application evidence and reproducible checks are recorded in
 
 The maintainer submitted the new identity (`habit-rhythm-tracker` / `Habit Rhythm Tracker`) to the
 Obsidian Community directory. The automated review of release 0.1.1 failed as reported by the
-maintainer; the 0.1.2 fixes and a new directory scan are still pending publication. GitHub release
-publication and directory review remain separate states.
+maintainer. Release 0.1.2 has been published, but its directory review has not been verified here.
+GitHub release publication and directory review remain separate states.
 
 ## Approved exceptions
 

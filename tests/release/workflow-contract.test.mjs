@@ -29,9 +29,9 @@ describe('GitHub Actions safety contract', () => {
     }
   });
 
-  it('pins actions and keeps the release job on reviewed main with minimal permissions', () => {
+  it('uses versioned actions and keeps the release job on reviewed main with minimal permissions', () => {
     for (const step of actionSteps(ci)) {
-      expect(step.uses).toMatch(/^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/);
+      expect(step.uses).toMatch(/^[\w.-]+\/[\w.-]+@v\d+(?:\.\d+){0,2}$/);
       if (step.uses.startsWith('actions/checkout@')) {
         expect(step.with['persist-credentials']).toBe(false);
       }
