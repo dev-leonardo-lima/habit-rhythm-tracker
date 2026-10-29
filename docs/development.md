@@ -50,12 +50,12 @@ fails the command.
 
 ```sh
 npm run build
-mkdir -p "<vault>/.obsidian/plugins/habit-rhythm"
-cp main.js manifest.json styles.css "<vault>/.obsidian/plugins/habit-rhythm/"
+mkdir -p "<vault>/.obsidian/plugins/habit-rhythm-tracker"
+cp main.js manifest.json styles.css "<vault>/.obsidian/plugins/habit-rhythm-tracker/"
 ```
 
 Enable the plugin and open the dashboard from the command palette or ribbon. The default folder is
-`Habits`; change it in **Settings → Habit Rhythm**.
+`Habits`; change it in **Settings → Habit Rhythm Tracker**.
 
 ## Conventional Commits
 

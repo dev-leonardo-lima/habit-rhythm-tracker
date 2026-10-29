@@ -6,7 +6,7 @@ const watch = process.argv.includes('--watch');
 
 const context = await esbuild.context({
   banner: {
-    js: '/* Habit Rhythm - bundled output. Do not edit directly. */',
+    js: '/* Habit Rhythm Tracker - bundled output. Do not edit directly. */',
   },
   entryPoints: ['src/main.ts'],
   bundle: true,

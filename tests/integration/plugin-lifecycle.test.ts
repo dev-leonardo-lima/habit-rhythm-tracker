@@ -20,7 +20,7 @@ type MockPlugin = HabitTrackerPlugin & {
 type MockLeaf = WorkspaceLeaf & { state?: { type: string; active?: boolean } | null };
 
 const manifest = {
-  id: 'habit-rhythm',
+  id: 'habit-rhythm-tracker',
   version: '0.1.0',
   minAppVersion: '1.6.0',
   isDesktopOnly: false,

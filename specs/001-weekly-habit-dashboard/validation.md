@@ -18,7 +18,7 @@ user reported the revised UI was improved. The latest layout was not independent
 desktop automation because the computer-use host was unavailable; no new desktop/narrow
 visual smoke result is claimed. Follow the current [quickstart](quickstart.md) for those checks.
 
-**Repository review corrections**: The plugin ID is now `habit-rhythm`. Automated
+**Repository review corrections**: The plugin ID is now `habit-rhythm-tracker`. Automated
 regression tests cover unknown JSON property preservation, invalid color retention, duplicate IDs
 added after refresh, sequential rapid actions, stale refresh results, historical archived-week
 correction, draft refresh behavior, deferred editors, and editor changes during a guarded write.

@@ -43,7 +43,7 @@ describe('GitHub Actions safety contract', () => {
     expect(release.if).toContain("github.event_name == 'workflow_dispatch'");
     expect(release.permissions).toEqual({ contents: 'write', actions: 'read' });
     expect(release.concurrency).toEqual({
-      group: 'habit-rhythm-release',
+      group: 'habit-rhythm-tracker-release',
       'cancel-in-progress': false,
     });
     expect(release.steps.some((step) => /npm (ci|install)/.test(step.run ?? ''))).toBe(false);

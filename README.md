@@ -1,4 +1,4 @@
-# Habit Rhythm for Obsidian
+# Habit Rhythm Tracker for Obsidian
 
 [![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20%26%20mobile-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md/)
 [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
@@ -29,11 +29,12 @@ that makes room for rest days. Your habits live in Markdown notes in your vault.
 ## Installation
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the
-   [latest release](https://github.com/dev-leonardo-lima/habit-rhythm/releases/latest).
-2. Create the folder `<your-vault>/.obsidian/plugins/habit-rhythm/` in your vault.
+   [latest release](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/latest).
+2. Create the folder `<your-vault>/.obsidian/plugins/habit-rhythm-tracker/` in your vault.
 3. Copy the three downloaded files into that folder.
-4. In Obsidian, open **Settings → Community plugins** and enable **Habit Rhythm**.
-5. Open the dashboard using the ribbon icon or the **Habit Rhythm: Open habit dashboard** command.
+4. In Obsidian, open **Settings → Community plugins** and enable **Habit Rhythm Tracker**.
+5. Open the dashboard using the ribbon icon or the **Habit Rhythm Tracker: Open habit dashboard**
+   command.
 
 If you used an earlier development build, disable it and install this build in the new folder.
 Existing habit notes remain in their configured folder. This build has its own settings, so set the
@@ -66,7 +67,7 @@ through a week, the first week's target is capped at the number of days remainin
 ## Configuration and habits
 
 By default, habit notes are stored in the `Habits` folder. Change **Habits folder** in
-**Settings → Habit Rhythm** to use a different vault folder. The plugin creates a Markdown note for
+**Settings → Habit Rhythm Tracker** to use a different vault folder. The plugin creates a Markdown note for
 each habit and manages a marked block inside it; content outside that block is preserved. See
 [docs/data-format.md](docs/data-format.md) for the note format and editing guidance.
 

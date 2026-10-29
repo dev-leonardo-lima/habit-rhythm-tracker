@@ -1,4 +1,4 @@
-# Habit Rhythm Constitution
+# Habit Rhythm Tracker Constitution
 
 ## Core Principles
 

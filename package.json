@@ -1,6 +1,6 @@
 {
-  "name": "habit-rhythm",
-  "version": "0.1.0",
+  "name": "habit-rhythm-tracker",
+  "version": "0.1.1",
   "description": "Weekly habit dashboard for Obsidian, stored in user-editable Markdown notes.",
   "main": "main.js",
   "type": "module",

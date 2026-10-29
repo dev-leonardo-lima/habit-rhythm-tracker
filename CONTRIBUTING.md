@@ -1,6 +1,6 @@
-# Contributing to Habit Rhythm
+# Contributing to Habit Rhythm Tracker
 
-Thanks for helping improve Habit Rhythm. Bug reports, documentation, accessibility work, tests,
+Thanks for helping improve Habit Rhythm Tracker. Bug reports, documentation, accessibility work, tests,
 and code changes are all welcome.
 
 ## Before you start
@@ -27,10 +27,10 @@ version pinned in `.nvmrc`.
    npm run build
    ```
 
-3. Create `.obsidian/plugins/habit-rhythm/` inside your test vault and copy `main.js`,
+3. Create `.obsidian/plugins/habit-rhythm-tracker/` inside your test vault and copy `main.js`,
    `manifest.json`, and `styles.css` into it.
-4. Enable **Habit Rhythm** in Obsidian's community plugin settings and open its dashboard from the
-   ribbon or command palette.
+4. Enable **Habit Rhythm Tracker** in Obsidian's community plugin settings and open its dashboard
+   from the ribbon or command palette.
 
 Run `npm run dev -- --watch` to rebuild `main.js` when source files change. Copy the rebuilt file
 and any changed stylesheet to the test vault and reload the plugin or Obsidian to see the changes.

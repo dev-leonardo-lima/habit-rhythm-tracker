@@ -105,7 +105,7 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
 
   private getController(): DashboardController {
     if (!this.controller) {
-      throw new Error('Habit Rhythm has not finished loading');
+      throw new Error('Habit Rhythm Tracker has not finished loading');
     }
     return this.controller;
   }

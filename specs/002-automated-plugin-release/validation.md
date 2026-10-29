@@ -28,16 +28,16 @@ Earlier application evidence and reproducible checks are recorded in
 
 ## GitHub acceptance
 
-- **First release**: [run 40887541674](https://github.com/dev-leonardo-lima/habit-rhythm/actions/runs/40887541674)
+- **First release**: [run 40887541674](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887541674)
   passed the validation job and the release job published
-  [release 0.1.0](https://github.com/dev-leonardo-lima/habit-rhythm/releases/tag/0.1.0) without a
+  [release 0.1.0](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/releases/tag/0.1.0) without a
   manual release command. The tag resolves to `76f6a541a97cd49f313c4ba1d90349f83871a3da`; the
   assets are `main.js` (62,509 bytes), `manifest.json` (263 bytes), and `styles.css` (41,295 bytes).
   The release body links the source SHA and validation run. No issues were created.
-- **No-bump push**: [run 40887829880](https://github.com/dev-leonardo-lima/habit-rhythm/actions/runs/40887829880)
+- **No-bump push**: [run 40887829880](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40887829880)
   passed validation and the release job stopped with "Release 0.1.0 is already published; nothing to
   do." No second release was created.
-- **Manual dispatch recovery**: [run 40888006877](https://github.com/dev-leonardo-lima/habit-rhythm/actions/runs/40888006877)
+- **Manual dispatch recovery**: [run 40888006877](https://github.com/dev-leonardo-lima/habit-rhythm-tracker/actions/runs/40888006877)
   repeated validation on `main` and reached the same no-op release decision.
 - **Recovery and collision scenarios**: the workflow contract test verifies the draft-first,
   asset-verification, tag-collision, version-regression, and idempotent commands. The draft-resume

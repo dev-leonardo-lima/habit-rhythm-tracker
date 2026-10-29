@@ -18,7 +18,7 @@ export class HabitTrackerSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     const heading = document.createElement('h2');
-    heading.textContent = 'Habit Rhythm settings';
+    heading.textContent = 'Habit Rhythm Tracker settings';
     containerEl.append(heading);
     const explanation = document.createElement('p');
     explanation.textContent =
