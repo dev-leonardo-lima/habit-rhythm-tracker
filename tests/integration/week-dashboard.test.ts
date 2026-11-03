@@ -29,13 +29,14 @@ describe('US3: week navigation and history', () => {
     );
     expect(container.querySelectorAll('[data-testid="week-table"]')).toHaveLength(1);
     expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
-    expect(container.querySelectorAll('.habit-tracker-gutter-head')).toHaveLength(1);
-    expect(container.querySelector('.habit-tracker-gutter-head')?.classList).toContain(
+    expect(
+      container.querySelector('.habit-tracker-corner')?.nextElementSibling?.classList,
+    ).toContain('habit-tracker-day-head');
+    expect(container.querySelector('.habit-tracker-day-head')?.classList).toContain(
       'is-current-week',
     );
     expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('This week');
-    expect(container.querySelectorAll('.habit-tracker-gutter-cell')).toHaveLength(1);
-    expect(container.querySelectorAll('.habit-tracker-habit-row')[0]?.children).toHaveLength(9);
+    expect(container.querySelectorAll('.habit-tracker-habit-row')[0]?.children).toHaveLength(8);
     expect(container.querySelectorAll('.habit-tracker-habit-row')).toHaveLength(1);
 
     harness.controller.nextWeek();
@@ -46,7 +47,7 @@ describe('US3: week navigation and history', () => {
     expect(container.querySelectorAll('.habit-tracker-day-head')).toHaveLength(7);
     expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('');
     expect(container.querySelector('.habit-tracker-week-meta button')).toBeNull();
-    expect(container.querySelector('.habit-tracker-gutter-head')?.classList).not.toContain(
+    expect(container.querySelector('.habit-tracker-day-head')?.classList).not.toContain(
       'is-current-week',
     );
 

@@ -150,8 +150,8 @@ always written in words.
 
 The dashboard is a centered strip up to 1200px inside the main Obsidian tab. The week header is a
 centered group: small previous/next arrows around the year label and range, with the current-week
-context directly beneath. It shows no habit count. The grid uses a fixed habit column (240px), a
-10px gutter, and seven fluid day columns. A subtle border groups the table, while row separators and
+context directly beneath. It shows no habit count. The grid uses a fixed habit column (250px) and
+seven fluid day columns. A subtle border groups the table, while row separators and
 the column header retain the shape of an Obsidian table.
 
 The always-visible New habit row sits above the grid, separated by a hairline. A selected habit's
