@@ -31,6 +31,7 @@ function handlers(): DashboardHandlers {
     archiveHabit: vi.fn(),
     reactivateHabit: vi.fn(),
     cancelPendingArchive: vi.fn(),
+    deleteHabit: vi.fn(),
     previousWeek: vi.fn(),
     nextWeek: vi.fn(),
   };
@@ -71,6 +72,24 @@ function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
 }
 
 describe('UI components', () => {
+  it('identifies same-named habits by path and exposes the delete action', () => {
+    const container = document.createElement('div');
+    const callbacks = handlers();
+    renderHabitSettings(
+      container,
+      [summary(), summary({ habitId: 'other', path: 'Habits/Other.md' })],
+      callbacks,
+    );
+    const row = container.querySelector<HTMLElement>('[data-habit-id="habit-1"]');
+    expect(row?.textContent).toContain('Habits/Gym.md');
+    expect(row?.querySelector('summary')?.textContent).toContain('Habits/Gym.md');
+    const action = row?.querySelector<HTMLButtonElement>('[data-delete-habit-id]');
+    expect(action?.textContent).toBe('Delete habit');
+    expect(action?.getAttribute('aria-label')).toBe('Delete habit Gym: Habits/Gym.md');
+    action?.click();
+    expect(callbacks.deleteHabit).toHaveBeenCalledWith('habit-1');
+  });
+
   it('validates and submits the habit form with a default target of seven', () => {
     const container = document.createElement('div');
     const createHabit = vi.fn();
@@ -106,6 +125,7 @@ describe('UI components', () => {
       archiveHabit: vi.fn(),
       reactivateHabit: vi.fn(),
       cancelPendingArchive: vi.fn(),
+      deleteHabit: vi.fn(),
     };
     renderHabitSettings(
       container,
@@ -159,6 +179,7 @@ describe('UI components', () => {
       archiveHabit: vi.fn(),
       reactivateHabit: vi.fn(),
       cancelPendingArchive: vi.fn(),
+      deleteHabit: vi.fn(),
     };
     renderHabitSettings(container, [summary({ color: '#3366cc' })], callbacks);
 

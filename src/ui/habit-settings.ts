@@ -11,6 +11,7 @@ export interface HabitSettingsHandlers {
   archiveHabit(habitId: string): void | Promise<unknown>;
   reactivateHabit(habitId: string): void | Promise<unknown>;
   cancelPendingArchive(habitId: string): void | Promise<unknown>;
+  deleteHabit(habitId: string): void | Promise<unknown>;
 }
 
 export interface HabitSettingsOptions {
@@ -79,8 +80,12 @@ export function renderHabitSettings(
     el('span', undefined, ''),
   );
   section.append(columns);
+  const nameCounts = new Map<string, number>();
   for (const habit of habits) {
-    const item = renderHabitSettingsItem(habit, handlers);
+    nameCounts.set(habit.name, (nameCounts.get(habit.name) ?? 0) + 1);
+  }
+  for (const habit of habits) {
+    const item = renderHabitSettingsItem(habit, handlers, (nameCounts.get(habit.name) ?? 0) > 1);
     const closeOthers = (): void => {
       for (const other of section.querySelectorAll<HTMLDetailsElement>(
         '.habit-tracker-settings-item',
@@ -108,6 +113,7 @@ export function renderHabitSettings(
 function renderHabitSettingsItem(
   habit: HabitSummaryViewModel,
   handlers: HabitSettingsHandlers,
+  duplicateName: boolean,
 ): HTMLDetailsElement {
   const item = el('details', 'habit-tracker-settings-item');
   item.dataset.habitId = habit.habitId;
@@ -132,7 +138,7 @@ function renderHabitSettingsItem(
     'span',
     'habit-tracker-visually-hidden',
     t('manage.summaryAria', {
-      name: habit.name,
+      name: duplicateName ? `${habit.name} — ${habit.path}` : habit.name,
       target: targetText,
       progress: progressText,
       streak: streakText,
@@ -147,6 +153,10 @@ function renderHabitSettingsItem(
     name.append(icon);
   }
   name.append(el('span', 'habit-tracker-settings-name-text', habit.name));
+  if (duplicateName) {
+    name.classList.add('has-path');
+    name.append(el('span', 'habit-tracker-settings-path', habit.path));
+  }
   summary.append(name);
   const meta = el('span', 'habit-tracker-settings-meta');
   const metaItem = (className: string, label: string, value: string): HTMLElement => {
@@ -287,6 +297,19 @@ function renderHabitSettingsItem(
     });
     stateActions.append(archive);
   }
+  const remove = el('button', 'habit-tracker-delete-button', t('action.deleteHabit'));
+  remove.type = 'button';
+  remove.dataset.deleteHabitId = habit.habitId;
+  remove.setAttribute(
+    'aria-label',
+    duplicateName
+      ? t('delete.actionPathAria', { name: habit.name, path: habit.path })
+      : t('delete.actionAria', { name: habit.name }),
+  );
+  remove.addEventListener('click', () => {
+    void handlers.deleteHabit(habit.habitId);
+  });
+  stateActions.append(remove);
   body.append(stateActions);
   item.append(body);
   return item;

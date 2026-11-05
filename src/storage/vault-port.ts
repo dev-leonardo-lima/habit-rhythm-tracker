@@ -16,6 +16,8 @@ export interface VaultPort {
   exists(path: string): boolean;
   read(path: string): Promise<string>;
   create(path: string, content: string): Promise<void>;
+  /** Uses Obsidian's configured deletion behavior for one file. */
+  trash(path: string): Promise<unknown>;
   /** Protected read-modify-write, mirroring Obsidian's `Vault.process`. */
   process(path: string, transform: (content: string) => string): Promise<string>;
   ensureFolder(path: string): Promise<void>;

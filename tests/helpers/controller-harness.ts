@@ -1,12 +1,14 @@
 import { DashboardController } from '../../src/ui/dashboard-controller';
 import { HabitRepository } from '../../src/storage/habit-repository';
 import { GuardedCreator, GuardedWriter } from '../../src/storage/guarded-write';
+import type { EditorGuard } from '../../src/storage/guarded-write';
 import { MemoryVault } from './memory-vault';
 
 export interface HarnessOptions {
   now: () => Date;
   vault?: MemoryVault;
   habitsFolder?: string;
+  editorGuard?: EditorGuard;
 }
 
 export function createHarness(options: HarnessOptions) {
@@ -14,7 +16,7 @@ export function createHarness(options: HarnessOptions) {
   const habitsFolder = options.habitsFolder ?? 'Habits';
   vault.folders.add(habitsFolder);
   const repository = new HabitRepository(vault, habitsFolder);
-  const writer = new GuardedWriter({ vault });
+  const writer = new GuardedWriter({ vault, editorGuard: options.editorGuard });
   const creator = new GuardedCreator({ vault });
   const controller = new DashboardController({
     repository,
