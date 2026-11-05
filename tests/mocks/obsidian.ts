@@ -1,6 +1,7 @@
 export interface App {
   vault: Vault;
   workspace: Workspace;
+  fileManager: { trashFile(file: TFile): Promise<unknown> };
 }
 
 export interface Vault {
@@ -188,23 +189,36 @@ export class Modal {
   titleEl: HTMLElement;
   contentEl: HTMLElement;
   isOpen = false;
+  private readonly handleEscape = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') {
+      this.close();
+    }
+  };
 
   constructor(app: App) {
     this.app = app;
     this.modalEl = document.createElement('div');
     this.titleEl = document.createElement('div');
+    this.titleEl.className = 'modal-title';
     this.contentEl = document.createElement('div');
     this.modalEl.append(this.titleEl, this.contentEl);
   }
 
   open(): void {
     this.isOpen = true;
+    document.body.append(this.modalEl);
+    document.addEventListener('keydown', this.handleEscape);
     this.onOpen();
   }
 
   close(): void {
+    if (!this.isOpen) {
+      return;
+    }
     this.isOpen = false;
+    document.removeEventListener('keydown', this.handleEscape);
     this.onClose();
+    this.modalEl.remove();
   }
 
   onOpen(): void {

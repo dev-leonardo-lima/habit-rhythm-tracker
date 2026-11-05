@@ -10,6 +10,11 @@
 minimalist design, weekly dashboard with an interactive seven-day grid, weekly targets, streaks of
 successful weeks, automatic rollover, and persistent history.
 
+**Later scope update**: The exclusions of permanent habit-note deletion in FR-024 and the
+assumptions describe this original feature. [Delete a Habit](../004-delete-habit/spec.md) separately
+specifies an explicitly confirmed deletion flow that respects Obsidian deletion settings, including
+permanent deletion when selected; the existing data safeguards remain in force.
+
 ## Clarifications
 
 ### Session 2026-10-28

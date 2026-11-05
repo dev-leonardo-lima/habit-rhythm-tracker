@@ -4,13 +4,13 @@ import { createFakeApp } from '../helpers/fake-obsidian-app';
 
 describe('Obsidian vault adapter', () => {
   it('lists Markdown files inside a folder and checks existence', async () => {
-    const { vault } = createFakeApp();
+    const { vault, app } = createFakeApp();
     await vault.create('Habits/Gym.md', 'a');
     await vault.create('Habits/Read.md', 'b');
     await vault.create('Habits/Nested/Meditate.md', 'nested');
     await vault.create('Habits/image.png', 'not a note');
     await vault.create('Other/Note.md', 'c');
-    const port = new ObsidianVaultPort(vault as never);
+    const port = new ObsidianVaultPort(vault as never, app.fileManager);
     const enumerate = vi.spyOn(vault, 'getMarkdownFiles');
 
     expect(await port.listMarkdownFiles('Habits')).toEqual([
@@ -32,8 +32,8 @@ describe('Obsidian vault adapter', () => {
   });
 
   it('reads, creates and processes notes while creating parent folders', async () => {
-    const { vault } = createFakeApp();
-    const port = new ObsidianVaultPort(vault as never);
+    const { vault, app } = createFakeApp();
+    const port = new ObsidianVaultPort(vault as never, app.fileManager);
     await port.ensureFolder('Nested/Habits');
     expect(vault.folderObjects.has('Nested')).toBe(true);
     expect(vault.folderObjects.has('Nested/Habits')).toBe(true);
@@ -45,8 +45,8 @@ describe('Obsidian vault adapter', () => {
   });
 
   it('fails clearly for missing files and conflicting folder paths', async () => {
-    const { vault } = createFakeApp();
-    const port = new ObsidianVaultPort(vault as never);
+    const { vault, app } = createFakeApp();
+    const port = new ObsidianVaultPort(vault as never, app.fileManager);
     await port.create('Habits.md', 'a file');
 
     await expect(port.read('Habits/Missing.md')).rejects.toThrow('Habit note not found');
@@ -55,5 +55,29 @@ describe('Obsidian vault adapter', () => {
     );
     await expect(port.ensureFolder('Habits.md')).rejects.toThrow('A file already exists');
     await port.ensureFolder('   ');
+  });
+
+  it('delegates exactly one validated file to the file manager and preserves its result', async () => {
+    const { vault } = createFakeApp();
+    const file = await vault.create('Habits/Gym.md', 'complete note');
+    const manager = { trashFile: vi.fn().mockResolvedValue(false) };
+    const port = new ObsidianVaultPort(vault as never, manager as never);
+    const directDelete = vi.spyOn(vault, 'delete');
+
+    expect(await port.trash('Habits/Gym.md')).toBe(false);
+    expect(manager.trashFile).toHaveBeenCalledOnce();
+    expect(manager.trashFile).toHaveBeenCalledWith(file);
+    expect(directDelete).not.toHaveBeenCalled();
+  });
+
+  it('refuses to pass a missing path or folder to the file manager', async () => {
+    const { vault } = createFakeApp();
+    await vault.createFolder('Habits');
+    const manager = { trashFile: vi.fn() };
+    const port = new ObsidianVaultPort(vault as never, manager as never);
+
+    await expect(port.trash('Habits')).rejects.toThrow('Habit note not found');
+    await expect(port.trash('Habits/Missing.md')).rejects.toThrow('Habit note not found');
+    expect(manager.trashFile).not.toHaveBeenCalled();
   });
 });

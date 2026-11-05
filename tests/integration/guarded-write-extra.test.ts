@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GuardedCreator, GuardedWriter, type EditorGuard } from '../../src/storage/guarded-write';
 import { parseHabitNote } from '../../src/storage/habit-note';
 import { MemoryVault } from '../helpers/memory-vault';
@@ -216,5 +216,108 @@ describe('guarded creation failure paths', () => {
     expect(result.status).toBe('applied');
     expect(parseHabitNote(vault.files.get(PATH) ?? '').habit.name).toBe('Gym');
     expect([...vault.files.keys()].filter((path) => path.includes('recovery'))).toEqual([]);
+  });
+});
+
+describe('guarded deletion', () => {
+  it('removes only the verified complete note after identity and editor checks', async () => {
+    const { vault, writer } = setup();
+    const habit = makeHabit();
+    addHabitNote(vault.files, habit, PATH);
+    vault.files.set(PATH, `${vault.files.get(PATH)}\nPersonal text`);
+    vault.files.set('Habits/Other.md', 'unrelated');
+    const baseContent = vault.files.get(PATH) ?? '';
+    const verifyIdentity = vi.fn().mockResolvedValue(true);
+
+    const result = await writer.delete(PATH, { baseContent, verifyIdentity });
+
+    expect(result.status).toBe('applied');
+    expect(verifyIdentity).toHaveBeenCalled();
+    expect(vault.files.has(PATH)).toBe(false);
+    expect(vault.files.get('Habits/Other.md')).toBe('unrelated');
+    expect(vault.trashCount).toBe(1);
+  });
+
+  it('does not delete a changed note or one whose identity is ambiguous', async () => {
+    const { vault, writer } = setup();
+    addHabitNote(vault.files, makeHabit(), PATH);
+    const baseContent = vault.files.get(PATH) ?? '';
+    vault.files.set(PATH, `${baseContent}\nExternal edit`);
+    expect(
+      (await writer.delete(PATH, { baseContent, verifyIdentity: async () => true })).status,
+    ).toBe('conflict');
+    vault.files.set(PATH, baseContent);
+    expect(
+      (await writer.delete(PATH, { baseContent, verifyIdentity: async () => false })).status,
+    ).toBe('conflict');
+    expect(vault.files.get(PATH)).toBe(baseContent);
+    expect(vault.trashCount).toBe(0);
+  });
+
+  it.each(['dirty', 'unknown'] as const)(
+    'blocks %s editor state before dispatch',
+    async (status) => {
+      const { vault } = setup();
+      addHabitNote(vault.files, makeHabit(), PATH);
+      const baseContent = vault.files.get(PATH) ?? '';
+      const writer = new GuardedWriter({ vault, editorGuard: { inspect: () => ({ status }) } });
+      expect(
+        (await writer.delete(PATH, { baseContent, verifyIdentity: async () => true })).status,
+      ).toBe('editor-blocked');
+      expect(vault.files.get(PATH)).toBe(baseContent);
+      expect(vault.trashCount).toBe(0);
+    },
+  );
+
+  it('treats a false result as failure only when the original note is still verifiable', async () => {
+    const { vault, writer } = setup();
+    addHabitNote(vault.files, makeHabit(), PATH);
+    const baseContent = vault.files.get(PATH) ?? '';
+    vault.trashResult = false;
+    const result = await writer.delete(PATH, { baseContent, verifyIdentity: async () => true });
+    expect(result.status).toBe('failed');
+    expect(vault.files.get(PATH)).toBe(baseContent);
+    expect(vault.trashCount).toBe(1);
+  });
+
+  it('reports an uncertain result after a thrown deletion and never retries', async () => {
+    const { vault, writer } = setup();
+    addHabitNote(vault.files, makeHabit(), PATH);
+    const baseContent = vault.files.get(PATH) ?? '';
+    vault.failNextTrash = new Error('unknown outcome');
+    const result = await writer.delete(PATH, { baseContent, verifyIdentity: async () => true });
+    expect(result.status).toBe('uncertain');
+    expect(vault.trashCount).toBe(1);
+  });
+
+  it('reports uncertainty if the editor changes while deletion is in flight', async () => {
+    const { vault } = setup();
+    addHabitNote(vault.files, makeHabit(), PATH);
+    const baseContent = vault.files.get(PATH) ?? '';
+    let editorContent = baseContent;
+    const writer = new GuardedWriter({
+      vault,
+      editorGuard: { inspect: () => ({ status: 'clean', content: editorContent }) },
+    });
+    vault.beforeTrash = () => {
+      editorContent = `${baseContent}\nUnsaved edit`;
+    };
+    const result = await writer.delete(PATH, { baseContent, verifyIdentity: async () => true });
+    expect(result.status).toBe('uncertain');
+    expect(vault.trashCount).toBe(1);
+  });
+
+  it('does not treat false as a known failure if the note changed during dispatch', async () => {
+    const { vault, writer } = setup();
+    addHabitNote(vault.files, makeHabit(), PATH);
+    const baseContent = vault.files.get(PATH) ?? '';
+    vault.trashResult = false;
+    vault.afterTrash = () => {
+      vault.files.set(PATH, 'replacement');
+    };
+    const result = await writer.delete(PATH, { baseContent, verifyIdentity: async () => true });
+    expect(result.status).toBe('uncertain');
+    expect(vault.files.get(PATH)).toBe('replacement');
+    expect(vault.trashCount).toBe(1);
   });
 });

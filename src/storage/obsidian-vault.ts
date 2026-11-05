@@ -1,9 +1,12 @@
-import { TFile, TFolder, type Vault } from 'obsidian';
+import { TFile, TFolder, type FileManager, type Vault } from 'obsidian';
 import { t } from '../i18n';
 import type { VaultPort } from './vault-port';
 
 export class ObsidianVaultPort implements VaultPort {
-  constructor(private readonly vault: Vault) {}
+  constructor(
+    private readonly vault: Vault,
+    private readonly fileManager: FileManager,
+  ) {}
 
   async listMarkdownFiles(folder: string): Promise<string[]> {
     const normalized = folder.replace(/^\/+|\/+$/g, '');
@@ -43,6 +46,11 @@ export class ObsidianVaultPort implements VaultPort {
       await this.ensureFolder(folder);
     }
     await this.vault.create(path, content);
+  }
+
+  async trash(path: string): Promise<unknown> {
+    const result: unknown = await this.fileManager.trashFile(this.requireFile(path));
+    return result;
   }
 
   async process(path: string, transform: (content: string) => string): Promise<string> {

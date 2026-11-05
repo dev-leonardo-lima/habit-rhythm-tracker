@@ -35,6 +35,16 @@ export interface CreateIntent {
   habit: Habit;
 }
 
+export interface DeleteIntent {
+  baseContent: string;
+  verifyIdentity(): Promise<boolean>;
+  beforeDispatch?(): boolean;
+}
+
+export type DeleteResult =
+  | { status: 'applied' | 'conflict' | 'failed' | 'uncertain' }
+  | { status: 'editor-blocked'; reason: 'dirty' | 'unknown' };
+
 export type WriteResult =
   | {
       status: 'applied';
@@ -112,6 +122,70 @@ export class GuardedWriter {
 
   update(path: string, intent: WriteIntent): Promise<WriteResult> {
     return this.serialize(path, () => this.doUpdate(path, intent));
+  }
+
+  delete(path: string, intent: DeleteIntent): Promise<DeleteResult> {
+    return this.serialize(path, () => this.doDelete(path, intent));
+  }
+
+  private async doDelete(path: string, intent: DeleteIntent): Promise<DeleteResult> {
+    const matches = async (): Promise<boolean> =>
+      (await intent.verifyIdentity()) && (await this.vault.read(path)) === intent.baseContent;
+    try {
+      if (!(await matches())) {
+        return { status: 'conflict' };
+      }
+    } catch {
+      return { status: 'conflict' };
+    }
+
+    try {
+      await this.editorGuard.prepare?.(path);
+      const problem = inspectionProblem(this.editorGuard.inspect(path), [intent.baseContent]);
+      if (problem) {
+        return { status: 'editor-blocked', reason: problem };
+      }
+    } catch {
+      return { status: 'editor-blocked', reason: 'unknown' };
+    }
+
+    try {
+      if (!(await matches())) {
+        return { status: 'conflict' };
+      }
+    } catch {
+      return { status: 'conflict' };
+    }
+    try {
+      const problem = inspectionProblem(this.editorGuard.inspect(path), [intent.baseContent]);
+      if (problem) {
+        return { status: 'editor-blocked', reason: problem };
+      }
+    } catch {
+      return { status: 'editor-blocked', reason: 'unknown' };
+    }
+    if (intent.beforeDispatch && !intent.beforeDispatch()) {
+      return { status: 'conflict' };
+    }
+
+    let result: unknown;
+    try {
+      result = await this.vault.trash(path);
+    } catch {
+      return { status: 'uncertain' };
+    }
+    try {
+      const problem = inspectionProblem(this.editorGuard.inspect(path), [intent.baseContent]);
+      if (problem) {
+        return { status: 'uncertain' };
+      }
+      if (result === false) {
+        return { status: (await matches()) ? 'failed' : 'uncertain' };
+      }
+      return { status: this.vault.exists(path) ? 'uncertain' : 'applied' };
+    } catch {
+      return { status: 'uncertain' };
+    }
   }
 
   protected serialize<T>(key: string, task: () => Promise<T>): Promise<T> {

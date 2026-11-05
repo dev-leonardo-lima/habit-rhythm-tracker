@@ -32,6 +32,60 @@ const manifest = {
 };
 
 describe('US1: Portuguese interface follows Obsidian', () => {
+  it('shows only the short localized deletion question and actions', async () => {
+    useLanguage('pt-BR');
+    const harness = createHarness({ now: () => localNoon(2026, 10, 28) });
+    addHabitNote(harness.vault.files, makeHabit({ id: 'reading', name: 'Leitura' }));
+    const { workspace } = createFakeApp();
+    const view = new HabitDashboardView(workspace.addLeaf(), () => harness.controller);
+    document.body.append(view.contentEl);
+    await view.onOpen();
+
+    const action = view.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id]');
+    expect(action?.textContent).toBe('Excluir hábito');
+    expect(action?.getAttribute('aria-label')).toBe('Excluir hábito Leitura');
+    action?.click();
+    await vi.waitFor(() =>
+      expect(document.querySelector('.habit-tracker-delete-confirmation')).not.toBeNull(),
+    );
+    const modal = document.querySelector<HTMLElement>('.habit-tracker-delete-confirmation');
+    expect(modal?.querySelector('.modal-title')?.textContent).toBe("Excluir hábito 'Leitura'?");
+    expect([...modal!.querySelectorAll('button')].map((button) => button.textContent)).toEqual([
+      'Cancelar',
+      'Excluir',
+    ]);
+    await harness.controller.refresh();
+    expect(document.querySelector('.habit-tracker-delete-confirmation')).toBe(modal);
+    (modal?.querySelector('button') as HTMLButtonElement).click();
+    expect(harness.vault.files.has('Habits/Leitura.md')).toBe(true);
+    await view.onClose();
+    view.contentEl.remove();
+  });
+
+  it('renders and confirms the same concise flow in English', async () => {
+    useLanguage('en');
+    const harness = createHarness({ now: () => localNoon(2026, 10, 28) });
+    addHabitNote(harness.vault.files, makeHabit({ id: 'reading', name: 'Reading' }));
+    const { workspace } = createFakeApp();
+    const view = new HabitDashboardView(workspace.addLeaf(), () => harness.controller);
+    document.body.append(view.contentEl);
+    await view.onOpen();
+    view.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
+    await vi.waitFor(() =>
+      expect(document.querySelector('.habit-tracker-delete-confirmation')).not.toBeNull(),
+    );
+    const modal = document.querySelector<HTMLElement>('.habit-tracker-delete-confirmation');
+    expect(modal?.querySelector('.modal-title')?.textContent).toBe("Delete habit 'Reading'?");
+    expect([...modal!.querySelectorAll('button')].map((button) => button.textContent)).toEqual([
+      'Cancel',
+      'Delete',
+    ]);
+    (modal?.querySelectorAll('button')[1] as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(harness.vault.files.has('Habits/Reading.md')).toBe(false));
+    await view.onClose();
+    view.contentEl.remove();
+  });
+
   it('renders the dashboard, history and management in pt-BR', async () => {
     useLanguage('pt-BR');
     const harness = createHarness({ now: () => localNoon(2026, 10, 28) });

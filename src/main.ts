@@ -17,6 +17,7 @@ import {
 export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
   override settings: HabitTrackerSettings = { ...DEFAULT_SETTINGS };
   private controller: DashboardController | null = null;
+  private pendingSettingsUpdates = 0;
 
   override async onload(): Promise<void> {
     this.settings = resolveSettings(await this.loadData());
@@ -76,19 +77,53 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
    */
   async updateSettings(patch: Partial<HabitTrackerSettings>): Promise<void> {
     const next = validateSettings({ ...this.settings, ...patch });
+    const previous = this.settings;
+    const outgoing = this.controller;
+    const pending = outgoing?.beginSettingsUpdate();
+    this.pendingSettingsUpdates += 1;
     this.settings = next;
-    await this.saveData(next);
-    this.configure();
-    for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)) {
-      if (leaf.view instanceof HabitDashboardView) {
-        leaf.view.rebind();
+    try {
+      await this.saveData(next);
+      let active = outgoing;
+      let settled = pending;
+      for (;;) {
+        await settled;
+        if (active === this.controller) {
+          break;
+        }
+        active = this.controller;
+        settled = active?.beginSettingsUpdate();
+      }
+      const outcome =
+        active?.getSettingsDeletionOutcome() ?? outgoing?.getSettingsDeletionOutcome();
+      this.configure();
+      if (this.pendingSettingsUpdates > 1) {
+        void this.controller?.beginSettingsUpdate();
+      }
+      if (outcome) {
+        this.controller?.restoreDeletionOutcome(outcome);
+      }
+      for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)) {
+        if (leaf.view instanceof HabitDashboardView) {
+          leaf.view.rebind();
+        }
+      }
+      await this.controller?.load();
+    } catch (error) {
+      if (this.settings === next) {
+        this.settings = previous;
+      }
+      throw error;
+    } finally {
+      this.pendingSettingsUpdates -= 1;
+      if (this.pendingSettingsUpdates === 0) {
+        this.controller?.endSettingsUpdate();
       }
     }
-    await this.controller?.load();
   }
 
   private configure(): void {
-    const vault = new ObsidianVaultPort(this.app.vault);
+    const vault = new ObsidianVaultPort(this.app.vault, this.app.fileManager);
     const repository = new HabitRepository(vault, this.settings.habitsFolder);
     const editorGuard = new ObsidianEditorGuard(this.app);
     const writer = new GuardedWriter({ vault, editorGuard });

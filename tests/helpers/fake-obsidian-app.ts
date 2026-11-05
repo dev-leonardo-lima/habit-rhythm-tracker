@@ -198,7 +198,8 @@ export class FakeWorkspace {
 export function createFakeApp(): { app: App; vault: FakeVault; workspace: FakeWorkspace } {
   const vault = new FakeVault();
   const workspace = new FakeWorkspace();
-  const app = { vault, workspace } as unknown as App;
+  const fileManager = { trashFile: async (file: TFile) => vault.delete(file) };
+  const app = { vault, workspace, fileManager } as unknown as App;
   workspace.app = app;
   return { app, vault, workspace };
 }

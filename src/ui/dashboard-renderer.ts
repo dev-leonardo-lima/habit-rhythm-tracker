@@ -18,6 +18,7 @@ export interface DashboardHandlers {
   archiveHabit(habitId: string): void | Promise<unknown>;
   reactivateHabit(habitId: string): void | Promise<unknown>;
   cancelPendingArchive(habitId: string): void | Promise<unknown>;
+  deleteHabit(habitId: string): void | Promise<unknown>;
   previousWeek(): void;
   nextWeek(): void;
 }

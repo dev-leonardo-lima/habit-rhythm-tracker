@@ -22,6 +22,16 @@ export const enStrings = {
   'action.reactivate': 'Reactivate this week',
   'action.archive': 'Archive from next week',
   'action.createHabit': 'Create habit',
+  'action.deleteHabit': 'Delete habit',
+  'action.delete': 'Delete',
+  'action.cancel': 'Cancel',
+  'delete.question': "Delete habit '{name}'?",
+  'delete.actionAria': 'Delete habit {name}',
+  'delete.actionPathAria': 'Delete habit {name}: {path}',
+  'delete.conflict': 'The habit note changed or could not be identified. Review it and try again.',
+  'delete.failed': 'The habit note was not deleted. Check the vault and try again.',
+  'delete.uncertain':
+    'The deletion result is uncertain. Check the vault and trash before trying again.',
 
   'dashboard.previousWeek': 'Previous week',
   'dashboard.nextWeek': 'Next week',

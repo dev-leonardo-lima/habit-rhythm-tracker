@@ -26,7 +26,7 @@ import type { DiscoveredHabit, Habit, LocalDate, NoteIssue, WeekKey } from '../d
 import { outcomeLabel, weeklyOutcome } from '../domain/weekly-outcome';
 import { completedDatesInWeek, completedCountInWeek } from '../domain/week-progress';
 import type { HabitRepository } from '../storage/habit-repository';
-import type { WriteResult } from '../storage/guarded-write';
+import type { DeleteResult, WriteResult } from '../storage/guarded-write';
 import type { GuardedCreator, GuardedWriter } from '../storage/guarded-write';
 import { t } from '../i18n';
 import { CalendarController } from './calendar-controller';
@@ -45,6 +45,20 @@ export type MessageKind = 'info' | 'warning' | 'error';
 export interface DashboardMessage {
   kind: MessageKind;
   text: string;
+}
+
+export interface DeletionRequest {
+  habitId: string;
+  name: string;
+  path: string;
+}
+
+interface PendingDeletion extends DeletionRequest {
+  baseContent: string;
+  phase: 'preparing' | 'ready' | 'committing';
+  invalidated: boolean;
+  dispatched: boolean;
+  completion?: Promise<DeleteResult | null>;
 }
 
 export interface DashboardControllerOptions {
@@ -166,6 +180,9 @@ export class DashboardController {
   private selectedHistoryYear: number | null = null;
   private reloadGeneration = 0;
   private readonly habitQueues = new Map<string, Promise<void>>();
+  private readonly pendingDeletions = new Map<string, PendingDeletion>();
+  private settingsChanging = false;
+  private settingsDeletionOutcome: DashboardMessage | null = null;
 
   constructor(options: DashboardControllerOptions) {
     this.repository = options.repository;
@@ -456,11 +473,166 @@ export class DashboardController {
     return result;
   }
 
+  async prepareDeletion(habitId: string): Promise<DeletionRequest | null> {
+    if (this.settingsChanging || this.pendingDeletions.has(habitId)) {
+      return null;
+    }
+    const pending: PendingDeletion = {
+      habitId,
+      name: '',
+      path: '',
+      baseContent: '',
+      phase: 'preparing',
+      invalidated: false,
+      dispatched: false,
+    };
+    this.pendingDeletions.set(habitId, pending);
+    return this.serializeHabit(habitId, async () => {
+      try {
+        const fresh = await this.loadFresh(habitId);
+        if (
+          this.pendingDeletions.get(habitId) !== pending ||
+          pending.invalidated ||
+          this.settingsChanging
+        ) {
+          return null;
+        }
+        pending.name = fresh.habit.name;
+        pending.path = fresh.path;
+        pending.baseContent = fresh.content;
+        pending.phase = 'ready';
+        return { habitId, name: pending.name, path: pending.path };
+      } catch {
+        if (this.pendingDeletions.get(habitId) === pending) {
+          this.pendingDeletions.delete(habitId);
+          this.setMessage('error', t('delete.conflict'));
+        }
+        return null;
+      }
+    });
+  }
+
+  isDeletionPending(habitId: string): boolean {
+    const pending = this.pendingDeletions.get(habitId);
+    return !!pending && !pending.invalidated && pending.phase !== 'committing';
+  }
+
+  cancelDeletion(habitId: string): void {
+    const pending = this.pendingDeletions.get(habitId);
+    if (!pending || pending.phase === 'committing') {
+      return;
+    }
+    pending.invalidated = true;
+    this.pendingDeletions.delete(habitId);
+    this.emit();
+  }
+
+  beginSettingsUpdate(): Promise<void> {
+    if (!this.settingsChanging) {
+      this.settingsDeletionOutcome = null;
+    }
+    this.settingsChanging = true;
+    const completions: Array<Promise<DeleteResult | null>> = [];
+    for (const pending of this.pendingDeletions.values()) {
+      if (pending.completion) {
+        completions.push(pending.completion);
+      }
+      if (!pending.dispatched) {
+        pending.invalidated = true;
+        if (pending.phase !== 'committing') {
+          this.pendingDeletions.delete(pending.habitId);
+        }
+      }
+    }
+    this.emit();
+    return Promise.all(completions).then(() => undefined);
+  }
+
+  endSettingsUpdate(): void {
+    this.settingsChanging = false;
+  }
+
+  getSettingsDeletionOutcome(): DashboardMessage | null {
+    return this.settingsDeletionOutcome;
+  }
+
+  restoreDeletionOutcome(message: DashboardMessage): void {
+    this.settingsDeletionOutcome = message;
+    this.message = message;
+    this.emit();
+  }
+
+  async confirmDeletion(habitId: string): Promise<DeleteResult | null> {
+    const pending = this.pendingDeletions.get(habitId);
+    if (!pending || pending.invalidated || pending.phase !== 'ready' || this.settingsChanging) {
+      return null;
+    }
+    pending.phase = 'committing';
+    const completion = this.executeDeletion(pending);
+    pending.completion = completion;
+    return completion;
+  }
+
+  private async executeDeletion(pending: PendingDeletion): Promise<DeleteResult> {
+    let result: DeleteResult;
+    try {
+      result = await this.writer.delete(pending.path, {
+        baseContent: pending.baseContent,
+        verifyIdentity: async () => {
+          const found = await this.repository.findById(pending.habitId);
+          return !!found && found.path === pending.path;
+        },
+        beforeDispatch: () => {
+          if (
+            pending.invalidated ||
+            this.settingsChanging ||
+            this.pendingDeletions.get(pending.habitId) !== pending
+          ) {
+            return false;
+          }
+          pending.dispatched = true;
+          return true;
+        },
+      });
+    } catch {
+      result = { status: pending.dispatched ? 'uncertain' : 'failed' };
+    }
+    if (this.pendingDeletions.get(pending.habitId) === pending) {
+      this.pendingDeletions.delete(pending.habitId);
+    }
+    if (result.status === 'applied') {
+      if (this.selectedHabitId === pending.habitId) {
+        this.selectedHabitId = null;
+        this.selectedHistoryYear = null;
+      }
+      this.message = null;
+      await this.refresh();
+    } else if (!pending.invalidated || pending.dispatched) {
+      const text =
+        result.status === 'editor-blocked'
+          ? t('message.editorBlocked')
+          : result.status === 'conflict'
+            ? t('delete.conflict')
+            : result.status === 'failed'
+              ? t('delete.failed')
+              : t('delete.uncertain');
+      const kind = result.status === 'editor-blocked' ? 'warning' : 'error';
+      if (this.settingsChanging && pending.dispatched) {
+        this.settingsDeletionOutcome = { kind, text };
+      }
+      this.setMessage(kind, text);
+    }
+    return result;
+  }
+
   async toggleCompletion(
     habitId: string,
     date: LocalDate,
     completed?: boolean,
   ): Promise<WriteResult | null> {
+    if (this.pendingDeletions.has(habitId)) {
+      return null;
+    }
     return this.serializeHabit(habitId, () => this.writeCompletion(habitId, date, completed));
   }
 
@@ -536,6 +708,9 @@ export class DashboardController {
     habitId: string,
     transform: (habit: Habit) => Habit,
   ): Promise<WriteResult | null> {
+    if (this.pendingDeletions.has(habitId)) {
+      return null;
+    }
     return this.serializeHabit(habitId, () => this.writeLifecycle(habitId, transform));
   }
 

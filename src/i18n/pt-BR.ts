@@ -20,6 +20,17 @@ export const ptBR: Catalog = {
     'action.reactivate': 'Reativar esta semana',
     'action.archive': 'Arquivar a partir da próxima semana',
     'action.createHabit': 'Criar hábito',
+    'action.deleteHabit': 'Excluir hábito',
+    'action.delete': 'Excluir',
+    'action.cancel': 'Cancelar',
+    'delete.question': "Excluir hábito '{name}'?",
+    'delete.actionAria': 'Excluir hábito {name}',
+    'delete.actionPathAria': 'Excluir hábito {name}: {path}',
+    'delete.conflict':
+      'A nota do hábito mudou ou não pôde ser identificada. Revise-a e tente novamente.',
+    'delete.failed': 'A nota do hábito não foi excluída. Verifique o cofre e tente novamente.',
+    'delete.uncertain':
+      'O resultado da exclusão é incerto. Verifique o cofre e a lixeira antes de tentar novamente.',
 
     'dashboard.previousWeek': 'Semana anterior',
     'dashboard.nextWeek': 'Próxima semana',

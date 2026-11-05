@@ -39,12 +39,16 @@ plugin owns exactly one body block between `<!-- habit-tracker:start -->` and
 - `completions`: distinct valid local dates, none before `created`. Dates after today are retained
   after a device clock moves backward but do not count toward progress until they arrive.
 
-All content outside the managed block, including YAML frontmatter and arbitrary prose, belongs to the
-user and is preserved byte-for-byte. The plugin never reconstructs the whole note; it replaces only
-the managed block. It also preserves unknown JSON fields and unknown properties on existing target
+During ordinary edits, all content outside the managed block, including YAML frontmatter and
+arbitrary prose, belongs to the user and is preserved byte-for-byte. The plugin replaces only the
+managed block. It also preserves unknown JSON fields and unknown properties on existing target
 and state entries. An invalid stored color is retained on unrelated edits; selecting a new color is
 an explicit replacement. If an action would remove a history entry that has unknown properties, the
 action is blocked so the person can review those properties first.
+
+Deleting a habit after confirmation is the explicit exception: the complete note, including the
+managed block, history, frontmatter, and other user text, follows Obsidian's configured deletion
+behavior. Other notes and attachments are not deleted. The note format does not change.
 
 ## Discovery and validation
 
@@ -74,6 +78,11 @@ detected only afterwards, the plugin reports an uncertain outcome and asks the p
 note. The plugin does not promise to recover an
 unsaved intent after an unexpected app exit; previously saved note content remains intact. An
 eligible date that was unmarked can be marked again directly in the dashboard.
+
+Before deletion, the plugin checks the selected habit ID, path, full saved note, and open editors.
+Detected conflicts stop deletion. The subsequent Obsidian deletion call is separate from
+`Vault.process`, so an independent writer can still race with it. An uncertain result is reported
+without retrying or automatically restoring a note.
 
 Existing `recovery-*` notes from earlier development builds are preserved and ignored unless the
 person deletes them outside the plugin. The plugin does not read, modify, or clean them up.

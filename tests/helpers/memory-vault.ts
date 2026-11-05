@@ -7,13 +7,22 @@ export class MemoryVault implements VaultPort {
   failNextCreate: Error | null = null;
   failNextProcess: Error | null = null;
   failNextEnsureFolder: Error | null = null;
+  failNextTrash: Error | null = null;
+  trashResult: unknown = undefined;
+  trashDestination: 'system' | 'vault' | 'permanent' = 'permanent';
+  readonly systemTrash = new Map<string, string>();
+  readonly vaultTrash = new Map<string, string>();
+  beforeTrash: ((path: string) => void | Promise<void>) | null = null;
+  afterTrash: ((path: string) => void | Promise<void>) | null = null;
   beforeCreate: ((path: string, content: string) => void) | null = null;
   afterCreate: ((path: string, content: string) => void) | null = null;
   beforeProcess: ((path: string) => void) | null = null;
+  beforeProcessAsync: ((path: string) => Promise<void>) | null = null;
   afterProcess: ((path: string) => void) | null = null;
   beforeRead: ((path: string) => void) | null = null;
   createCount = 0;
   processCount = 0;
+  trashCount = 0;
 
   async listMarkdownFiles(folder: string): Promise<string[]> {
     return [...this.files.keys()]
@@ -54,9 +63,31 @@ export class MemoryVault implements VaultPort {
     this.afterCreate?.(path, content);
   }
 
+  async trash(path: string): Promise<unknown> {
+    this.trashCount += 1;
+    await this.beforeTrash?.(path);
+    if (this.failNextTrash) {
+      const error = this.failNextTrash;
+      this.failNextTrash = null;
+      throw error;
+    }
+    if (this.trashResult !== false) {
+      const content = this.files.get(path);
+      if (content !== undefined && this.trashDestination === 'system') {
+        this.systemTrash.set(path, content);
+      } else if (content !== undefined && this.trashDestination === 'vault') {
+        this.vaultTrash.set(path, content);
+      }
+      this.files.delete(path);
+    }
+    await this.afterTrash?.(path);
+    return this.trashResult;
+  }
+
   async process(path: string, transform: (data: string) => string): Promise<string> {
     this.processCount += 1;
     this.beforeProcess?.(path);
+    await this.beforeProcessAsync?.(path);
     if (this.failNextProcess) {
       const error = this.failNextProcess;
       this.failNextProcess = null;

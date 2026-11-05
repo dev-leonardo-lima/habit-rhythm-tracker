@@ -63,7 +63,7 @@ development setup and test-vault instructions, see [CONTRIBUTING.md](CONTRIBUTIN
 2. In **New habit**, enter a name, choose a weekly target, and select **Create habit**.
 3. Select an eligible day in the grid to mark it. Select it again to unmark it.
 4. Use the arrows to move between weeks. Select a habit's name to open its activity history.
-5. Expand **Manage habits** to change a name, target, color, or icon, or to archive a habit.
+5. Expand **Manage habits** to change a name, target, color, or icon, or to archive or delete a habit.
 
 For example, set **Gym** to **4 days / week**. Once you mark four distinct days, that week counts
 toward your streak even if the days are not consecutive. An unfinished current week does not break
@@ -84,6 +84,9 @@ In **Manage habits**:
 - Target changes and archiving take effect next week. Reactivation applies in the current week.
 - Archived habits and their history remain accessible. Only one editor is open at a time; drafts
   are kept while the dashboard remains open.
+- **Delete habit** asks for confirmation and removes the entire selected note, including
+  its history and any other text. Obsidian's deletion setting determines whether the note goes to
+  the system trash, the vault trash, or is deleted permanently.
 
 ## Data and privacy
 
@@ -95,6 +98,9 @@ the conflict instead of overwriting it. If a note is open with unsaved or unveri
 content, save or close it before trying the action again. Invalid notes are reported without being
 rewritten. The plugin cannot guarantee detection of conflicts produced by independent sync clients
 outside Obsidian's protected write interval.
+
+Before deleting, the plugin checks the selected note and open editors. If it cannot establish the
+result of a deletion, it asks you to check the vault and applicable trash before trying again.
 
 The plugin does not create a recovery journal. Unknown note formats are left unchanged; future
 format migrations require explicit approval and a recoverable copy of the original. See
