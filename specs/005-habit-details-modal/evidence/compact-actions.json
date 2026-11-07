@@ -1,0 +1,52 @@
+{
+  "before": {
+    "viewport": [
+      957,
+      949
+    ],
+    "buttons": [
+      {
+        "caption": "Arquivar a partir da próxima semana",
+        "x": 95.5,
+        "y": 383.046875,
+        "width": 275.4609375,
+        "height": 38
+      },
+      {
+        "caption": "Excluir hábito",
+        "x": 95.5,
+        "y": 429.046875,
+        "width": 135.65625,
+        "height": 38
+      }
+    ],
+    "sameRow": false,
+    "overflow": false,
+    "hint": null
+  },
+  "after": {
+    "viewport": [
+      957,
+      949
+    ],
+    "buttons": [
+      {
+        "caption": "Arquivar",
+        "x": 95.5,
+        "y": 395.3515625,
+        "width": 104.1640625,
+        "height": 38
+      },
+      {
+        "caption": "Excluir",
+        "x": 207.6640625,
+        "y": 395.3515625,
+        "width": 93.2578125,
+        "height": 38
+      }
+    ],
+    "sameRow": true,
+    "overflow": false,
+    "hint": "A partir da próxima semana."
+  }
+}

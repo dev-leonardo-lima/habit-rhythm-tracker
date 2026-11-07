@@ -1,0 +1,123 @@
+[
+  {
+    "label": "desktop",
+    "viewport": [
+      957,
+      949
+    ],
+    "modalWidth": 800,
+    "smallControls": [
+      {
+        "label": "Fechar hábito Exercício",
+        "width": 24,
+        "height": 24
+      },
+      {
+        "label": "Nome do hábito Exercício",
+        "width": 274.34375,
+        "height": 38
+      },
+      {
+        "label": "Renomear Exercício",
+        "width": 88.65625,
+        "height": 38
+      },
+      {
+        "label": "Meta semanal de Exercício a partir da próxima semana",
+        "width": 183.1484375,
+        "height": 38
+      },
+      {
+        "label": "Agendar meta semanal de Exercício",
+        "width": 179.8515625,
+        "height": 38
+      },
+      {
+        "label": "Escolher cor de Exercício",
+        "width": 26,
+        "height": 22
+      },
+      {
+        "label": "Usar cor do tema para Exercício",
+        "width": 126.375,
+        "height": 40
+      },
+      {
+        "label": "Escolher ícone de Exercício",
+        "width": 123.0234375,
+        "height": 40
+      },
+      {
+        "label": "Arquivar Exercício a partir da próxima semana",
+        "width": 275.4609375,
+        "height": 38
+      },
+      {
+        "label": "Excluir hábito Exercício",
+        "width": 135.65625,
+        "height": 38
+      },
+      {
+        "label": "Ano anterior do histórico",
+        "width": 32,
+        "height": 32
+      },
+      {
+        "label": "Próximo ano do histórico",
+        "width": 32,
+        "height": 32
+      }
+    ],
+    "blocks": [
+      {
+        "className": "habit-tracker-editor-fields",
+        "overflow": false
+      },
+      {
+        "className": "habit-tracker-editor-appearance-controls",
+        "overflow": false
+      },
+      {
+        "className": "habit-tracker-editor-preview",
+        "overflow": false
+      },
+      {
+        "className": "habit-tracker-actions habit-tracker-editor-footer",
+        "overflow": false
+      }
+    ],
+    "scrollers": [],
+    "preview": "Exercício com um nome bastante longo para conferir a prévia sem cortar as palavras"
+  },
+  {
+    "label": "390x844-light",
+    "viewport": [
+      390,
+      844
+    ],
+    "modalWidth": 374,
+    "smallControls": [],
+    "blocks": [
+      {
+        "className": "habit-tracker-editor-fields",
+        "overflow": false
+      },
+      {
+        "className": "habit-tracker-editor-appearance-controls",
+        "overflow": false
+      },
+      {
+        "className": "habit-tracker-editor-preview",
+        "overflow": false
+      },
+      {
+        "className": "habit-tracker-actions habit-tracker-editor-footer",
+        "overflow": false
+      }
+    ],
+    "scrollers": [
+      "modal-content"
+    ],
+    "preview": "Exercício com um nome bastante longo para conferir a prévia sem cortar as palavras"
+  }
+]

@@ -15,6 +15,12 @@ assumptions describe this original feature. [Delete a Habit](../004-delete-habit
 specifies an explicitly confirmed deletion flow that respects Obsidian deletion settings, including
 permanent deletion when selected; the existing data safeguards remain in force.
 
+**Presentation supersession**: [Habit Details Modal](../005-habit-details-modal/spec.md) replaces
+the inline history and Manage habits presentation with a native details dialog and Archived (n).
+The original note format, calculations, history eligibility, and guarded-write safeguards remain.
+Feature 005 additionally blocks newly introduced duplicate names on creation/rename while preserving
+all existing duplicate records.
+
 ## Clarifications
 
 ### Session 2026-10-28

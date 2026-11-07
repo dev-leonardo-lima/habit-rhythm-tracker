@@ -26,13 +26,12 @@ describe('deleting a habit', () => {
     expect(vault.files.get(selectedPath)).toBe(selectedNote);
     expect(vault.files.get('Habits/Existing.md')).toBe(oldNote);
 
-    controller.toggleHabitHistory('selected');
     await controller.prepareDeletion('selected');
     expect((await controller.confirmDeletion('selected'))?.status).toBe('applied');
     expect(vault.files.has(selectedPath)).toBe(false);
     expect(vault.files.get('Habits/Existing.md')).toBe(oldNote);
     expect(vault.files.get('Attachments/photo.png')).toBe('attachment');
-    expect(controller.getViewModel().detail).toBeNull();
+    expect(controller.getHabitDetail('selected', 2026)).toBeNull();
     expect(controller.getViewModel().habits.map((habit) => habit.habitId)).toEqual(['existing']);
     controller.previousWeek();
     expect(controller.getViewModel().weeks[0]?.rows.some((row) => row.habitId === 'selected')).toBe(
@@ -79,9 +78,8 @@ describe('deleting a habit', () => {
       expect(controller.getViewModel().habits).toHaveLength(0);
       vault.files.set(path, original);
       await controller.refresh();
-      controller.toggleHabitHistory('old-id');
-      expect(controller.getViewModel().detail?.habitId).toBe('old-id');
-      expect(controller.getViewModel().detail?.history.markedDays).toBe(1);
+      expect(controller.getHabitDetail('old-id', 2026)?.habitId).toBe('old-id');
+      expect(controller.getHabitDetail('old-id', 2026)?.history.markedDays).toBe(1);
     },
   );
 
@@ -96,10 +94,12 @@ describe('deleting a habit', () => {
     await controller.prepareDeletion('first');
     await controller.confirmDeletion('first');
     expect(vault.files.get(otherPath)).toBe(other);
+    expect(await controller.createHabit('Read')).toBeNull();
+    expect(controller.getViewModel().habits).toHaveLength(1);
+    await controller.renameHabit('second', 'Books');
     await controller.createHabit('Read');
     const created = controller.getViewModel().habits.find((habit) => habit.habitId !== 'second');
     expect(created?.habitId).not.toBe('first');
-    controller.toggleHabitHistory(created?.habitId ?? '');
-    expect(controller.getViewModel().detail?.history.markedDays).toBe(0);
+    expect(controller.getHabitDetail(created?.habitId ?? '', 2026)?.history.markedDays).toBe(0);
   });
 });

@@ -3,6 +3,7 @@ import { parseHabitNote, renderHabitNote, replaceHabitBlock } from '../../src/st
 import { createDashboardHandlers } from '../../src/ui/controller-handlers';
 import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { createHarness, localNoon } from '../helpers/controller-harness';
+import { mountDashboard, openHabit } from '../helpers/dashboard-view';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
 describe('icons and weekly progress', () => {
@@ -14,25 +15,15 @@ describe('icons and weekly progress', () => {
       `Personal notes\n\n${renderHabitNote(original)}\nKeep me\n`,
     );
     await harness.controller.load();
-    const container = document.createElement('div');
-    document.body.append(container);
-    const handlers = createDashboardHandlers(harness.controller);
-    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
-    const unsubscribe = harness.controller.subscribe(render);
-    render();
+    const view = await mountDashboard(harness.controller);
+    const container = openHabit(view);
 
-    const manage = container.querySelector<HTMLDetailsElement>('[data-disclosure-key="manage"]');
-    const edit = container.querySelector<HTMLDetailsElement>(
-      '[data-disclosure-key="edit:habit-1"]',
-    );
     const picker = container.querySelector<HTMLDetailsElement>(
       '[data-disclosure-key="icon:habit-1"]',
     );
-    if (!manage || !edit || !picker) {
+    if (!picker) {
       throw new Error('missing icon controls');
     }
-    manage.open = true;
-    edit.open = true;
     picker.open = true;
     const search = picker.querySelector<HTMLInputElement>('input[type="search"]');
     if (!search) {
@@ -61,14 +52,13 @@ describe('icons and weekly progress', () => {
       color: '#3366cc',
       completions: ['2026-10-27'],
     });
+    expect(container.querySelector('.modal-title svg')).toBeNull();
     expect(
-      container
-        .querySelector('[data-history-habit-id="habit-1"] svg')
-        ?.getAttribute('data-icon-id'),
+      container.querySelector('.habit-tracker-editor-preview svg')?.getAttribute('data-icon-id'),
     ).toBe('book-open');
     expect(
       container.querySelector<HTMLDetailsElement>('[data-disclosure-key="icon:habit-1"]')?.open,
-    ).toBe(true);
+    ).toBe(false);
     const pickerSummary = container.querySelector('[data-disclosure-key="icon:habit-1"] > summary');
     expect(pickerSummary?.textContent).toBe('Change icon');
     expect(pickerSummary?.querySelector('svg')?.getAttribute('data-icon-id')).toBe('book-open');
@@ -79,7 +69,15 @@ describe('icons and weekly progress', () => {
     expect(
       container.querySelector<HTMLInputElement>('input[aria-label="Search icons for Gym"]')?.value,
     ).toBe('book open');
-    expect(document.activeElement?.getAttribute('aria-label')).toBe('Use book open icon for Gym');
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Choose icon for Gym');
+
+    container.querySelector<HTMLDetailsElement>('[data-disclosure-key="icon:habit-1"]')!.open =
+      true;
+    await vi.waitFor(() =>
+      expect(container.querySelector<HTMLElement>('.habit-tracker-icon-popover')?.hidden).toBe(
+        false,
+      ),
+    );
 
     const remove = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Remove icon for Gym"]',
@@ -96,8 +94,7 @@ describe('icons and weekly progress', () => {
     ).toEqual(['2026-10-27']);
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Choose icon for Gym');
 
-    unsubscribe();
-    container.remove();
+    await view.onClose();
   });
 
   it('retains an unavailable icon through unrelated edits and shows it as unavailable', async () => {
@@ -112,12 +109,9 @@ describe('icons and weekly progress', () => {
     const note = parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit;
     expect(note.icon).toBe('plugin-icon-on-another-device');
     expect(note.completions).toContain('2026-10-28');
-    const container = document.createElement('div');
-    renderDashboard(
-      container,
-      harness.controller.getViewModel(),
-      createDashboardHandlers(harness.controller),
-    );
+    const view = await mountDashboard(harness.controller);
+    const container = openHabit(view);
+
     expect(container.textContent).toContain('Icon unavailable');
   });
 
@@ -192,7 +186,7 @@ describe('icons and weekly progress', () => {
     await harness.controller.toggleCompletion('habit-2', '2026-10-28', true);
     expect(
       container.querySelector('[data-habit-id="habit-2"] .habit-tracker-habit-status')?.textContent,
-    ).toContain('2 / 2 · Successful');
+    ).toContain('2 / 2');
     harness.controller.nextWeek();
     expect(container.textContent).not.toContain('Weekly goals met');
     unsubscribe();

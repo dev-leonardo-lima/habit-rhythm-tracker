@@ -1,0 +1,124 @@
+{
+  "before": {
+    "viewport": [
+      957,
+      949
+    ],
+    "nameToAppearance": 37.3984375,
+    "appearance": {
+      "x": 95.5,
+      "y": 301.25,
+      "width": 766,
+      "height": 97.59375,
+      "left": 95.5,
+      "right": 861.5,
+      "top": 301.25,
+      "bottom": 398.84375
+    },
+    "footer": {
+      "x": 95.5,
+      "y": 414.84375,
+      "width": 766,
+      "height": 55,
+      "left": 95.5,
+      "right": 861.5,
+      "top": 414.84375,
+      "bottom": 469.84375
+    },
+    "preview": {
+      "x": 488.5,
+      "y": 301.25,
+      "width": 373,
+      "height": 97.59375,
+      "left": 488.5,
+      "right": 861.5,
+      "top": 301.25,
+      "bottom": 398.84375
+    },
+    "actionsInAppearance": false,
+    "iconOffset": 15,
+    "labelOffset": 35,
+    "stats": [
+      {
+        "width": 247.328125,
+        "center": 219.1640625,
+        "valueCenter": 131.90625,
+        "align": "start"
+      },
+      {
+        "width": 247.3359375,
+        "center": 478.49609375,
+        "valueCenter": 395.76171875,
+        "align": "start"
+      },
+      {
+        "width": 247.328125,
+        "center": 737.828125,
+        "valueCenter": 643.53125,
+        "align": "start"
+      }
+    ],
+    "overflow": false
+  },
+  "after": {
+    "viewport": [
+      957,
+      949
+    ],
+    "nameToAppearance": 12,
+    "appearance": {
+      "x": 95.5,
+      "y": 278.6484375,
+      "width": 373,
+      "height": 188.3984375,
+      "left": 95.5,
+      "right": 468.5,
+      "top": 278.6484375,
+      "bottom": 467.046875
+    },
+    "footer": {
+      "x": 95.5,
+      "y": 383.046875,
+      "width": 373,
+      "height": 84,
+      "left": 95.5,
+      "right": 468.5,
+      "top": 383.046875,
+      "bottom": 467.046875
+    },
+    "preview": {
+      "x": 488.5,
+      "y": 300.046875,
+      "width": 373,
+      "height": 167,
+      "left": 488.5,
+      "right": 861.5,
+      "top": 300.046875,
+      "bottom": 467.046875
+    },
+    "actionsInAppearance": true,
+    "iconOffset": 12,
+    "labelOffset": 35,
+    "stats": [
+      {
+        "width": 247.328125,
+        "center": 219.1640625,
+        "valueCenter": 219.1640625,
+        "align": "center"
+      },
+      {
+        "width": 247.3359375,
+        "center": 478.49609375,
+        "valueCenter": 478.49609375,
+        "align": "center"
+      },
+      {
+        "width": 247.328125,
+        "center": 737.828125,
+        "valueCenter": 737.828125,
+        "align": "center"
+      }
+    ],
+    "overflow": false
+  }
+}

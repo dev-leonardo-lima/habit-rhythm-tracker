@@ -4,6 +4,7 @@ import type { DashboardController } from '../../src/ui/dashboard-controller';
 import { HabitDashboardView } from '../../src/ui/dashboard-view';
 import { createFakeApp } from '../helpers/fake-obsidian-app';
 import { createHarness, localNoon } from '../helpers/controller-harness';
+import { openHabit } from '../helpers/dashboard-view';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 import { renderHabitNote } from '../../src/storage/habit-note';
 
@@ -30,7 +31,9 @@ describe('deletion concurrency', () => {
     const view = new HabitDashboardView(workspace.addLeaf(), () => controller);
     document.body.append(view.contentEl);
     await view.onOpen();
-    view.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
+    const dialog = openHabit(view, 'reading');
+
+    dialog.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
     await vi.waitFor(() =>
       expect(document.querySelector('.habit-tracker-delete-confirmation')).not.toBeNull(),
     );
@@ -52,8 +55,12 @@ describe('deletion concurrency', () => {
     document.body.append(first.contentEl, second.contentEl);
     await first.onOpen();
     await second.onOpen();
-    first.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
-    second.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
+    const firstDialog = openHabit(first, 'reading');
+
+    firstDialog.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
+    const secondDialog = openHabit(second, 'reading');
+
+    secondDialog.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
     await vi.waitFor(() =>
       expect(document.querySelectorAll('.habit-tracker-delete-confirmation')).toHaveLength(1),
     );

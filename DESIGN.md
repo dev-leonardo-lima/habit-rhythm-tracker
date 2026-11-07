@@ -85,7 +85,7 @@ relationships with their own values.
 **Key Characteristics:**
 
 - One Monday–Sunday week, exactly seven columns, no monthly calendar.
-- Habit names left; compact weekly progress, outcome, and streak text underneath.
+- Habit names left; compact weekly progress and streak text underneath, without outcome labels.
 - Completion runs are continuous capsules without count labels; each habit also has textual
   progress without repeating the target or adding another progress rail.
 - The year is a small centered label above the week range; crossing years name both.
@@ -110,7 +110,7 @@ that carries completion and current-week meaning.
 - **Deep Ground** (`#1c1c1c` reference): the page and grid ground.
 - **Raised Surface** (`#282828` reference): messages, code blocks, hover rows, and popover ground.
 - **Primary Text** (`#dadada` reference): habit names and dates.
-- **Muted Text** (`#b3b3b3` reference): target, streak, and weekly status.
+- **Muted Text** (`#b3b3b3` reference): target and streak metadata.
 - **Faint Text** (`#666666` reference): weekday labels, separators, and secondary metadata.
 - **Hairline** (`#333333` reference): one-pixel week, row, and table boundaries.
 
@@ -140,11 +140,13 @@ than a display face. Numerals are tabular so dates, targets, and counts stay ali
 - **Label** (450, 9–10.5px, 1.3): weekdays, dates, targets, streaks, week status, and disclosure
   summaries.
 - **Micro/Caption** (450, 7–8.5px, 1.2–1.3): weekday initials and compact labels.
+- **Mobile fields** (400, 16px): text inputs and selects retain readable input text and avoid
+  focus zoom in mobile WebViews; interactive targets are at least 44px square.
 
 ### Named Rules
 
-**The Quiet Label Rule.** Metadata is small and muted but never hidden or color-only. Status is
-always written in words.
+**The Quiet Label Rule.** Metadata is small and muted. Weekly progress uses `completed / target`
+beside a labeled streak; do not repeat it as successful, in progress, or missed-target text.
 
 ## Layout
 
@@ -154,15 +156,22 @@ context directly beneath. It shows no habit count. The grid uses a fixed habit c
 seven fluid day columns. A subtle border groups the table, while row separators and
 the column header retain the shape of an Obsidian table.
 
-The always-visible New habit row sits above the grid, separated by a hairline. A selected habit's
-history opens below the grid; Manage habits is a disclosure below it, with compact rows that expand
-in place for editing. The editor groups name and next week's target, then places the color and icon
-controls together; the selected icon is shown without its technical name but is identified for
-assistive technology. The yearly activity grid
-uses the available width while keeping its day cells square, and scrolls on narrower panes. In a
-narrow workspace pane or phone-sized view, each habit's details sit above
-its seven days, which remain aligned with the weekday header. Each day has a 44px minimum hit area;
-very narrow views scroll horizontally if needed. No modal is used for creation or management.
+The always-visible New habit row sits above the grid, separated by a hairline. Selecting a habit
+name opens a native Obsidian dialog with an always-visible editor before the calendar.
+The desktop editor uses independent columns: name, appearance and lifecycle actions form the left
+block; next week's target and the live preview form the right. Target guidance never pushes the
+left appearance block down. On phones, name, target, the appearance/actions block and preview
+stack in that order; the selected icon is shown without its technical name but is identified for
+assistive technology. Archived (n) is a compact disclosure below the grid and opens the same dialog.
+Its membership follows today's state, independently of the displayed week. Archived items are
+left-aligned, use the same icon and habit color as the grid, and have a trailing opening chevron.
+Duplicate-name paths appear beneath the name, with hairlines separating items.
+
+The details dialog is centered on desktop, up to 800px wide, and uses one column and one vertical
+content scroller on phones. Only the yearly calendar scrolls horizontally, retaining its weekday
+labels and square day cells. In a narrow dashboard pane or phone-sized view, each habit's label sits
+above its seven days, which remain aligned with the weekday header. Each day has a 44px minimum hit
+area; very narrow dashboard views scroll horizontally if needed. Creation remains inline.
 
 ## Elevation & Depth
 
@@ -196,39 +205,77 @@ stable. Navigation in both directions uses the arrows.
 The whole day cell is the hit area. A visually hidden native checkbox keeps keyboard, touch, and
 screen-reader semantics. Completed days form unlabeled capsules in the habit's color or the theme
 accent. Hover and focus draw a capsule-shaped halo aligned with the mark. Disabled future or
-pre-creation days remain visible but muted.
+pre-creation days remain visible but muted. Completed marks have a 6px inset at the outer edges of
+Monday and Sunday, without shortening checkbox hit areas or adding gaps inside completion runs.
 
 ### Habit Row
 
-A habit cell holds an optional local Obsidian icon and the name as a history control. Compact
-metadata shows the selected week's `completed / target · outcome` and the current
+A habit cell holds an optional local Obsidian icon and the name as a details-dialog control. Compact
+metadata shows the selected week's `completed / target` and the current
 streak; no separate target label or progress rail repeats those values. Future marks do not count
-as completed. The row uses a hairline bottom border and a tonal hover. Archived rows are muted and
-labeled in text.
+as completed. The row uses a hairline bottom border and a tonal hover. Historical archived rows
+retain their marks and muted presentation; archive membership and scheduled changes remain explicit.
 
-### Habit History and Management
+### Habit Details
 
-The individual history is a bordered section with current and best streaks in weeks, marked days,
-and a read-only yearly calendar. Calendar squares follow the habit color, with labels for archived,
-unmarked, and unavailable days. Year navigation stays within the habit's recorded lifetime, and
-the calendar scrolls horizontally when space is limited. Management is a compact list of names,
-targets, current-week progress, and streaks; an Edit disclosure reveals the existing controls.
-On narrow screens, the name and metadata sit above the day controls, keeping each day easy to tap.
-Only one habit editor is expanded at a time; switching rows preserves unsaved form input in the view.
-The row has an accessible description without a redundant tooltip covering the editor.
+One native dialog per dashboard view combines the habit's name-only title, current and best streaks in
+weeks, marked days, and a read-only yearly calendar. Calendar squares follow the habit color, with
+labels for archived, unmarked, and unavailable days. Year navigation stays within the habit's
+recorded lifetime. Duplicate names show their note paths in the grid, archived list, and dialog.
+
+The editor stays visible before the calendar, without an Edit disclosure. Its live preview reflects
+name/target input without submitting it; the habit icon appears in the preview and icon control,
+not in the modal header. Name and target have separate submit actions; color and
+icon save immediately. Refresh retains active input nodes, drafts, selected year, and
+scroll. Unsaved name/target input survives closing and reopening within the same dashboard view.
+Archive/reactivate and Delete habit sit directly below the appearance controls in the same left
+block beside the preview. Compact labels keep both actions in one row. The archive/restore icon remains in its button;
+timing guidance appears on hover or keyboard focus, with no extra information button beside the
+actions. Full accessible action names retain the habit context. Buttons share the row height
+when a caption wraps on phones. Deletion uses a short
+inline question with Cancel/Delete in this same dialog. Escape cancels that question first; the
+next Escape closes details. Native close is labeled, initial focus goes to the title, and dismissal
+returns focus to the originating name or an available dashboard control.
+
+History statistics keep three equal columns and their existing gaps; each value and caption is
+centered within its column. The icon trigger uses an 18px badge and a 6px text gap, keeping the
+label position while aligning the glyph farther left.
+
+Weekly target and Appearance use small information buttons beside their titles. They reveal
+optional guidance on click, Enter/Space or touch, and close on Escape/outside click or focus leaving
+the trigger. The first Escape dismisses guidance before the dialog. Generic timing/immediate-save
+explanations do not occupy permanent rows; actual scheduled-target status remains visible. Target
+icon, title and information control share one full-width heading row above the select/save row.
+
+The icon chooser is a compact floating panel anchored to its trigger, using the browser's public
+popover API when available and a positioned fallback otherwise. It never reflows the editor.
+Search precedes up to 30 local choices per page; removal and close sit in the header, pagination
+below the grid. Selection closes and returns focus to the trigger. Escape closes the chooser first;
+clicking outside also dismisses it. It stays within the visible viewport and scrolls its results
+when height is limited. The editor retains a single main vertical content scroller. Long titles wrap in the native mobile header, and
+native close controls remain keyboard operable and at least 44px on mobile.
+
+New history years open with their anchor date visible; a same-year refresh retains manual horizontal
+scroll. The inline deletion question labels its group and describes Cancel without adding visible
+copy. Repeated errors are announced as new feedback; ordinary refresh preserves existing feedback.
+External name/path changes cancel the prepared question with conflict feedback, preserve drafts
+and return focus to Delete. The person must request deletion again after reviewing the change.
+Quick creation resets only its unchanged submission in the originating dashboard session. Newer
+input and drafts in other tabs remain available. Routine dashboard refresh preserves text selection
+and does not refocus an already displayed error; repeating an erroneous action produces new feedback.
 
 ### Disclosure
 
-Hairline-top rows with a small rotating chevron. Manage habits uses this pattern; the New habit form
-is always visible above the grid. The summary remains a standard focusable `<summary>`; details open
-in place.
+Hairline-top rows with a small rotating chevron. Archived (n) uses a standard focusable `<summary>` control. New habit stays visible above the grid.
 
 ### Inputs and Buttons
 
-Inputs are 30px high, 6px radius, ground-colored, with a hairline border and accent focus. The color
+Dashboard inputs are 30px high, 6px radius, ground-colored, with a hairline border and accent focus.
+Habit-details fields and submit buttons are 38px high with native UI typography, growing to at least
+44px on touch layouts. The color
 control is a true circular swatch with a 34px touch target; choosing a color applies immediately,
 and **Use theme color** sits beside it, disabled when the theme is already active. The input names
-the habit in its accessible label. A searchable, paginated in-place icon picker uses Obsidian's local
+the habit in its accessible label. A searchable, paginated floating icon picker uses Obsidian's local
 icon registry, with labeled, touch-sized choices and an explicit remove action. Primary creation uses the theme accent; all secondary actions are
 text or hairline ghost buttons. Touch targets grow on narrow screens.
 
@@ -238,7 +285,7 @@ text or hairline ghost buttons. Touch targets grow on narrow screens.
 
 - **Do** keep one week, exactly seven date columns, and habits in rows.
 - **Do** draw consecutive completions as connected capsules without count labels.
-- **Do** keep target, streak, and weekly outcome visible in words.
+- **Do** keep completed/target counts and a labeled streak visible.
 - **Do** use the theme accent by default and apply an optional habit color only to that habit.
 - **Do** keep the year smaller and centered above the visible week range, with no habit count.
 - **Do** keep New habit visible, refresh automatically, and reserve banners for errors or conflicts.
@@ -249,5 +296,5 @@ text or hairline ghost buttons. Touch targets grow on narrow screens.
 - **Don't** add a monthly grid, month selector, or all-weeks table as the primary view.
 - **Don't** turn weeks into separate cards or nest cards.
 - **Don't** use color alone for completion, state, or errors.
-- **Don't** hide target, streak, or weekly outcome behind hover-only affordances.
+- **Don't** hide target or streak behind hover-only affordances, or add redundant outcome text.
 - **Don't** replace native checkboxes, summaries, or form controls with custom div controls.

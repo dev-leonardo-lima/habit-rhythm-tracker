@@ -1,15 +1,14 @@
 import * as obsidian from 'obsidian';
 import { describe, expect, it, vi } from 'vitest';
 import { parseHabitNote } from '../../src/storage/habit-note';
-import { createDashboardHandlers } from '../../src/ui/controller-handlers';
-import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { createHarness, localNoon } from '../helpers/controller-harness';
+import { mountDashboard, openHabit } from '../helpers/dashboard-view';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
 describe('icon pagination', () => {
-  it('browses the full registry, retains the page after saving, and resets it on search', async () => {
+  it('browses the registry, retains the page when reopened after selection, and resets on search', async () => {
     const ids = Array.from(
-      { length: 82 },
+      { length: 91 },
       (_, index) => `custom-icon-${String(index).padStart(3, '0')}`,
     );
     vi.spyOn(obsidian, 'getIconIds').mockReturnValue(ids);
@@ -22,35 +21,25 @@ describe('icon pagination', () => {
     const harness = createHarness({ now: () => localNoon(2026, 10, 28) });
     addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
     await harness.controller.load();
-    const container = document.createElement('div');
-    document.body.append(container);
-    const handlers = createDashboardHandlers(harness.controller);
-    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
-    const unsubscribe = harness.controller.subscribe(render);
-    render();
+    const view = await mountDashboard(harness.controller);
+    const container = openHabit(view);
 
-    const manage = container.querySelector<HTMLDetailsElement>('[data-disclosure-key="manage"]');
-    const edit = container.querySelector<HTMLDetailsElement>(
-      '[data-disclosure-key="edit:habit-1"]',
-    );
     const picker = container.querySelector<HTMLDetailsElement>(
       '[data-disclosure-key="icon:habit-1"]',
     );
-    if (!manage || !edit || !picker) {
+    if (!picker) {
       throw new Error('missing icon controls');
     }
-    manage.open = true;
-    edit.open = true;
     picker.open = true;
     const search = picker.querySelector<HTMLInputElement>('input[type="search"]');
     if (!search) {
       throw new Error('missing search');
     }
     search.dispatchEvent(new Event('input'));
-    expect(picker.querySelectorAll('.habit-tracker-icon-option')).toHaveLength(27);
+    expect(picker.querySelectorAll('.habit-tracker-icon-option')).toHaveLength(30);
     expect(picker.querySelector('.habit-tracker-icon-page-label')?.textContent).toBe('Page 1 of 4');
     expect(picker.querySelector('.habit-tracker-icon-hint')?.textContent).toBe(
-      'Showing 1–27 of 82 icons.',
+      'Showing 1–30 of 91 icons.',
     );
     expect(
       picker.querySelector<HTMLButtonElement>('button[aria-label="Previous icon page for Gym"]')
@@ -59,7 +48,7 @@ describe('icon pagination', () => {
     picker.querySelector<HTMLButtonElement>('button[aria-label="Next icon page for Gym"]')?.click();
     expect(picker.querySelector('.habit-tracker-icon-page-label')?.textContent).toBe('Page 2 of 4');
     expect(picker.querySelector('.habit-tracker-icon-hint')?.textContent).toBe(
-      'Showing 28–54 of 82 icons.',
+      'Showing 31–60 of 91 icons.',
     );
 
     const results = picker.querySelector<HTMLElement>('.habit-tracker-icon-results');
@@ -69,7 +58,7 @@ describe('icon pagination', () => {
     results.scrollTop = 36;
     results.dispatchEvent(new Event('scroll'));
     const choice = picker.querySelector<HTMLButtonElement>(
-      'button[aria-label="Use custom icon 027 icon for Gym"]',
+      'button[aria-label="Use custom icon 030 icon for Gym"]',
     );
     if (!choice) {
       throw new Error('missing icon on second page');
@@ -78,16 +67,24 @@ describe('icon pagination', () => {
     choice.click();
     await vi.waitFor(() => {
       expect(parseHabitNote(harness.vault.files.get('Habits/Gym.md') ?? '').habit.icon).toBe(
-        'custom-icon-027',
+        'custom-icon-030',
       );
     });
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Choose icon for Gym');
+    const reopened = container.querySelector<HTMLDetailsElement>(
+      '[data-disclosure-key="icon:habit-1"]',
+    )!;
+    expect(reopened.open).toBe(false);
+    reopened.open = true;
+    await vi.waitFor(() =>
+      expect(container.querySelector<HTMLElement>('.habit-tracker-icon-popover')?.hidden).toBe(
+        false,
+      ),
+    );
     expect(container.querySelector('.habit-tracker-icon-page-label')?.textContent).toBe(
       'Page 2 of 4',
     );
     expect(container.querySelector<HTMLElement>('.habit-tracker-icon-results')?.scrollTop).toBe(36);
-    expect(document.activeElement?.getAttribute('aria-label')).toBe(
-      'Use custom icon 027 icon for Gym',
-    );
 
     container
       .querySelector<HTMLButtonElement>('button[aria-label="Next icon page for Gym"]')
@@ -105,7 +102,7 @@ describe('icon pagination', () => {
     expect(document.activeElement).toBe(container.querySelector('.habit-tracker-icon-page-label'));
     expect(container.querySelectorAll('.habit-tracker-icon-option')).toHaveLength(1);
     expect(
-      container.querySelector('button[aria-label="Use custom icon 081 icon for Gym"]'),
+      container.querySelector('button[aria-label="Use custom icon 090 icon for Gym"]'),
     ).not.toBeNull();
 
     const freshSearch = container.querySelector<HTMLInputElement>(
@@ -141,7 +138,6 @@ describe('icon pagination', () => {
     );
     expect(container.querySelectorAll('.habit-tracker-icon-option')).toHaveLength(0);
 
-    unsubscribe();
-    container.remove();
+    await view.onClose();
   });
 });

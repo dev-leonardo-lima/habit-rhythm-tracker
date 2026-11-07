@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parseHabitNote, replaceHabitBlock } from '../../src/storage/habit-note';
 import { scheduleTargetChange } from '../../src/domain/target-history';
-import { createDashboardHandlers } from '../../src/ui/controller-handlers';
-import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { createHarness, localNoon } from '../helpers/controller-harness';
+import { mountDashboard, openHabit } from '../helpers/dashboard-view';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
 const path = 'Habits/Gym.md';
@@ -151,12 +150,9 @@ describe('review regressions', () => {
     const harness = createHarness({ now });
     addHabitNote(harness.vault.files, makeHabit(), path);
     await harness.controller.load();
-    const container = document.createElement('div');
-    document.body.append(container);
-    const handlers = createDashboardHandlers(harness.controller);
-    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
-    const unsubscribe = harness.controller.subscribe(render);
-    render();
+    const view = await mountDashboard(harness.controller);
+    const container = openHabit(view);
+
     const target = () =>
       container.querySelector<HTMLSelectElement>(
         'select[aria-label="Weekly target for Gym from next week"]',
@@ -177,7 +173,6 @@ describe('review regressions', () => {
     await harness.controller.refresh();
     expect(target()?.value).toBe('2');
     expect(harness.controller.getViewModel().habits[0]?.pendingTarget).toBe(3);
-    unsubscribe();
-    container.remove();
+    await view.onClose();
   });
 });

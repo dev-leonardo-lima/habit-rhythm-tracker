@@ -38,6 +38,10 @@ export function normalizeHabitName(name: string): string {
   return normalized;
 }
 
+export function habitNameKey(name: string): string {
+  return name.trim().normalize('NFC').toLowerCase();
+}
+
 export function validateTarget(target: number): number {
   if (!Number.isInteger(target) || target < 1 || target > 7) {
     throw new HabitOperationError('invalid-target', t('error.targetRange'));

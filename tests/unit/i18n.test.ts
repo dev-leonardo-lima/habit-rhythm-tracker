@@ -81,10 +81,10 @@ describe('catalog contract', () => {
 
   it('uses the confirmed glossary consistently', () => {
     expect(ptBR.strings['form.name']).toContain('hábito');
-    expect(ptBR.strings['history.title']).toContain('Histórico');
+    expect(ptBR.strings['history.sectionAria']).toContain('Histórico');
     expect(ptBR.strings['action.archive']).toContain('Arquivar');
-    expect(ptBR.strings['manage.columnTarget']).toBe('Meta semanal');
-    expect(ptBR.strings['manage.summaryAria']).toContain('progresso');
+    expect(ptBR.strings['editor.weeklyTarget']).toBe('Meta semanal');
+    expect(ptBR.strings['details.editAria']).toContain('Editar hábito');
     expect(ptBR.plurals['dashboard.streak'].other).toContain('Sequência');
     expect(ptBR.strings['history.hint']).toContain('sequências');
   });
@@ -93,13 +93,13 @@ describe('catalog contract', () => {
 describe('translation lookup and interpolation', () => {
   it('translates through the active catalog and falls back per missing key', () => {
     useLanguage('pt-BR');
-    expect(t('action.close')).toBe('Fechar');
-    expect(t('dashboard.viewHistoryAria', { name: 'Academia' })).toBe('Ver histórico de Academia');
+    expect(t('action.cancel')).toBe('Cancelar');
+    expect(t('dashboard.openHabitAria', { name: 'Academia' })).toBe('Abrir hábito Academia');
 
-    const close = ptBR.strings['action.close'];
-    delete (ptBR.strings as Partial<Record<keyof typeof en.strings, string>>)['action.close'];
-    expect(t('action.close')).toBe('Close');
-    (ptBR.strings as Record<string, string>)['action.close'] = close;
+    const close = ptBR.strings['action.cancel'];
+    delete (ptBR.strings as Partial<Record<keyof typeof en.strings, string>>)['action.cancel'];
+    expect(t('action.cancel')).toBe('Cancel');
+    (ptBR.strings as Record<string, string>)['action.cancel'] = close;
 
     const next = ptBR.strings['action.next'];
     (ptBR.strings as Record<string, string>)['action.next'] = '';
@@ -107,7 +107,7 @@ describe('translation lookup and interpolation', () => {
     (ptBR.strings as Record<string, string>)['action.next'] = next;
 
     useLanguage('fr');
-    expect(t('action.close')).toBe('Close');
+    expect(t('action.cancel')).toBe('Cancel');
   });
 
   it('replaces placeholders in a single pass', () => {

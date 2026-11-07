@@ -1,0 +1,122 @@
+[
+  {
+    "viewport": [
+      320,
+      844
+    ],
+    "theme": "dark",
+    "native": true,
+    "popup": {
+      "x": 12,
+      "y": 439.8046875,
+      "width": 296,
+      "height": 392.1953125
+    },
+    "modal": {
+      "x": 8,
+      "y": 8,
+      "width": 304,
+      "height": 828
+    },
+    "resultsHeight": 191,
+    "previewUnchanged": true,
+    "smallControls": [],
+    "horizontalOverflow": []
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "theme": "dark",
+    "native": true,
+    "popup": {
+      "x": 58,
+      "y": 436.3046875,
+      "width": 320,
+      "height": 395.6953125
+    },
+    "modal": {
+      "x": 8,
+      "y": 8,
+      "width": 374,
+      "height": 828
+    },
+    "resultsHeight": 195,
+    "previewUnchanged": true,
+    "smallControls": [],
+    "horizontalOverflow": []
+  },
+  {
+    "viewport": [
+      844,
+      390
+    ],
+    "theme": "dark",
+    "native": true,
+    "popup": {
+      "x": 245.2578125,
+      "y": 78,
+      "width": 320,
+      "height": 300
+    },
+    "modal": {
+      "x": 22,
+      "y": 24,
+      "width": 800,
+      "height": 342
+    },
+    "resultsHeight": 99,
+    "previewUnchanged": true,
+    "smallControls": [],
+    "horizontalOverflow": []
+  },
+  {
+    "viewport": [
+      320,
+      844
+    ],
+    "theme": "light",
+    "native": true,
+    "popup": {
+      "x": 12,
+      "y": 439.8046875,
+      "width": 296,
+      "height": 392.1953125
+    },
+    "modal": {
+      "x": 8,
+      "y": 8,
+      "width": 304,
+      "height": 828
+    },
+    "resultsHeight": 191,
+    "previewUnchanged": true,
+    "smallControls": [],
+    "horizontalOverflow": []
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "theme": "light",
+    "native": true,
+    "popup": {
+      "x": 58,
+      "y": 436.3046875,
+      "width": 320,
+      "height": 395.6953125
+    },
+    "modal": {
+      "x": 8,
+      "y": 8,
+      "width": 374,
+      "height": 828
+    },
+    "resultsHeight": 195,
+    "previewUnchanged": true,
+    "smallControls": [],
+    "horizontalOverflow": []
+  }
+]

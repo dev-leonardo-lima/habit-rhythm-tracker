@@ -10,6 +10,7 @@ import { HabitTrackerSettingTab } from '../../src/ui/settings-tab';
 import { parseHabitForm } from '../../src/ui/habit-form';
 import { createFakeApp } from '../helpers/fake-obsidian-app';
 import { createHarness, localNoon } from '../helpers/controller-harness';
+import { mountDashboard, openHabit } from '../helpers/dashboard-view';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
 function useLanguage(language: string): void {
@@ -41,15 +42,17 @@ describe('US1: Portuguese interface follows Obsidian', () => {
     document.body.append(view.contentEl);
     await view.onOpen();
 
-    const action = view.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id]');
-    expect(action?.textContent).toBe('Excluir hábito');
+    const dialog = openHabit(view, 'reading');
+
+    const action = dialog.querySelector<HTMLButtonElement>('[data-delete-habit-id]');
+    expect(action?.textContent).toBe('Excluir');
     expect(action?.getAttribute('aria-label')).toBe('Excluir hábito Leitura');
     action?.click();
     await vi.waitFor(() =>
       expect(document.querySelector('.habit-tracker-delete-confirmation')).not.toBeNull(),
     );
     const modal = document.querySelector<HTMLElement>('.habit-tracker-delete-confirmation');
-    expect(modal?.querySelector('.modal-title')?.textContent).toBe("Excluir hábito 'Leitura'?");
+    expect(modal?.querySelector('p')?.textContent).toBe("Excluir hábito 'Leitura'?");
     expect([...modal!.querySelectorAll('button')].map((button) => button.textContent)).toEqual([
       'Cancelar',
       'Excluir',
@@ -70,12 +73,14 @@ describe('US1: Portuguese interface follows Obsidian', () => {
     const view = new HabitDashboardView(workspace.addLeaf(), () => harness.controller);
     document.body.append(view.contentEl);
     await view.onOpen();
-    view.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
+    const dialog = openHabit(view, 'reading');
+
+    dialog.querySelector<HTMLButtonElement>('[data-delete-habit-id]')?.click();
     await vi.waitFor(() =>
       expect(document.querySelector('.habit-tracker-delete-confirmation')).not.toBeNull(),
     );
     const modal = document.querySelector<HTMLElement>('.habit-tracker-delete-confirmation');
-    expect(modal?.querySelector('.modal-title')?.textContent).toBe("Delete habit 'Reading'?");
+    expect(modal?.querySelector('p')?.textContent).toBe("Delete habit 'Reading'?");
     expect([...modal!.querySelectorAll('button')].map((button) => button.textContent)).toEqual([
       'Cancel',
       'Delete',
@@ -99,10 +104,8 @@ describe('US1: Portuguese interface follows Obsidian', () => {
       'Habits/Academia.md',
     );
     await harness.controller.load();
-    const container = document.createElement('div');
-    document.body.append(container);
-    harness.controller.subscribe(() => render(harness, container));
-    render(harness, container);
+    const view = await mountDashboard(harness.controller);
+    const container = view.contentEl;
 
     expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '26 out – 1 nov 2026',
@@ -117,9 +120,7 @@ describe('US1: Portuguese interface follows Obsidian', () => {
       container.querySelector('.habit-tracker-day-head .habit-tracker-weekday')?.textContent,
     ).toBe('seg');
     expect(container.querySelector('.habit-tracker-corner')?.textContent).toBe('Hábito');
-    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toBe(
-      '1 / 4 · Em andamento',
-    );
+    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toBe('1 / 4');
     expect(container.querySelector('.habit-tracker-meta-streak')?.textContent).toBe(
       'Sequência: 0 semanas',
     );
@@ -149,31 +150,29 @@ describe('US1: Portuguese interface follows Obsidian', () => {
       'A meta semanal deve ser um número inteiro de 1 a 7',
     );
 
-    const manage = container.querySelector<HTMLDetailsElement>(
-      'details[data-disclosure-key="manage"]',
-    );
-    expect(manage?.querySelector('summary')?.textContent).toContain('Gerenciar hábitos');
-    expect(manage?.textContent).toContain('Hábito');
-    expect(manage?.textContent).toContain('Meta semanal');
-    expect(manage?.textContent).toContain('Esta semana');
-    expect(manage?.textContent).toContain('Sequência');
-    expect(manage?.textContent).toContain('Editar');
-    expect(manage?.textContent).toContain('Nome');
-    expect(manage?.textContent).toContain('Renomear');
-    expect(manage?.textContent).toContain('Meta semanal a partir da próxima semana');
-    expect(manage?.textContent).toContain('Salvar meta semanal');
-    expect(manage?.textContent).toContain('Cor');
-    expect(manage?.textContent).toContain('Usar cor do tema');
-    expect(manage?.textContent).toContain('Ver histórico');
-    expect(manage?.textContent).toContain('Arquivar a partir da próxima semana');
-    expect(manage?.textContent).toContain('1 dia / semana');
+    const dialog = openHabit(view);
 
-    container
-      .querySelector<HTMLButtonElement>('button[aria-label="Ver histórico de Academia"]')
-      ?.click();
-    const history = container.querySelector('[data-testid="habit-history"]');
+    expect(dialog.querySelector('.habit-tracker-editor')?.getAttribute('aria-label')).toBe(
+      'Editar hábito Academia',
+    );
+    for (const text of [
+      'Nome',
+      'Renomear',
+      'Meta semanal',
+      'Vale a partir da próxima segunda-feira.',
+      'Salvar meta semanal',
+      'Aparência',
+      'Cor e ícone são aplicados na hora.',
+      'Prévia do hábito',
+      'Usar cor do tema',
+      'Arquivar',
+      'A partir da próxima semana.',
+      '1 dia / semana',
+    ]) {
+      expect(dialog.textContent).toContain(text);
+    }
+    const history = dialog.querySelector('[data-testid="habit-history"]');
     expect(history?.getAttribute('aria-label')).toBe('Histórico de Academia');
-    expect(history?.textContent).toContain('Histórico do hábito');
     expect(history?.textContent).toContain('Sequência atual');
     expect(history?.textContent).toContain('Melhor sequência');
     expect(history?.textContent).toContain('Dias marcados');
@@ -186,10 +185,7 @@ describe('US1: Portuguese interface follows Obsidian', () => {
     expect(history?.textContent).toContain('out');
     expect(history?.textContent).toContain('seg');
     expect(history?.querySelector('[aria-label*="28 de outubro de 2026"]')).not.toBeNull();
-    expect(
-      history?.querySelector<HTMLButtonElement>('button[aria-label="Fechar histórico de Academia"]')
-        ?.textContent,
-    ).toBe('Fechar');
+    expect(dialog.querySelector('[aria-label="Fechar hábito Academia"]')).not.toBeNull();
   });
 
   it('renders empty, loading and note-problem states in pt-BR', async () => {
@@ -288,7 +284,9 @@ describe('US1: Portuguese interface follows Obsidian', () => {
     const container = document.createElement('div');
     render(harness, container);
     expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('Esta semana');
-    expect(container.textContent).toContain('Gerenciar hábitos');
+    expect(container.querySelector('[data-open-habit-id]')?.getAttribute('aria-label')).toBe(
+      'Abrir hábito Academia',
+    );
     expect(container.textContent).not.toContain('Manage habits');
   });
 });

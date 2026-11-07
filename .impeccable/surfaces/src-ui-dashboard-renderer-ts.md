@@ -2,7 +2,14 @@
 version: 1
 slug: 'src-ui-dashboard-renderer-ts'
 primary_target: 'src/ui/dashboard-renderer.ts'
-related_targets: []
+related_targets:
+  [
+    'src/ui/habit-detail-modal.ts',
+    'src/ui/habit-editor.ts',
+    'src/ui/habit-icon-picker.ts',
+    'src/ui/info-popover.ts',
+    'styles.css',
+  ]
 ---
 
 # Surface: Current-week habit dashboard
@@ -25,7 +32,8 @@ is marking a day; creation and management are secondary.
 - Exactly seven days in the grid: Monday through Sunday for the selected week.
 - Previous/next week navigation, including returning to the current week through the arrows.
 - No monthly grid or month selector, no habit count, and no More or manual Refresh control.
-- New habit stays visible in a compact row; archived habits remain available in Manage habits.
+- New habit stays visible in a compact row; Archived (n) opens currently archived habits regardless
+  of the displayed week. Habit names open a native details dialog.
 - Open in the main workspace tab; reveal an existing main-tab instance. Move a sidebar instance to a
   predictable main tab rather than leaving it in the sidebar.
 - Keep controls standard, keyboard/touch operable, and fully accessible.
@@ -40,11 +48,28 @@ years name both and the header group is centered. Empty day outlines make the co
 and each habit's textual weekly progress remains visible without an extra progress rail or aggregate
 summary. On narrow widths the habit details
 sit above the seven day cells to keep the controls touchable. Navigation is limited to previous, next,
-and returning to the current week through the arrows. Creation is always visible above the grid;
-management is progressively disclosed below it. Its editor groups name and target before color and
-icon, with the selected icon shown without its technical name. The yearly activity calendar expands
-to the available width and scrolls on narrow screens. Successful routine changes stay quiet, while
-conflicts and failures surface as clear status text without a recovery area.
+and returning to the current week through the arrows. Creation is always visible above the grid.
+A habit name opens a native dialog with a name-only header and an always-visible compact editor
+before history. Independent desktop columns group name/appearance/lifecycle actions on the left
+and target/preview on the right. Narrow layouts stack name, target, appearance/actions, preview.
+Statistics remain in three equal columns with centered values and captions.
+Compact lifecycle captions keep Archive/Cancel archive/Reactivate beside Delete, retaining the
+archive/restore icon and full accessible names. Timing is explained on the action's hover/focus.
+Weekly target and Appearance have separate, keyboard/touch-operable information buttons beside
+their headings; generic guidance stays out of the permanent layout. Saved target scheduling stays
+visible. The target icon/title/information row spans the form above the select and save button.
+Unsaved input updates the preview without submitting; icon/color retain immediate saves. Archived (n) is the only secondary habit list. Details use one vertical scroller;
+the yearly calendar scrolls horizontally on narrow screens. Successful routine changes stay quiet,
+while conflicts and failures surface as clear status text inside the active dialog.
+
+The icon chooser floats beside its trigger without moving the form, with 30 local choices per page,
+local search, header removal/close, and pagination. Selection closes it and returns focus; Escape
+or an outside click dismisses it. It fits the visible viewport and scrolls results in limited height. Existing duplicate names remain accessible with secondary paths;
+creation and rename block new collisions, including archived names.
+
+Weekly metadata is limited to completed/target and the labeled streak. Completed marks have a 6px
+outer inset on Monday/Sunday while hit areas and internal run joins stay unchanged. Archived
+entries use left-aligned icon/name/path groups, the habit's own icon color, and trailing chevrons.
 
 ## Direction contract
 

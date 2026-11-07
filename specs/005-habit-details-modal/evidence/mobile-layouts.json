@@ -1,0 +1,167 @@
+[
+  {
+    "viewport": [
+      320,
+      844
+    ],
+    "mobile": true,
+    "theme": "dark",
+    "bounds": [
+      8,
+      8,
+      312,
+      836
+    ],
+    "title": [
+      188,
+      188,
+      80
+    ],
+    "modal": [
+      304,
+      304
+    ],
+    "content": [
+      272,
+      272,
+      676,
+      1589
+    ],
+    "verticalScrollers": [
+      "modal-content"
+    ],
+    "smallTouchTargets": []
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "mobile": true,
+    "theme": "dark",
+    "bounds": [
+      8,
+      8,
+      382,
+      836
+    ],
+    "title": [
+      258,
+      258,
+      60
+    ],
+    "modal": [
+      374,
+      374
+    ],
+    "content": [
+      342,
+      342,
+      696,
+      1409
+    ],
+    "verticalScrollers": [
+      "modal-content"
+    ],
+    "smallTouchTargets": []
+  },
+  {
+    "viewport": [
+      844,
+      390
+    ],
+    "mobile": true,
+    "theme": "dark",
+    "bounds": [
+      22,
+      24,
+      822,
+      366
+    ],
+    "title": [
+      511,
+      511,
+      26
+    ],
+    "modal": [
+      800,
+      800
+    ],
+    "content": [
+      800,
+      800,
+      276,
+      980
+    ],
+    "verticalScrollers": [
+      "modal-content"
+    ],
+    "smallTouchTargets": []
+  },
+  {
+    "viewport": [
+      320,
+      844
+    ],
+    "mobile": true,
+    "theme": "light",
+    "bounds": [
+      8,
+      8,
+      312,
+      836
+    ],
+    "title": [
+      188,
+      188,
+      80
+    ],
+    "modal": [
+      304,
+      304
+    ],
+    "content": [
+      272,
+      272,
+      676,
+      1589
+    ],
+    "verticalScrollers": [
+      "modal-content"
+    ],
+    "smallTouchTargets": []
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "mobile": true,
+    "theme": "light",
+    "bounds": [
+      8,
+      8,
+      382,
+      836
+    ],
+    "title": [
+      258,
+      258,
+      60
+    ],
+    "modal": [
+      374,
+      374
+    ],
+    "content": [
+      342,
+      342,
+      696,
+      1409
+    ],
+    "verticalScrollers": [
+      "modal-content"
+    ],
+    "smallTouchTargets": []
+  }
+]

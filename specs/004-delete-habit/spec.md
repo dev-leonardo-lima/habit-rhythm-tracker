@@ -8,6 +8,14 @@
 
 **Input**: User description: "O usuário precisa conseguir apagar um habito pela interface, a criação original acabou deixando isso de fora."
 
+**Presentation supersession**: [Habit Details Modal](../005-habit-details-modal/spec.md) moves the
+Delete habit action and its short confirmation into the same native habit dialog. The wording
+“Excluir hábito 'Leitura'?”, whole-note effect, Obsidian deletion setting, identity/editor/concurrency
+checks, and uncertain-result handling specified here remain unchanged. The maintainer
+subsequently shortened the visible in-dialog action to “Excluir” in feature 005; the full
+accessible name and the short confirmation question remain unchanged. This supersedes the visible
+button caption requirement below.
+
 ## Clarifications
 
 ### Session 2026-11-05

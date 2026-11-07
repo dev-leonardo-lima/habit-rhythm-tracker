@@ -1,0 +1,51 @@
+{
+  "host": "Obsidian 1.15.0 on macOS",
+  "fixture": "Synthetic in-memory note with production parser/controller/writer",
+  "beforeFix": {
+    "pointerChoice": "lucide-book-open",
+    "callsAfterPointerClick": [
+      [
+        "native-icon-regression",
+        "lucide-heart"
+      ]
+    ],
+    "writesAfterPointerClick": 1,
+    "events": [
+      {
+        "type": "pointerdown",
+        "tag": "SPAN",
+        "label": "Usar ícone book open para Teste de ícone",
+        "hidden": false,
+        "active": "Buscar ícones para Teste de ícone"
+      },
+      {
+        "type": "mousedown",
+        "tag": "SPAN",
+        "label": "Usar ícone book open para Teste de ícone",
+        "hidden": false,
+        "active": "Buscar ícones para Teste de ícone"
+      },
+      {
+        "type": "focusout",
+        "tag": "INPUT",
+        "label": "Buscar ícones para Teste de ícone",
+        "hidden": false,
+        "active": null
+      },
+      {
+        "type": "mouseup",
+        "tag": "SPAN",
+        "label": "Histórico de Teste de ícone",
+        "hidden": true,
+        "active": null
+      },
+      {
+        "type": "click",
+        "tag": "DIV",
+        "hidden": true,
+        "active": null
+      }
+    ]
+  },
+  "afterFixNativeRetest": "Pending: CUA input failed with ScreenCaptureKit -3811/noWindowsAvailable; automated regression passes."
+}

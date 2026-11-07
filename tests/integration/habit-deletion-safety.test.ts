@@ -3,6 +3,7 @@ import * as obsidian from 'obsidian';
 import { HabitDashboardView } from '../../src/ui/dashboard-view';
 import { ObsidianEditorGuard } from '../../src/ui/obsidian-editor-guard';
 import { createFakeApp } from '../helpers/fake-obsidian-app';
+import { openHabit } from '../helpers/dashboard-view';
 import { createHarness, localNoon } from '../helpers/controller-harness';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
@@ -23,12 +24,15 @@ describe('deletion safety', () => {
     if (input) {
       input.value = 'Draft habit';
     }
-    view.contentEl.querySelector<HTMLButtonElement>('[data-delete-habit-id="reading"]')?.click();
+    const dialog = openHabit(view, 'reading');
+
+    dialog.querySelector<HTMLButtonElement>('[data-delete-habit-id="reading"]')?.click();
     await vi.waitFor(() =>
       expect(document.querySelector('.habit-tracker-delete-confirmation')).not.toBeNull(),
     );
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.querySelector('.habit-tracker-delete-confirmation')).toBeNull();
+    expect(document.querySelector('.habit-tracker-detail-modal')).not.toBeNull();
     expect(vault.files.get(path)).toBe(original);
     expect(
       view.contentEl.querySelector<HTMLInputElement>('form[data-form-key="create"] input')?.value,

@@ -10,6 +10,7 @@ export default tseslint.config(
       'main.js',
       'coverage/',
       'dist/',
+      'test-vault/',
       'specs/',
       '.specify/',
       '.agents/',

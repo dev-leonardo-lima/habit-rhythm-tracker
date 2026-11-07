@@ -1,223 +1,78 @@
-import { describe, expect, it } from 'vitest';
-import { createDashboardHandlers } from '../../src/ui/controller-handlers';
-import { renderDashboard } from '../../src/ui/dashboard-renderer';
+import { describe, expect, it, vi } from 'vitest';
 import { createHarness, localNoon } from '../helpers/controller-harness';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
+import { mountDashboard, openHabit, field, submitField } from '../helpers/dashboard-view';
 
-describe('habit history and compact management', () => {
-  it('opens history from a habit, navigates years, and updates after a completion', async () => {
-    const harness = createHarness({ now: () => localNoon(2026, 10, 28) });
+describe('habit history in details', () => {
+  it('opens read-only history by name, bounds years, and preserves context on close', async () => {
+    const { controller, vault } = createHarness({ now: () => localNoon(2026, 10, 28) });
     addHabitNote(
-      harness.vault.files,
+      vault.files,
       makeHabit({
         created: '2025-12-29',
-        name: 'Gym',
         targets: [{ week: '2025-12-29', days: 2 }],
         completions: ['2025-12-30', '2026-10-27', '2026-10-30'],
       }),
-      'Habits/Gym.md',
     );
-    await harness.controller.load();
-    const container = document.createElement('div');
-    document.body.append(container);
-    const handlers = createDashboardHandlers(harness.controller);
-    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
-    const unsubscribe = harness.controller.subscribe(render);
-    render();
-
-    container
-      .querySelector<HTMLButtonElement>('button[aria-label="View history for Gym"]')
-      ?.click();
-    expect(container.querySelector('[data-testid="habit-history"]')?.textContent).toContain('2026');
-    expect(container.querySelector('[data-testid="habit-history"]')?.textContent).toContain(
-      '2 days',
-    );
+    const view = await mountDashboard(controller);
+    const original = vault.files.get('Habits/Gym.md');
+    const dialog = openHabit(view);
+    expect(dialog.querySelector('.habit-tracker-editor')?.closest('details')).toBeNull();
+    expect(field(dialog, 'name')).not.toBeNull();
+    expect(dialog.querySelector('[data-testid="habit-history"]')?.textContent).toContain('2 days');
     expect(
-      container.querySelector('[aria-label*="October 30, 2026: saved future mark"]'),
+      dialog.querySelector('[aria-label*="October 30, 2026: saved future mark"]'),
     ).not.toBeNull();
-    expect(
-      container.querySelector('[data-history-anchor]')?.getAttribute('data-history-anchor'),
-    ).toBe('2026-10-28');
-    expect(
-      container.querySelector('[data-testid="habit-history"]')?.getAttribute('aria-label'),
-    ).toBe('History for Gym');
-    expect(document.activeElement).toBe(container.querySelector('[data-testid="habit-history"]'));
-    const historyScroll = container.querySelector<HTMLElement>('.habit-tracker-history-scroll');
-    if (!historyScroll) {
-      throw new Error('missing history calendar');
-    }
-    historyScroll.scrollLeft = 240;
-    await harness.controller.refresh();
-    expect(document.activeElement).toBe(container.querySelector('[data-testid="habit-history"]'));
-    expect(container.querySelector<HTMLElement>('.habit-tracker-history-scroll')?.scrollLeft).toBe(
+    expect(document.activeElement).toBe(dialog.querySelector('.modal-title'));
+    const scroll = dialog.querySelector<HTMLElement>('.habit-tracker-history-scroll')!;
+    scroll.scrollLeft = 240;
+    await controller.refresh();
+    expect(dialog.querySelector<HTMLElement>('.habit-tracker-history-scroll')?.scrollLeft).toBe(
       240,
     );
-
-    const previousYear = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Previous history year"]',
-    );
-    if (!previousYear) {
-      throw new Error('missing previous year button');
-    }
-    previousYear.focus();
-    previousYear.click();
-    expect(container.querySelector('.habit-tracker-history-year')?.textContent).toBe('2025');
-    expect(document.activeElement).toBe(container.querySelector('.habit-tracker-history-year'));
+    dialog.querySelector<HTMLButtonElement>('[aria-label="Previous history year"]')!.click();
+    expect(dialog.querySelector('.habit-tracker-history-year')?.textContent).toBe('2025');
     expect(
-      container.querySelector('[data-history-anchor]')?.getAttribute('data-history-anchor'),
-    ).toBe('2025-12-31');
-    expect(container.querySelector('[aria-label*="December 30, 2025: marked"]')).not.toBeNull();
-    expect(
-      container.querySelector<HTMLButtonElement>('button[aria-label="Previous history year"]')
-        ?.disabled,
+      dialog.querySelector<HTMLButtonElement>('[aria-label="Previous history year"]')?.disabled,
     ).toBe(true);
-    container.querySelector<HTMLButtonElement>('button[aria-label="Next history year"]')?.click();
-    expect(container.querySelector('.habit-tracker-history-year')?.textContent).toBe('2026');
-
-    await harness.controller.toggleCompletion('habit-1', '2026-10-28', true);
-    expect(container.querySelector('[data-testid="habit-history"]')?.textContent).toContain(
-      '3 days',
-    );
-    expect(container.querySelector('[aria-label*="October 28, 2026: marked"]')).not.toBeNull();
-    container
-      .querySelector<HTMLButtonElement>('button[aria-label="Close history for Gym"]')
-      ?.click();
-    expect(container.querySelector('[data-testid="habit-history"]')).toBeNull();
-    expect(document.activeElement?.getAttribute('aria-label')).toBe('View history for Gym');
-
-    unsubscribe();
-    container.remove();
+    expect(dialog.querySelector('[aria-label*="December 30, 2025: marked"]')).not.toBeNull();
+    await controller.refresh();
+    expect(dialog.querySelector('.habit-tracker-history-year')?.textContent).toBe('2025');
+    expect(vault.files.get('Habits/Gym.md')).toBe(original);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.querySelector('.habit-tracker-detail-modal')).toBeNull();
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Open habit Gym');
+    expect(view.contentEl.querySelector('[data-disclosure-key="manage"]')).toBeNull();
+    expect(view.contentEl.querySelector('[data-testid="habit-history"]')).toBeNull();
   });
 
-  it('keeps an open edit and its draft across refresh, and opens history for archived habits', async () => {
-    const harness = createHarness({ now: () => localNoon(2026, 10, 28) });
-    addHabitNote(
-      harness.vault.files,
-      makeHabit({
-        created: '2026-10-05',
-        name: 'Read',
-        states: [
-          { week: '2026-10-05', state: 'active' },
-          { week: '2026-10-19', state: 'archived' },
-        ],
-        completions: ['2026-10-06'],
-      }),
-      'Habits/Read.md',
+  it('keeps day marking direct and submits only the selected editing field', async () => {
+    const { controller, vault } = createHarness({ now: () => localNoon(2026, 10, 28) });
+    addHabitNote(vault.files, makeHabit());
+    const view = await mountDashboard(controller);
+    const checkbox = view.contentEl.querySelector<HTMLInputElement>(
+      'input[type="checkbox"][data-date="2026-10-28"]',
+    )!;
+    checkbox.click();
+    await vi.waitFor(() =>
+      expect(controller.getHabitDetail('habit-1', 2026)?.history.markedDays).toBe(1),
     );
-    await harness.controller.load();
-    const container = document.createElement('div');
-    document.body.append(container);
-    const handlers = createDashboardHandlers(harness.controller);
-    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
-    const unsubscribe = harness.controller.subscribe(render);
-    render();
+    expect(document.querySelector('.habit-tracker-detail-modal')).toBeNull();
+    const dialog = openHabit(view);
 
-    const manage = container.querySelector<HTMLDetailsElement>('[data-disclosure-key="manage"]');
-    const edit = container.querySelector<HTMLDetailsElement>(
-      '[data-disclosure-key="edit:habit-1"]',
+    const name = field<HTMLInputElement>(dialog, 'name');
+    name.value = ' Reading ';
+    name.dispatchEvent(new Event('input'));
+    const target = field<HTMLSelectElement>(dialog, 'target');
+    target.value = '3';
+    target.dispatchEvent(new Event('change'));
+    submitField(dialog, 'name');
+    await vi.waitFor(() =>
+      expect(controller.getHabitDetail('habit-1', 2026)?.name).toBe('Reading'),
     );
-    if (!manage || !edit) {
-      throw new Error('missing management controls');
-    }
-    manage.open = true;
-    edit.open = true;
-    const input = edit.querySelector<HTMLInputElement>('input[aria-label="Habit name for Read"]');
-    if (!input) {
-      throw new Error('missing name field');
-    }
-    input.value = 'Draft name';
-    input.focus();
-    await harness.controller.refresh();
-    expect(
-      container.querySelector<HTMLDetailsElement>('[data-disclosure-key="manage"]')?.open,
-    ).toBe(true);
-    expect(
-      container.querySelector<HTMLDetailsElement>('[data-disclosure-key="edit:habit-1"]')?.open,
-    ).toBe(true);
-    expect(
-      container.querySelector<HTMLInputElement>('input[aria-label="Habit name for Read"]')?.value,
-    ).toBe('Draft name');
-
-    const editSummary = container.querySelector<HTMLElement>(
-      '[data-disclosure-key="edit:habit-1"] > summary',
-    );
-    const accessibleLabel = editSummary?.getAttribute('aria-labelledby');
-    expect(editSummary?.hasAttribute('aria-label')).toBe(false);
-    expect(
-      accessibleLabel && container.querySelector(`#${accessibleLabel}`)?.textContent,
-    ).toContain('Edit Read; Archived; this week —; current streak');
-    editSummary?.focus();
-    await harness.controller.refresh();
-    expect(document.activeElement).toBe(
-      container.querySelector('[data-disclosure-key="edit:habit-1"] > summary'),
-    );
-
-    container
-      .querySelector<HTMLButtonElement>('button[aria-label="View history for Read"]')
-      ?.click();
-    expect(container.querySelector('[data-testid="habit-history"]')?.textContent).toContain('Read');
-    expect(container.querySelector('[data-testid="habit-history"]')?.textContent).toContain(
-      '1 day',
-    );
-    expect(
-      container.querySelector<HTMLDetailsElement>('[data-disclosure-key="edit:habit-1"]')?.open,
-    ).toBe(true);
-    expect(
-      container.querySelector<HTMLInputElement>('input[aria-label="Habit name for Read"]')?.value,
-    ).toBe('Draft name');
-
-    unsubscribe();
-    container.remove();
-  });
-
-  it('opens only one habit editor at a time and keeps unsaved drafts across refreshes', async () => {
-    const harness = createHarness({ now: () => localNoon(2026, 10, 28) });
-    addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
-    addHabitNote(harness.vault.files, makeHabit({ id: 'habit-2', name: 'Read' }), 'Habits/Read.md');
-    await harness.controller.load();
-    const container = document.createElement('div');
-    document.body.append(container);
-    const handlers = createDashboardHandlers(harness.controller);
-    const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
-    const unsubscribe = harness.controller.subscribe(render);
-    render();
-    const manage = container.querySelector<HTMLDetailsElement>('[data-disclosure-key="manage"]');
-    if (!manage) {
-      throw new Error('missing management section');
-    }
-    manage.open = true;
-    container.querySelector<HTMLElement>('[data-disclosure-key="edit:habit-1"] > summary')?.click();
-    const first = container.querySelector<HTMLDetailsElement>(
-      '[data-disclosure-key="edit:habit-1"]',
-    );
-    const firstName = first?.querySelector<HTMLInputElement>(
-      'input[aria-label="Habit name for Gym"]',
-    );
-    if (!first || !firstName) {
-      throw new Error('missing first editor');
-    }
-    expect(first.open).toBe(true);
-    firstName.value = 'Unsaved draft';
-    container.querySelector<HTMLElement>('[data-disclosure-key="edit:habit-2"] > summary')?.click();
-    expect(first.open).toBe(false);
-    expect(
-      container.querySelector<HTMLDetailsElement>('[data-disclosure-key="edit:habit-2"]')?.open,
-    ).toBe(true);
-    await harness.controller.refresh();
-    expect(
-      container.querySelector<HTMLDetailsElement>('[data-disclosure-key="edit:habit-1"]')?.open,
-    ).toBe(false);
-    expect(
-      container.querySelector<HTMLDetailsElement>('[data-disclosure-key="edit:habit-2"]')?.open,
-    ).toBe(true);
-    container.querySelector<HTMLElement>('[data-disclosure-key="edit:habit-1"] > summary')?.click();
-    expect(
-      container.querySelector<HTMLDetailsElement>('[data-disclosure-key="edit:habit-2"]')?.open,
-    ).toBe(false);
-    expect(
-      container.querySelector<HTMLInputElement>('input[aria-label="Habit name for Gym"]')?.value,
-    ).toBe('Unsaved draft');
-    unsubscribe();
-    container.remove();
+    await vi.waitFor(() => expect(name.value).toBe('Reading'));
+    expect(target.value).toBe('3');
+    expect(controller.getHabitDetail('habit-1', 2026)?.pendingTarget).toBeNull();
+    expect([...dialog.querySelectorAll('input,select')].indexOf(name)).toBeLessThan(2);
   });
 });
