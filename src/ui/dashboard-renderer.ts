@@ -1,24 +1,18 @@
 import { t } from '../i18n';
-import type { DashboardViewModel } from './dashboard-controller';
+import type { DashboardMessage, DashboardViewModel } from './dashboard-controller';
 import { renderHabitForm } from './habit-form';
-import { renderHabitSettings } from './habit-settings';
 import { renderHabitGrid } from './week-dashboard';
-import { renderHabitHistory } from './habit-history-view';
+import { habitIcon } from './habit-icon-picker';
+
+const renderedMessages = new WeakMap<
+  HTMLElement,
+  { message: DashboardMessage; element: HTMLElement }
+>();
 
 export interface DashboardHandlers {
   createHabit(name: string, target: number): void | Promise<unknown>;
   toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
-  toggleHabitHistory(habitId: string): void;
-  closeHabitHistory(): void;
-  changeHistoryYear(delta: -1 | 1): void;
-  renameHabit(habitId: string, name: string): void | Promise<unknown>;
-  changeColor(habitId: string, color: string | null): void | Promise<unknown>;
-  changeIcon(habitId: string, icon: string | null): void | Promise<unknown>;
-  changeTarget(habitId: string, target: number): void | Promise<unknown>;
-  archiveHabit(habitId: string): void | Promise<unknown>;
-  reactivateHabit(habitId: string): void | Promise<unknown>;
-  cancelPendingArchive(habitId: string): void | Promise<unknown>;
-  deleteHabit(habitId: string): void | Promise<unknown>;
+  openHabit(habitId: string, origin?: 'grid' | 'archived'): void;
   previousWeek(): void;
   nextWeek(): void;
 }
@@ -75,13 +69,14 @@ type FocusDescriptor =
 
 interface CapturedUiState {
   focus: FocusDescriptor | null;
+  selection: {
+    start: number;
+    end: number;
+    direction: HTMLInputElement['selectionDirection'];
+  } | null;
   forms: Record<string, Record<string, string>>;
   disclosure: Record<string, boolean>;
-  formResetVersion: number;
   gridScrollLeft: number;
-  historyScrollLeft: number;
-  historyYear: string | null;
-  historyHabitId: string | null;
 }
 
 function escapeSelectorValue(value: string): string {
@@ -114,6 +109,15 @@ function captureFocus(container: HTMLElement): FocusDescriptor | null {
       )}"][data-date="${escapeSelectorValue(active.dataset.date)}"]`,
     };
   }
+  if (active.dataset.openHabitId) {
+    const origin = active.closest('[data-disclosure-key="archived"]')
+      ? '[data-disclosure-key="archived"]'
+      : '.habit-tracker-grid';
+    return {
+      kind: 'selector',
+      selector: `${origin} [data-open-habit-id="${escapeSelectorValue(active.dataset.openHabitId)}"]`,
+    };
+  }
   if (active.dataset.testid) {
     return {
       kind: 'selector',
@@ -131,15 +135,6 @@ function captureFocus(container: HTMLElement): FocusDescriptor | null {
   }
   const ariaLabel = active.getAttribute('aria-label');
   if (ariaLabel) {
-    const operation = active.closest<HTMLElement>('[data-operation-id]');
-    if (operation?.dataset.operationId) {
-      return {
-        kind: 'selector',
-        selector: `[data-operation-id="${escapeSelectorValue(
-          operation.dataset.operationId,
-        )}"] [aria-label="${escapeSelectorValue(ariaLabel)}"]`,
-      };
-    }
     const habit = active.closest<HTMLElement>('[data-habit-id]');
     if (habit?.dataset.habitId) {
       return {
@@ -161,6 +156,18 @@ function captureFocus(container: HTMLElement): FocusDescriptor | null {
 }
 
 function captureUiState(container: HTMLElement): CapturedUiState {
+  const active = container.ownerDocument.activeElement;
+  const selection =
+    active?.instanceOf(HTMLInputElement) &&
+    container.contains(active) &&
+    active.selectionStart !== null &&
+    active.selectionEnd !== null
+      ? {
+          start: active.selectionStart,
+          end: active.selectionEnd,
+          direction: active.selectionDirection,
+        }
+      : null;
   const forms: Record<string, Record<string, string>> = {};
   for (const form of container.querySelectorAll<HTMLFormElement>('form[data-form-key]')) {
     const key = form.dataset.formKey;
@@ -190,32 +197,18 @@ function captureUiState(container: HTMLElement): CapturedUiState {
   }
   return {
     focus: captureFocus(container),
+    selection,
     forms,
     disclosure,
-    formResetVersion: Number(container.dataset.formResetVersion ?? '0'),
     gridScrollLeft:
       container.querySelector<HTMLElement>('.habit-tracker-grid-scroll')?.scrollLeft ?? 0,
-    historyScrollLeft:
-      container.querySelector<HTMLElement>('.habit-tracker-history-scroll')?.scrollLeft ?? 0,
-    historyYear:
-      container.querySelector<HTMLElement>('.habit-tracker-history-scroll')?.dataset.year ?? null,
-    historyHabitId:
-      container.querySelector<HTMLElement>('[data-testid="habit-history"]')?.dataset.habitId ??
-      null,
   };
 }
 
-function restoreFormValues(
-  container: HTMLElement,
-  captured: CapturedUiState,
-  viewModel: DashboardViewModel,
-): void {
+function restoreFormValues(container: HTMLElement, captured: CapturedUiState): void {
   for (const form of container.querySelectorAll<HTMLFormElement>('form[data-form-key]')) {
     const key = form.dataset.formKey;
     if (!key) {
-      continue;
-    }
-    if (key === 'create' && captured.formResetVersion !== viewModel.formResetVersion) {
       continue;
     }
     const values = captured.forms[key];
@@ -256,12 +249,8 @@ function restoreDisclosure(
   }
 }
 
-function restoreFocus(
-  container: HTMLElement,
-  captured: CapturedUiState,
-  viewModel: DashboardViewModel,
-): void {
-  if (!captured.focus || viewModel.message?.kind === 'error') {
+function restoreFocus(container: HTMLElement, captured: CapturedUiState, newError: boolean): void {
+  if (!captured.focus || newError) {
     return;
   }
   const target =
@@ -270,21 +259,20 @@ function restoreFocus(
       : ([...container.querySelectorAll<HTMLElement>(captured.focus.tagName)][
           captured.focus.index
         ] ?? null);
-  if (
-    target?.instanceOf(HTMLButtonElement) &&
-    target.disabled &&
-    target.classList.contains('habit-tracker-history-year-button')
-  ) {
-    container
-      .querySelector<HTMLElement>('.habit-tracker-history-year')
-      ?.focus({ preventScroll: true });
-  } else if (target?.instanceOf(HTMLButtonElement) && target.disabled) {
+  if (target?.instanceOf(HTMLButtonElement) && target.disabled) {
     target
       .closest('details')
       ?.querySelector<HTMLElement>('summary')
       ?.focus({ preventScroll: true });
   } else {
     target?.focus({ preventScroll: true });
+    if (target?.instanceOf(HTMLInputElement) && captured.selection) {
+      target.setSelectionRange(
+        captured.selection.start,
+        captured.selection.end,
+        captured.selection.direction ?? undefined,
+      );
+    }
   }
 }
 
@@ -323,9 +311,15 @@ function renderHeader(
   container.append(header);
 }
 
-function renderMessage(container: HTMLElement, viewModel: DashboardViewModel): void {
+function renderMessage(container: HTMLElement, viewModel: DashboardViewModel): boolean {
   if (!viewModel.message) {
-    return;
+    renderedMessages.delete(container);
+    return false;
+  }
+  const previous = renderedMessages.get(container);
+  if (previous?.message === viewModel.message) {
+    container.append(previous.element);
+    return false;
   }
   const message = el(
     'p',
@@ -338,9 +332,11 @@ function renderMessage(container: HTMLElement, viewModel: DashboardViewModel): v
     message.tabIndex = -1;
   }
   container.append(message);
+  renderedMessages.set(container, { message: viewModel.message, element: message });
   if (viewModel.message.kind === 'error') {
     message.focus();
   }
+  return viewModel.message.kind === 'error';
 }
 
 function renderIssues(container: HTMLElement, viewModel: DashboardViewModel): void {
@@ -361,18 +357,50 @@ function renderCreateForm(container: HTMLElement, handlers: DashboardHandlers): 
   renderHabitForm(container, handlers, { heading: false });
 }
 
-function renderManageDisclosure(
+function renderArchived(
   container: HTMLElement,
-  viewModel: DashboardViewModel,
+  model: DashboardViewModel,
   handlers: DashboardHandlers,
 ): void {
-  if (viewModel.habits.length === 0) {
+  const habits = model.habits.filter((habit) => habit.state === 'archived');
+  if (habits.length === 0) {
     return;
   }
-  const manage = disclosure('manage', t('dashboard.manageHabits'));
-  const body = disclosureBody(manage);
-  renderHabitSettings(body, viewModel.habits, handlers, { heading: false });
-  container.append(manage);
+  const entry = disclosure('archived', t('dashboard.archivedHabits', { count: habits.length }));
+  const body = disclosureBody(entry);
+  const list = el('ul', 'habit-tracker-archived-list');
+  for (const habit of habits) {
+    const item = el('li');
+    const button = el('button', 'habit-tracker-archived-name');
+    button.type = 'button';
+    button.dataset.openHabitId = habit.habitId;
+    if (habit.color) {
+      button.style.setProperty('--ht-habit-color', habit.color);
+    }
+    const duplicate = model.duplicateHabitIds.has(habit.habitId);
+    const icon = habitIcon(habit.icon);
+    if (icon) {
+      button.append(icon);
+    }
+    const label = el('span', 'habit-tracker-archived-label');
+    label.append(el('span', 'habit-tracker-habit-name-text', habit.name));
+    if (duplicate) {
+      label.append(el('span', 'habit-tracker-habit-path', habit.path));
+    }
+    button.append(label);
+    button.setAttribute(
+      'aria-label',
+      t('dashboard.openHabitAria', {
+        name: duplicate ? `${habit.name}: ${habit.path}` : habit.name,
+      }),
+    );
+    button.setAttribute('aria-haspopup', 'dialog');
+    button.addEventListener('click', () => handlers.openHabit(habit.habitId, 'archived'));
+    item.append(button);
+    list.append(item);
+  }
+  body.append(list);
+  container.append(entry);
 }
 
 export function renderDashboard(
@@ -381,85 +409,39 @@ export function renderDashboard(
   handlers: DashboardHandlers,
 ): void {
   const captured = captureUiState(container);
+  const scrollTop = container.scrollTop;
   container.replaceChildren();
   container.classList.add('habit-tracker-dashboard');
-  const presentationHandlers: DashboardHandlers = {
-    ...handlers,
-    toggleHabitHistory: (habitId) => {
-      handlers.toggleHabitHistory(habitId);
-      const detail = container.querySelector<HTMLElement>('[data-testid="habit-history"]');
-      if (detail?.dataset.habitId === habitId) {
-        detail.focus({ preventScroll: true });
-        detail.scrollIntoView?.({ block: 'nearest' });
-      }
-    },
-  };
-
   renderHeader(container, viewModel, handlers);
-  renderMessage(container, viewModel);
-
+  const newError = renderMessage(container, viewModel);
+  renderCreateForm(container, handlers);
+  renderIssues(container, viewModel);
   if (viewModel.loading) {
-    const loading = el('p', 'habit-tracker-loading', t('dashboard.loading'));
+    const loading = el('p', 'habit-tracker-hint', t('dashboard.loading'));
     loading.setAttribute('role', 'status');
     container.append(loading);
-  }
-
-  renderIssues(container, viewModel);
-  renderCreateForm(container, handlers);
-
-  if (!viewModel.loading && viewModel.habits.length === 0) {
+  } else if (viewModel.habits.length === 0) {
     const empty = el('div', 'habit-tracker-empty-state');
-    empty.append(el('p', 'habit-tracker-empty-title', t('dashboard.emptyTitle')));
-    empty.append(el('p', 'habit-tracker-empty-copy', t('dashboard.emptyCopy')));
+    empty.append(
+      el('p', 'habit-tracker-empty-title', t('dashboard.emptyTitle')),
+      el('p', 'habit-tracker-empty-copy', t('dashboard.emptyCopy')),
+    );
     container.append(empty);
-  } else if (viewModel.habits.length > 0) {
-    renderHabitGrid(container, viewModel, presentationHandlers);
+  } else {
+    renderHabitGrid(container, viewModel, handlers);
   }
-
-  if (viewModel.detail) {
-    renderHabitHistory(container, viewModel.detail, {
-      changeHistoryYear: (delta) => handlers.changeHistoryYear(delta),
-      closeHabitHistory: () => {
-        const habitId = viewModel.detail?.habitId;
-        handlers.closeHabitHistory();
-        const trigger = [
-          ...container.querySelectorAll<HTMLButtonElement>('[data-history-habit-id]'),
-        ].find((button) => button.dataset.historyHabitId === habitId);
-        trigger?.focus({ preventScroll: true });
-      },
-    });
-  }
-
-  renderManageDisclosure(container, viewModel, presentationHandlers);
-
+  renderArchived(container, viewModel, handlers);
   for (const field of container.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
     'form[data-form-key] input, form[data-form-key] select',
   )) {
     field.dataset.baseValue = field.value;
   }
-
   restoreDisclosure(container, captured, viewModel);
   const gridScroll = container.querySelector<HTMLElement>('.habit-tracker-grid-scroll');
   if (gridScroll) {
     gridScroll.scrollLeft = captured.gridScrollLeft;
   }
-  const historyScroll = container.querySelector<HTMLElement>('.habit-tracker-history-scroll');
-  if (
-    historyScroll &&
-    historyScroll.dataset.year === captured.historyYear &&
-    viewModel.detail?.habitId === captured.historyHabitId
-  ) {
-    historyScroll.scrollLeft = captured.historyScrollLeft;
-  } else if (historyScroll) {
-    const anchor = historyScroll.querySelector<HTMLElement>('[data-history-anchor]');
-    if (anchor) {
-      historyScroll.scrollLeft +=
-        anchor.getBoundingClientRect().left -
-        historyScroll.getBoundingClientRect().left -
-        historyScroll.clientWidth * 0.75;
-    }
-  }
-  container.dataset.formResetVersion = String(viewModel.formResetVersion);
-  restoreFormValues(container, captured, viewModel);
-  restoreFocus(container, captured, viewModel);
+  restoreFormValues(container, captured);
+  restoreFocus(container, captured, newError);
+  container.scrollTop = scrollTop;
 }

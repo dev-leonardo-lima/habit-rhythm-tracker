@@ -1,173 +1,122 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as obsidian from 'obsidian';
 import { ptBR } from '../../src/i18n/pt-BR';
-import { parseHabitNote } from '../../src/storage/habit-note';
-import { createDashboardHandlers } from '../../src/ui/controller-handlers';
-import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { createHarness, localNoon } from '../helpers/controller-harness';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
+import { mountDashboard, openHabit, field } from '../helpers/dashboard-view';
 
-function languageControl(initial: string): {
-  set(language: string): void;
-} {
+function languageControl(initial: string) {
   let current = initial;
   vi.spyOn(obsidian, 'getLanguage').mockImplementation(() => current);
   return {
-    set(language: string) {
+    set: (language: string) => {
       current = language;
     },
   };
 }
-
-function setup(now: () => Date) {
-  const harness = createHarness({ now });
-  const container = document.createElement('div');
-  document.body.append(container);
-  const handlers = createDashboardHandlers(harness.controller);
-  const render = () => renderDashboard(container, harness.controller.getViewModel(), handlers);
-  const unsubscribe = harness.controller.subscribe(render);
-  return { harness, container, render, unsubscribe };
+async function setup() {
+  const h = createHarness({ now: () => localNoon(2026, 10, 28) });
+  addHabitNote(
+    h.vault.files,
+    makeHabit({ name: 'Academia', completions: ['2026-10-26', '2026-10-27'] }),
+    'Habits/Academia.md',
+  );
+  return { ...h, view: await mountDashboard(h.controller) };
 }
 
-describe('US3: unsupported and incomplete languages fall back cleanly', () => {
-  it('shows English for an unsupported language and a custom language-file path', async () => {
+describe('language fallback through habit details', () => {
+  it('uses English for unsupported languages and custom locale-file paths', async () => {
     const language = languageControl('fr');
-    const { harness, container, render } = setup(() => localNoon(2026, 10, 28));
-    addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
-    await harness.controller.load();
-    render();
+    const { controller, view } = await setup();
+    const dialog = openHabit(view);
 
-    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('This week');
-    expect(container.textContent).toContain('Manage habits');
-    expect(container.textContent).toContain('View history');
-    expect(container.textContent).not.toContain('Esta semana');
-    expect(container.textContent).not.toContain('Gerenciar hábitos');
-
+    expect(view.contentEl.querySelector('.habit-tracker-week-meta')?.textContent).toBe('This week');
+    expect(dialog.textContent).toContain('Current streak');
+    expect(dialog.textContent).toContain('Weekly target');
+    expect(dialog.textContent).toContain('Applies from next Monday.');
+    expect(dialog.textContent).toContain('Appearance');
     language.set('/vault/locales/pt-BR.json');
-    await harness.controller.refresh();
-    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('This week');
-    expect(container.textContent).toContain('Manage habits');
-    expect(container.textContent).not.toContain('Gerenciar hábitos');
+    await controller.refresh();
+    expect(dialog.textContent).toContain('Current streak');
+    expect(dialog.textContent).not.toContain('Sequência atual');
   });
-
-  it('falls back to a whole English entry when a Portuguese entry is missing or empty', async () => {
+  it('falls back per missing/empty entry without exposing keys', async () => {
     const language = languageControl('pt-BR');
-    const { harness, container, render } = setup(() => localNoon(2026, 10, 28));
-    addHabitNote(harness.vault.files, makeHabit({ name: 'Gym' }), 'Habits/Gym.md');
-    await harness.controller.load();
-    render();
-    expect(container.textContent).toContain('Gerenciar hábitos');
-
+    const { controller, view } = await setup();
     const strings = ptBR.strings as Record<string, string>;
-    const originalManage = strings['dashboard.manageHabits'];
-    delete strings['dashboard.manageHabits'];
-    await harness.controller.refresh();
-    expect(container.textContent).toContain('Manage habits');
-    expect(container.textContent).not.toContain('Gerenciar hábitos');
-    expect(container.textContent).not.toContain('dashboard.manageHabits');
-    strings['dashboard.manageHabits'] = originalManage ?? 'Gerenciar hábitos';
-
-    const originalTarget = strings['manage.columnTarget'];
-    strings['manage.columnTarget'] = '';
-    await harness.controller.refresh();
-    expect(container.textContent).toContain('Target');
-    expect(container.textContent).not.toContain('manage.columnTarget');
-    strings['manage.columnTarget'] = originalTarget ?? 'Meta semanal';
-
-    language.set('pt');
-    await harness.controller.refresh();
-    expect(container.textContent).toContain('Meta semanal');
-  });
-
-  it('preserves habits, marks, settings, drafts, the open view and note content across a switch', async () => {
-    const language = languageControl('pt-BR');
-    const { harness, container, render, unsubscribe } = setup(() => localNoon(2026, 10, 28));
-    const path = 'Habits/Academia.md';
-    addHabitNote(
-      harness.vault.files,
-      makeHabit({
-        name: 'Academia',
-        targets: [{ week: '2026-10-26', days: 4 }],
-        completions: ['2026-10-26', '2026-10-27'],
-      }),
-      path,
-    );
-    await harness.controller.load();
-    render();
-    const originalNote = harness.vault.files.get(path);
-    const originalCompletions = parseHabitNote(originalNote ?? '').habit.completions;
-    const habitsFolder = harness.habitsFolder;
-
-    const name = container.querySelector<HTMLInputElement>('form[data-form-key="create"] input');
-    const target = container.querySelector<HTMLSelectElement>(
-      'form[data-form-key="create"] select',
-    );
-    if (!name || !target) {
-      throw new Error('missing create form');
+    const original = strings['dashboard.openHabitAria'];
+    try {
+      delete strings['dashboard.openHabitAria'];
+      await controller.refresh();
+      expect(view.contentEl.querySelector('[data-open-habit-id]')?.getAttribute('aria-label')).toBe(
+        'Open habit Academia',
+      );
+      strings['dashboard.openHabitAria'] = '';
+      await controller.refresh();
+      expect(view.contentEl.querySelector('[data-open-habit-id]')?.getAttribute('aria-label')).toBe(
+        'Open habit Academia',
+      );
+      expect(view.contentEl.textContent).not.toContain('dashboard.openHabitAria');
+    } finally {
+      strings['dashboard.openHabitAria'] = original!;
     }
-    name.value = 'Rascunho em português';
+    language.set('pt');
+    await controller.refresh();
+    expect(view.contentEl.querySelector('[data-open-habit-id]')?.getAttribute('aria-label')).toBe(
+      'Abrir hábito Academia',
+    );
+  });
+  it('preserves notes, creation and editing drafts, settings, and open history across a language switch', async () => {
+    const language = languageControl('pt-BR');
+    const { controller, vault, view, habitsFolder } = await setup();
+    const original = vault.files.get('Habits/Academia.md');
+    const create = view.contentEl.querySelector<HTMLInputElement>(
+      'form[data-form-key="create"] input',
+    )!;
+    create.value = 'Rascunho';
+    const target = view.contentEl.querySelector<HTMLSelectElement>(
+      'form[data-form-key="create"] select',
+    )!;
     target.value = '3';
-    container
-      .querySelector<HTMLButtonElement>('button[aria-label="Ver histórico de Academia"]')
-      ?.click();
-    expect(
-      container.querySelector<HTMLElement>('[data-testid="habit-history"]')?.dataset.habitId,
-    ).toBe('habit-1');
-    expect(container.textContent).toContain('Sequência atual');
+    const dialog = openHabit(view);
 
+    const name = field<HTMLInputElement>(dialog, 'name');
+    name.value = 'Outra ideia';
+    expect(dialog.textContent).toContain('Sequência atual');
     language.set('en');
-    await harness.controller.refresh();
-    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('This week');
-    expect(container.textContent).toContain('Manage habits');
-    expect(container.textContent).toContain('Current streak');
-    expect(container.textContent).not.toContain('Esta semana');
+    await controller.refresh();
+    expect(dialog.textContent).toContain('Current streak');
+    expect(dialog.textContent).toContain('Weekly target');
+    expect(dialog.textContent).toContain('Applies from next Monday.');
+    expect(dialog.textContent).toContain('Appearance');
+    expect(field(dialog, 'name')).toBe(name);
+    expect(name.value).toBe('Outra ideia');
     expect(
-      container.querySelector<HTMLInputElement>('form[data-form-key="create"] input')?.value,
-    ).toBe('Rascunho em português');
+      view.contentEl.querySelector<HTMLInputElement>('form[data-form-key="create"] input')?.value,
+    ).toBe('Rascunho');
     expect(
-      container.querySelector<HTMLSelectElement>('form[data-form-key="create"] select')?.value,
+      view.contentEl.querySelector<HTMLSelectElement>('form[data-form-key="create"] select')?.value,
     ).toBe('3');
     expect(
-      container.querySelector<HTMLElement>('[data-testid="habit-history"]')?.dataset.habitId,
+      dialog.querySelector<HTMLElement>('[data-testid="habit-history"]')?.dataset.habitId,
     ).toBe('habit-1');
-    expect(container.textContent).toContain('Academia');
-    expect(harness.vault.files.get(path)).toBe(originalNote);
-    expect(parseHabitNote(harness.vault.files.get(path) ?? '').habit.completions).toEqual(
-      originalCompletions,
-    );
-    expect(harness.habitsFolder).toBe(habitsFolder);
-
+    expect(habitsFolder).toBe('Habits');
+    expect(vault.files.get('Habits/Academia.md')).toBe(original);
     language.set('pt-BR');
-    await harness.controller.refresh();
-    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('Esta semana');
-    expect(container.textContent).toContain('Gerenciar hábitos');
-    expect(
-      container.querySelector<HTMLInputElement>('form[data-form-key="create"] input')?.value,
-    ).toBe('Rascunho em português');
-    expect(harness.vault.files.get(path)).toBe(originalNote);
-
-    unsubscribe();
-    container.remove();
+    await controller.refresh();
+    expect(dialog.textContent).toContain('Sequência atual');
+    expect(name.value).toBe('Outra ideia');
   });
-
-  it('keeps English behavior and data for an English installation', async () => {
-    const language = languageControl('en-GB');
-    const { harness, container, render } = setup(() => localNoon(2026, 10, 28));
-    addHabitNote(
-      harness.vault.files,
-      makeHabit({ name: 'Gym', completions: ['2026-10-26'] }),
-      'Habits/Gym.md',
+  it('keeps English data and date behavior', async () => {
+    languageControl('en-GB');
+    const { view, vault } = await setup();
+    expect(
+      view.contentEl.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label'),
+    ).toBe('26 Oct – 1 Nov 2026');
+    expect(view.contentEl.textContent).toContain('Streak: 0 weeks');
+    expect(view.contentEl.querySelector('[data-open-habit-id]')?.getAttribute('aria-label')).toBe(
+      'Open habit Academia',
     );
-    await harness.controller.load();
-    render();
-    expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
-      '26 Oct – 1 Nov 2026',
-    );
-    expect(container.querySelector('.habit-tracker-week-meta')?.textContent).toBe('This week');
-    expect(container.textContent).toContain('Streak: 0 weeks');
-    expect(container.textContent).toContain('Manage habits');
-    expect(container.textContent).not.toContain('Esta semana');
-    language.set('en');
-    expect(harness.vault.files.get('Habits/Gym.md')).toContain('"completions"');
+    expect(vault.files.get('Habits/Academia.md')).toContain('"completions"');
   });
 });

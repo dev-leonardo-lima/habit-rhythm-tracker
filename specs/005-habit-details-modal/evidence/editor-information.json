@@ -1,0 +1,318 @@
+{
+  "desktop": {
+    "viewport": [
+      957,
+      949
+    ],
+    "direction": "row",
+    "labelCenters": [
+      242.3515625,
+      242.3515625
+    ],
+    "inputDelta": 0,
+    "infoButtons": 2,
+    "archiveIcon": true,
+    "sameRow": true,
+    "buttons": [
+      {
+        "x": 95.5,
+        "y": 398.3515625,
+        "width": 194.9140625,
+        "height": 38,
+        "top": 398.3515625,
+        "left": 95.5,
+        "right": 290.4140625,
+        "bottom": 436.3515625
+      },
+      {
+        "x": 298.4140625,
+        "y": 398.3515625,
+        "width": 93.2578125,
+        "height": 38,
+        "top": 398.3515625,
+        "left": 298.4140625,
+        "right": 391.671875,
+        "bottom": 436.3515625
+      }
+    ],
+    "staticAppearanceHelp": 0,
+    "staticArchiveHelp": 0,
+    "overflow": false
+  },
+  "pendingTested": true,
+  "mobile": [
+    {
+      "viewport": [
+        320,
+        844
+      ],
+      "direction": "row",
+      "labelCenters": [
+        212,
+        211.99609375
+      ],
+      "inputDelta": 108,
+      "infoButtons": 2,
+      "archiveIcon": true,
+      "sameRow": true,
+      "buttons": [
+        {
+          "x": 25,
+          "y": 555.109375,
+          "width": 163.4453125,
+          "height": 56.96875,
+          "top": 555.109375,
+          "left": 25,
+          "right": 188.4453125,
+          "bottom": 612.078125
+        },
+        {
+          "x": 196.4453125,
+          "y": 555.109375,
+          "width": 98.5546875,
+          "height": 56.96875,
+          "top": 555.109375,
+          "left": 196.4453125,
+          "right": 295,
+          "bottom": 612.078125
+        }
+      ],
+      "staticAppearanceHelp": 0,
+      "staticArchiveHelp": 0,
+      "overflow": false,
+      "panels": [
+        {
+          "hidden": false,
+          "bounds": {
+            "x": 25,
+            "y": 240,
+            "width": 270,
+            "height": 64.96875,
+            "top": 240,
+            "left": 25,
+            "right": 295,
+            "bottom": 304.96875
+          },
+          "inside": true,
+          "touch": {
+            "x": 162.4921875,
+            "y": 190,
+            "width": 44,
+            "height": 44,
+            "top": 190,
+            "left": 162.4921875,
+            "right": 206.4921875,
+            "bottom": 234
+          }
+        },
+        {
+          "hidden": false,
+          "bounds": {
+            "x": 25,
+            "y": 441.109375,
+            "width": 270,
+            "height": 42.484375,
+            "top": 441.109375,
+            "left": 25,
+            "right": 295,
+            "bottom": 483.59375
+          },
+          "inside": true,
+          "touch": {
+            "x": 132.421875,
+            "y": 391.109375,
+            "width": 44,
+            "height": 44,
+            "top": 391.109375,
+            "left": 132.421875,
+            "right": 176.421875,
+            "bottom": 435.109375
+          }
+        }
+      ],
+      "archiveHelpOpened": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "direction": "row",
+      "labelCenters": [
+        60.5,
+        60.49609375
+      ],
+      "inputDelta": 108,
+      "infoButtons": 2,
+      "archiveIcon": true,
+      "sameRow": true,
+      "buttons": [
+        {
+          "x": 25,
+          "y": 349.609375,
+          "width": 213.7265625,
+          "height": 44,
+          "top": 349.609375,
+          "left": 25,
+          "right": 238.7265625,
+          "bottom": 393.609375
+        },
+        {
+          "x": 246.7265625,
+          "y": 349.609375,
+          "width": 98.5546875,
+          "height": 44,
+          "top": 349.609375,
+          "left": 246.7265625,
+          "right": 345.28125,
+          "bottom": 393.609375
+        }
+      ],
+      "staticAppearanceHelp": 0,
+      "staticArchiveHelp": 0,
+      "overflow": false,
+      "panels": [
+        {
+          "hidden": false,
+          "bounds": {
+            "x": 85,
+            "y": 240,
+            "width": 280,
+            "height": 64.96875,
+            "top": 240,
+            "left": 85,
+            "right": 365,
+            "bottom": 304.96875
+          },
+          "inside": true,
+          "touch": {
+            "x": 162.4921875,
+            "y": 190,
+            "width": 44,
+            "height": 44,
+            "top": 190,
+            "left": 162.4921875,
+            "right": 206.4921875,
+            "bottom": 234
+          }
+        },
+        {
+          "hidden": false,
+          "bounds": {
+            "x": 85,
+            "y": 441.109375,
+            "width": 280,
+            "height": 42.484375,
+            "top": 441.109375,
+            "left": 85,
+            "right": 365,
+            "bottom": 483.59375
+          },
+          "inside": true,
+          "touch": {
+            "x": 132.421875,
+            "y": 391.109375,
+            "width": 44,
+            "height": 44,
+            "top": 391.109375,
+            "left": 132.421875,
+            "right": 176.421875,
+            "bottom": 435.109375
+          }
+        }
+      ],
+      "archiveHelpOpened": true
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "direction": "row",
+      "labelCenters": [
+        29,
+        28.99609375
+      ],
+      "inputDelta": 0,
+      "infoButtons": 2,
+      "archiveIcon": true,
+      "sameRow": true,
+      "buttons": [
+        {
+          "x": 39,
+          "y": 225,
+          "width": 213.7265625,
+          "height": 44,
+          "top": 225,
+          "left": 39,
+          "right": 252.7265625,
+          "bottom": 269
+        },
+        {
+          "x": 260.7265625,
+          "y": 225,
+          "width": 98.5546875,
+          "height": 44,
+          "top": 225,
+          "left": 260.7265625,
+          "right": 359.28125,
+          "bottom": 269
+        }
+      ],
+      "staticAppearanceHelp": 0,
+      "staticArchiveHelp": 0,
+      "overflow": false,
+      "panels": [
+        {
+          "hidden": false,
+          "bounds": {
+            "x": 525,
+            "y": 148,
+            "width": 280,
+            "height": 64.96875,
+            "top": 148,
+            "left": 525,
+            "right": 805,
+            "bottom": 212.96875
+          },
+          "inside": true,
+          "touch": {
+            "x": 569.4921875,
+            "y": 98,
+            "width": 44,
+            "height": 44,
+            "top": 98,
+            "left": 569.4921875,
+            "right": 613.4921875,
+            "bottom": 142
+          }
+        },
+        {
+          "hidden": false,
+          "bounds": {
+            "x": 146.421875,
+            "y": 223,
+            "width": 280,
+            "height": 42.484375,
+            "top": 223,
+            "left": 146.421875,
+            "right": 426.421875,
+            "bottom": 265.484375
+          },
+          "inside": true,
+          "touch": {
+            "x": 146.421875,
+            "y": 173,
+            "width": 44,
+            "height": 44,
+            "top": 173,
+            "left": 146.421875,
+            "right": 190.421875,
+            "bottom": 217
+          }
+        }
+      ],
+      "archiveHelpOpened": true
+    }
+  ]
+}

@@ -156,7 +156,7 @@ describe('US3: week navigation and history', () => {
       '28 Sep – 4 Oct 2026',
     );
     expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain('1 / 4');
-    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain(
+    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).not.toContain(
       'Missed target',
     );
     const reopened = new DashboardController({
@@ -182,7 +182,7 @@ describe('US3: week navigation and history', () => {
     if (!habit || !week) {
       throw new Error('missing week fixture');
     }
-    const handlers = { toggleCompletion: () => undefined, toggleHabitHistory: () => undefined };
+    const handlers = { toggleCompletion: () => undefined, openHabit: () => undefined };
 
     const noRows = document.createElement('div');
     renderHabitGrid(noRows, { ...view, habits: [habit], weeks: [{ ...week, rows: [] }] }, handlers);
@@ -273,7 +273,7 @@ describe('US3: week navigation and history', () => {
     await harness.controller.load();
     const container = document.createElement('div');
     render(harness, container);
-    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toContain('2 / 4');
+    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toBe('2 / 4');
     expect(container.querySelector('.habit-tracker-habit-meta')?.textContent).toContain(
       'Streak: 0 weeks',
     );
@@ -285,7 +285,7 @@ describe('US3: week navigation and history', () => {
       await harness.controller.toggleCompletion(habitId, date, true);
     }
     render(harness, container);
-    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toContain('5 / 4');
+    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toBe('5 / 4');
   });
 
   it('preserves the horizontal position of the week when the dashboard refreshes', async () => {
@@ -364,7 +364,7 @@ describe('US3: week navigation and history', () => {
     expect(harness.controller.getViewModel().weeks[0]?.rows[0]?.completed).toBe(1);
   });
 
-  it('shows archived-week history and its excluded weekly state', async () => {
+  it('shows archived-week marks without adding outcome text to the weekly progress', async () => {
     const now = localNoon(2026, 10, 28);
     const harness = createHarness({ now: () => now });
     addHabitNote(
@@ -389,7 +389,7 @@ describe('US3: week navigation and history', () => {
     expect(container.querySelector('[data-testid="week-label"]')?.getAttribute('aria-label')).toBe(
       '5 Oct – 11 Oct 2026',
     );
-    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).toContain(
+    expect(container.querySelector('.habit-tracker-habit-row')?.textContent).not.toContain(
       'Archived week (excluded)',
     );
     expect(container.querySelector('.habit-tracker-progress')).toBeNull();

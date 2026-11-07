@@ -80,7 +80,9 @@ docs: clarify installation
 ```
 
 For a pull request, explain what changed and why, link any related issue, and list the checks you
-ran. Include screenshots or a short recording for visual changes, using synthetic data. Describe
+ran. Include screenshots or a short recording for visual changes, using synthetic data. Listing
+screenshots must follow [screenshots/README.md](screenshots/README.md): 1200 × 800 PNGs and the
+pinned sample data in `screenshots/fixtures.json`. Describe
 any data-format, compatibility, or migration impact.
 
 Release version changes are an explicit maintainer decision. Run `npm run version:bump -- patch`,

@@ -1,5 +1,11 @@
 # Contract: Weekly Dashboard Interaction
 
+**Presentation supersession**: [Habit details contract](../../005-habit-details-modal/contracts/habit-details.md)
+replaces the inline history/management entry points below with a native habit dialog and Archived (n).
+Creation, day marking, history calculations, note integrity, and guarded writes retain this contract.
+Feature 005 adds duplicate-name validation for new creations/renames and 30 icon results per page;
+legacy duplicate names remain valid.
+
 - Entry: a command and ribbon action open an Obsidian view. On open it displays the current local
   week, Monday through Sunday, as exactly seven date columns with habits in rows. Today is clearly
   marked. Previous/next week arrows reach history and return to the current week.

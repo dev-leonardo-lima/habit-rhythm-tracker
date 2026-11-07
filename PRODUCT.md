@@ -46,15 +46,30 @@ without gamification or decorative dashboards.
   color uses the theme accent.
 - Weekly progress, effective targets, current streaks, archived weeks, and future stored dates must
   remain visible and truthful through week navigation.
-- A habit's read-only yearly activity calendar shows marked dates, current and best weekly streaks,
-  and marked days through today. Archived history remains accessible from the management list.
-- Compact management rows show current-week progress and expand in place for editing; name and
-  next week's target precede grouped color and icon controls.
+- Selecting a habit name opens one native details dialog per dashboard view, with a read-only yearly
+  activity calendar, current and best weekly streaks, and marked days through today.
+- The editor stays visible before the calendar, with grouped name/target fields, appearance controls
+  and a live habit preview. The title shows only the habit name. Name and next week's target use
+  explicit submissions; color and icon apply immediately. The icon chooser floats beside its button
+  without moving the form, closes on selection/Escape/outside click, and retains local search/page. Unsaved name/target input survives reopening within
+  that dashboard view. Archive and Delete habit remain in the same context, with a short inline
+  confirmation before whole-note deletion following Obsidian's deletion setting.
+- A compact Archived (n) disclosure keeps every currently archived habit accessible, independently
+  of the displayed week. Duplicate display names show note paths across grid, list, and dialog.
+  Archived entries preserve each habit's icon and custom color, with left-aligned names.
+- Weekly rows show completed/target counts and a labeled streak, without redundant outcome text.
+  A small outer inset separates completed marks from the grid boundaries while retaining full day
+  hit areas and continuous adjacent completions.
+- Creation and rename reject new duplicate names, ignoring surrounding whitespace and case and
+  including archived habits. Existing duplicates stay valid and accessible; no automatic cleanup
+  deletes, merges, or renames their notes.
 - The activity calendar fills the available width and scrolls on narrow views. The weekly dashboard
   keeps individual progress without aggregate average-progress or goals-met indicators.
 - Target and archive changes take effect next week; reactivation applies in the current week.
 - Concurrent edits and failures must be reported without overwriting the existing note.
 - Keyboard, touch, focus, text labels, and Obsidian theme variables are required.
+- Details use a single vertical scroller on phones, with horizontal scrolling confined to the yearly
+  calendar. Creation and day marking stay directly on the dashboard.
 - Never drop unrelated note content or delete habit data without explicit user action.
 
 ## Brand Commitments
@@ -70,6 +85,8 @@ the accent comes from the active Obsidian theme.
 ## Evidence on Hand
 
 - Product specification and data contract under `specs/001-weekly-habit-dashboard/`.
+- Details navigation and its validation record under `specs/005-habit-details-modal/` supersede the
+  original inline history and management layout.
 - Existing automated tests for targets, streaks, history, guarded writes, accessibility, and lifecycle.
 - Synthetic habit data only; no testimonial, customer, or performance claims exist.
 

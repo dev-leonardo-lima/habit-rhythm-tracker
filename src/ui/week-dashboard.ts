@@ -11,7 +11,7 @@ import { fullDate } from './text';
 
 export interface WeekDashboardHandlers {
   toggleCompletion(habitId: string, date: string, completed: boolean): void | Promise<unknown>;
-  toggleHabitHistory(habitId: string): void;
+  openHabit(habitId: string, origin?: 'grid' | 'archived'): void;
 }
 
 interface DecoratedCell {
@@ -87,6 +87,7 @@ function summaryFallback(
     created: firstRow?.created ?? '',
     state: firstRow?.state ?? 'active',
     target: firstRow?.target ?? null,
+    configuredTarget: null,
     completedThisWeek: 0,
     streak: firstRow?.streak ?? 0,
     pendingArchive: firstRow?.pendingArchive ?? false,
@@ -124,7 +125,7 @@ function habitRows(viewModel: DashboardViewModel): Array<{
 function nameCell(
   summary: HabitSummaryViewModel,
   selectedRow: HabitRowViewModel | undefined,
-  historyOpen: boolean,
+  duplicateName: boolean,
   handlers: WeekDashboardHandlers,
 ): HTMLTableCellElement {
   const cell = el('th', 'habit-tracker-habit-cell');
@@ -132,17 +133,27 @@ function nameCell(
   cell.setAttribute('role', 'rowheader');
   const name = el('button', 'habit-tracker-habit-name');
   name.type = 'button';
-  name.dataset.historyHabitId = summary.habitId;
-  name.setAttribute('aria-label', t('dashboard.viewHistoryAria', { name: summary.name }));
-  name.setAttribute('aria-expanded', String(historyOpen));
-  name.title = t('dashboard.viewHistoryAria', { name: summary.name });
-  name.addEventListener('click', () => handlers.toggleHabitHistory(summary.habitId));
+  name.dataset.openHabitId = summary.habitId;
+  name.setAttribute(
+    'aria-label',
+    t('dashboard.openHabitAria', {
+      name: duplicateName ? `${summary.name}: ${summary.path}` : summary.name,
+    }),
+  );
+  name.setAttribute('aria-haspopup', 'dialog');
+  name.title = t('dashboard.openHabitAria', {
+    name: duplicateName ? `${summary.name}: ${summary.path}` : summary.name,
+  });
+  name.addEventListener('click', () => handlers.openHabit(summary.habitId, 'grid'));
   const icon = habitIcon(summary.icon);
   if (icon) {
     name.append(icon);
   }
   name.append(el('span', 'habit-tracker-habit-name-text', summary.name));
   cell.append(name);
+  if (duplicateName) {
+    cell.append(el('span', 'habit-tracker-habit-path', summary.path));
+  }
 
   const meta = el('div', 'habit-tracker-habit-meta');
   if (selectedRow) {
@@ -150,15 +161,12 @@ function nameCell(
       el(
         'span',
         'habit-tracker-habit-status',
-        t('dashboard.progressStatus', {
+        t('dashboard.progress', {
           completed: selectedRow.completed,
           target: selectedRow.target ?? '—',
-          outcome: selectedRow.outcomeText,
         }),
       ),
     );
-  } else if (summary.state === 'archived') {
-    meta.append(el('span', 'habit-tracker-habit-status', t('dashboard.archived')));
   }
   if (meta.childElementCount > 0) {
     meta.append(document.createTextNode(' '));
@@ -337,7 +345,7 @@ export function renderHabitGrid(
     }
     const selectedRow = rowsByWeek.get(week.week);
     row.append(
-      nameCell(summary, selectedRow, viewModel.detail?.habitId === summary.habitId, handlers),
+      nameCell(summary, selectedRow, viewModel.duplicateHabitIds.has(summary.habitId), handlers),
     );
     const cells = selectedRow?.cells ?? placeholderCells(week);
     const decorated = decorateRun(cells);

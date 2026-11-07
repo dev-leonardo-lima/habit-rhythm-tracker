@@ -183,51 +183,99 @@ export class ItemView {
   }
 }
 
+export class Scope {
+  private handlers: Array<{
+    key: string | null;
+    callback: (event: KeyboardEvent) => boolean | void;
+  }> = [];
+  constructor(private readonly parent?: Scope) {}
+  register(
+    _modifiers: string[] | null,
+    key: string | null,
+    callback: (event: KeyboardEvent) => boolean | void,
+  ) {
+    const handler = { key, callback };
+    this.handlers.push(handler);
+    return handler;
+  }
+  unregister(handler: (typeof this.handlers)[number]): void {
+    this.handlers = this.handlers.filter((item) => item !== handler);
+  }
+  handle(event: KeyboardEvent): void {
+    for (const handler of this.handlers) {
+      if (
+        (handler.key === null || handler.key === event.key) &&
+        handler.callback(event) === false
+      ) {
+        event.preventDefault();
+        return;
+      }
+    }
+    this.parent?.handle(event);
+  }
+}
+
 export class Modal {
   app: App;
+  scope = new Scope();
+  containerEl: HTMLElement;
   modalEl: HTMLElement;
   titleEl: HTMLElement;
   contentEl: HTMLElement;
   isOpen = false;
-  private readonly handleEscape = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') {
-      this.close();
+  private static openModals: Modal[] = [];
+  private readonly handleKey = (event: KeyboardEvent): void => {
+    if (Modal.openModals[Modal.openModals.length - 1] === this) {
+      this.scope.handle(event);
     }
   };
-
   constructor(app: App) {
     this.app = app;
+    this.containerEl = document.createElement('div');
+    this.containerEl.className = 'modal-container';
     this.modalEl = document.createElement('div');
+    this.modalEl.className = 'modal';
     this.titleEl = document.createElement('div');
     this.titleEl.className = 'modal-title';
     this.contentEl = document.createElement('div');
-    this.modalEl.append(this.titleEl, this.contentEl);
+    this.contentEl.className = 'modal-content';
+    const close = document.createElement('button');
+    close.className = 'modal-close-button';
+    close.setAttribute('aria-label', 'Close');
+    close.addEventListener('click', () => this.close());
+    this.modalEl.append(close, this.titleEl, this.contentEl);
+    this.containerEl.append(this.modalEl);
+    this.scope.register([], 'Escape', () => {
+      this.close();
+      return false;
+    });
   }
-
   open(): void {
+    if (this.isOpen) {
+      return;
+    }
     this.isOpen = true;
-    document.body.append(this.modalEl);
-    document.addEventListener('keydown', this.handleEscape);
+    Modal.openModals.push(this);
+    document.body.append(this.containerEl);
+    document.addEventListener('keydown', this.handleKey);
     this.onOpen();
   }
-
   close(): void {
     if (!this.isOpen) {
       return;
     }
     this.isOpen = false;
-    document.removeEventListener('keydown', this.handleEscape);
+    Modal.openModals = Modal.openModals.filter((modal) => modal !== this);
+    document.removeEventListener('keydown', this.handleKey);
     this.onClose();
-    this.modalEl.remove();
+    this.containerEl.remove();
   }
-
-  onOpen(): void {
-    // overridden
+  setTitle(title: string): this {
+    this.titleEl.textContent = title;
+    return this;
   }
-
-  onClose(): void {
-    // overridden
-  }
+  onOpen(): void {}
+  onClose(): void {}
 }
 
 export class PluginSettingTab {

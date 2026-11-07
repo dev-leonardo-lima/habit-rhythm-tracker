@@ -1,0 +1,80 @@
+{
+  "pendingTested": true,
+  "results": [
+    {
+      "viewport": [
+        320,
+        844
+      ],
+      "buttons": [
+        {
+          "caption": "Cancelar arquivamento",
+          "x": 25,
+          "y": 512.859375,
+          "width": 163.4453125,
+          "height": 56.96875
+        },
+        {
+          "caption": "Excluir",
+          "x": 196.4453125,
+          "y": 512.859375,
+          "width": 98.5546875,
+          "height": 56.96875
+        }
+      ],
+      "sameRow": true,
+      "overflow": false,
+      "hint": "Arquivamento agendado para a próxima semana."
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "buttons": [
+        {
+          "caption": "Cancelar arquivamento",
+          "x": 25,
+          "y": 458.859375,
+          "width": 213.7265625,
+          "height": 44
+        },
+        {
+          "caption": "Excluir",
+          "x": 246.7265625,
+          "y": 458.859375,
+          "width": 98.5546875,
+          "height": 44
+        }
+      ],
+      "sameRow": true,
+      "overflow": false,
+      "hint": "Arquivamento agendado para a próxima semana."
+    },
+    {
+      "viewport": [
+        844,
+        390
+      ],
+      "buttons": [
+        {
+          "caption": "Cancelar arquivamento",
+          "x": 39,
+          "y": 295.3515625,
+          "width": 213.7265625,
+          "height": 44
+        },
+        {
+          "caption": "Excluir",
+          "x": 260.7265625,
+          "y": 295.3515625,
+          "width": 98.5546875,
+          "height": 44
+        }
+      ],
+      "sameRow": true,
+      "overflow": false,
+      "hint": "Arquivamento agendado para a próxima semana."
+    }
+  ]
+}

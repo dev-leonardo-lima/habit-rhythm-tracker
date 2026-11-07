@@ -104,6 +104,10 @@ does not update the listing. To change them, sign in to
 [community.obsidian.md](https://community.obsidian.md), open the developer dashboard, and edit the
 plugin.
 
+Desktop listing screenshots use 1200 × 800 px (3:2), below 5 MB. Keep the established sample values
+and follow [the capture contract](../screenshots/README.md) and its pinned fixture when replacing
+the repository images. Directory uploads remain a separate maintainer action.
+
 The initial submission was a separate maintainer action:
 
 1. Sign in to [community.obsidian.md](https://community.obsidian.md) and connect the GitHub account.

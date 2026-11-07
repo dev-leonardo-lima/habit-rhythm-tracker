@@ -62,8 +62,9 @@ development setup and test-vault instructions, see [CONTRIBUTING.md](CONTRIBUTIN
 1. Open the habit dashboard from the ribbon or command palette.
 2. In **New habit**, enter a name, choose a weekly target, and select **Create habit**.
 3. Select an eligible day in the grid to mark it. Select it again to unmark it.
-4. Use the arrows to move between weeks. Select a habit's name to open its activity history.
-5. Expand **Manage habits** to change a name, target, color, or icon, or to archive or delete a habit.
+4. Use the arrows to move between weeks. Select a habit's name to open its details and activity history.
+5. In the habit dialog, change its name, target, color, or icon, or to archive or
+   delete it. Open **Archived (n)** below the grid to reach archived habits.
 
 For example, set **Gym** to **4 days / week**. Once you mark four distinct days, that week counts
 toward your streak even if the days are not consecutive. An unfinished current week does not break
@@ -77,16 +78,30 @@ By default, habit notes are stored in the `Habits` folder. Change **Habits folde
 each habit and manages a marked block inside it; content outside that block is preserved. See
 [docs/data-format.md](docs/data-format.md) for the note format and editing guidance.
 
-In **Manage habits**:
+In a habit's details, the editor is always visible above the activity history:
 
 - Color and icon changes apply immediately. The icon picker searches locally available Obsidian
-  icons and shows up to 27 results per page. **Use theme color** or **Remove icon** resets a choice.
+  icons in a floating selector with up to 30 results per page. Choosing an icon closes the selector;
+  Escape or clicking outside dismisses it without changing anything. **Use theme color** or **Remove icon** resets a choice.
 - Target changes and archiving take effect next week. Reactivation applies in the current week.
-- Archived habits and their history remain accessible. Only one editor is open at a time; drafts
-  are kept while the dashboard remains open.
-- **Delete habit** asks for confirmation and removes the entire selected note, including
+- **Archived (n)** lists habits archived today, regardless of the week being viewed. Select a name
+  to review its history or reactivate it. Pending archives join the list when they take effect.
+- One habit dialog opens per dashboard view. Unsaved name and target input is kept while that view
+  remains open, including after closing and reopening the dialog. Saved changes apply independently.
+- **Delete** asks for confirmation and removes the entire selected note, including
   its history and any other text. Obsidian's deletion setting determines whether the note goes to
   the system trash, the vault trash, or is deleted permanently.
+
+The dialog groups name and target fields, appearance controls and a live habit preview above history.
+The preview reflects unsaved name/target input without saving it. Information buttons beside **Weekly target**
+and **Appearance** explain their behavior. The archive button shows its timing on hover or keyboard
+focus; scheduled target changes remain visible. Canceling a deletion returns to
+the same details; Escape cancels the confirmation first, then closes the dialog on the next press.
+Closing returns to the selected week and the habit control. Duplicate names show their note paths.
+
+New habits and renames require a name different from every other active or archived habit. Names
+are compared without surrounding spaces or case differences. Existing duplicates remain usable;
+the plugin never removes or merges them automatically. Rename one explicitly to resolve a duplicate.
 
 ## Data and privacy
 

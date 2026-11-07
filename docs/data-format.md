@@ -52,6 +52,14 @@ behavior. Other notes and attachments are not deleted. The note format does not 
 
 ## Discovery and validation
 
+- Creating or renaming through the dashboard cannot introduce a duplicate name among valid active
+  or archived habits in the configured folder. Comparisons trim surrounding whitespace, normalize
+  Unicode to NFC, and ignore case; stored capitalization, accents, and internal spaces remain as
+  authored. The same habit is excluded, and an existing duplicate can keep its unchanged comparison
+  name. Existing duplicate names remain valid on discovery and are never cleaned up automatically.
+  Colliding create/rename submissions within one controller are checked in order against fresh
+  discovery. Independent external writers retain the synchronization boundary described below.
+
 - Only Markdown notes in the configured habits folder are discovered. Recovery files left by older
   development builds are ignored and never treated as habit data.
 - A note with missing, duplicated, or out-of-order markers is reported with a visible error and is

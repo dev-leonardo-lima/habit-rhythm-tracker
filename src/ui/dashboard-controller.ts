@@ -9,6 +9,7 @@ import { habitColor } from '../domain/habit-color';
 import { habitHistory, type HabitHistory } from '../domain/habit-history';
 import {
   createHabit,
+  habitNameKey,
   markCompletion,
   renameHabit as renameHabitRecord,
   setHabitColor,
@@ -18,6 +19,7 @@ import {
 import { compareDates, mondayOf, todayLocalDate, weekDates } from '../domain/local-date';
 import { currentStreak, streakLabel } from '../domain/streak';
 import {
+  configuredTargetForWeek,
   effectiveTargetForWeek,
   pendingTargetChange,
   scheduleTargetChange,
@@ -54,6 +56,7 @@ export interface DeletionRequest {
 }
 
 interface PendingDeletion extends DeletionRequest {
+  request?: DeletionRequest;
   baseContent: string;
   phase: 'preparing' | 'ready' | 'committing';
   invalidated: boolean;
@@ -122,17 +125,15 @@ export interface HabitSummaryViewModel {
   created: LocalDate;
   state: 'active' | 'archived';
   target: number | null;
+  /** Saved weekly target before the creation-week adjustment used for progress. */
+  configuredTarget: number | null;
   completedThisWeek: number;
   streak: number;
   pendingArchive: boolean;
   pendingTarget: number | null;
 }
 
-export interface HabitDetailViewModel {
-  habitId: string;
-  name: string;
-  color: string | null;
-  icon: string | null;
+export interface HabitDetailViewModel extends HabitSummaryViewModel {
   history: HabitHistory;
 }
 
@@ -141,11 +142,12 @@ export interface DashboardViewModel {
   currentWeek: WeekKey;
   focusedWeek: WeekKey;
   loading: boolean;
+  settingsChanging: boolean;
   message: DashboardMessage | null;
   issues: NoteIssue[];
   weeks: WeekViewModel[];
   habits: HabitSummaryViewModel[];
-  detail: HabitDetailViewModel | null;
+  duplicateHabitIds: ReadonlySet<string>;
   formResetVersion: number;
 }
 
@@ -176,10 +178,9 @@ export class DashboardController {
   private loading = true;
   private message: DashboardMessage | null = null;
   private formResetVersion = 0;
-  private selectedHabitId: string | null = null;
-  private selectedHistoryYear: number | null = null;
   private reloadGeneration = 0;
   private readonly habitQueues = new Map<string, Promise<void>>();
+  private readonly nameQueues = new Map<string, Promise<void>>();
   private readonly pendingDeletions = new Map<string, PendingDeletion>();
   private settingsChanging = false;
   private settingsDeletionOutcome: DashboardMessage | null = null;
@@ -272,32 +273,54 @@ export class DashboardController {
     const summaries = habits
       .map((habit) => this.buildSummary(habit, today))
       .sort((left, right) => left.name.localeCompare(right.name));
-    const selected = this.discovered.find((entry) => entry.habit.id === this.selectedHabitId);
-    const year = Math.min(
-      this.selectedHistoryYear ?? Number(today.slice(0, 4)),
-      Number(today.slice(0, 4)),
-    );
-    const detail: HabitDetailViewModel | null = selected
-      ? {
-          habitId: selected.habit.id,
-          name: selected.habit.name,
-          color: habitColor(selected.habit),
-          icon: selected.habit.icon ?? null,
-          history: habitHistory(selected.habit, today, year),
+    const names = new Map<string, string[]>();
+    for (const habit of summaries) {
+      const key = habitNameKey(habit.name);
+      const ids = names.get(key) ?? [];
+      ids.push(habit.habitId);
+      names.set(key, ids);
+    }
+    const duplicateHabitIds = new Set<string>();
+    for (const ids of names.values()) {
+      if (ids.length > 1) {
+        for (const id of ids) {
+          duplicateHabitIds.add(id);
         }
-      : null;
-
+      }
+    }
     return {
       today,
       currentWeek,
       focusedWeek: this.calendar.focusedWeek,
       loading: this.loading,
+      settingsChanging: this.settingsChanging,
       message: this.message,
       issues: this.issues,
       weeks,
       habits: summaries,
-      detail,
+      duplicateHabitIds,
       formResetVersion: this.formResetVersion,
+    };
+  }
+
+  getHabitDetail(habitId: string, requestedYear: number): HabitDetailViewModel | null {
+    const entry = this.discovered.find((item) => item.habit.id === habitId);
+    if (!entry) {
+      return null;
+    }
+    const today = this.calendar.today;
+    const currentYear = Number(today.slice(0, 4));
+    const earliest = Math.min(currentYear, Number(entry.habit.created.slice(0, 4)));
+    const year = Math.max(
+      earliest,
+      Math.min(
+        currentYear,
+        Number.isFinite(requestedYear) ? Math.trunc(requestedYear) : currentYear,
+      ),
+    );
+    return {
+      ...this.buildSummary(entry.habit, today),
+      history: habitHistory(entry.habit, today, year),
     };
   }
 
@@ -408,6 +431,7 @@ export class DashboardController {
       created: habit.created,
       state,
       target: effectiveTargetForWeek(habit, week),
+      configuredTarget: configuredTargetForWeek(habit, week),
       completedThisWeek: completedCountInWeek(habit, week, today),
       streak: currentStreak(habit, today),
       pendingArchive: isPendingArchive(habit, today),
@@ -425,56 +449,27 @@ export class DashboardController {
     this.emit();
   }
 
-  toggleHabitHistory(habitId: string): void {
-    if (this.selectedHabitId === habitId) {
-      this.closeHabitHistory();
-      return;
-    }
-    if (!this.discovered.some((entry) => entry.habit.id === habitId)) {
-      return;
-    }
-    this.selectedHabitId = habitId;
-    this.selectedHistoryYear = Number(this.calendar.today.slice(0, 4));
-    this.emit();
-  }
-
-  closeHabitHistory(): void {
-    this.selectedHabitId = null;
-    this.selectedHistoryYear = null;
-    this.emit();
-  }
-
-  changeHistoryYear(delta: -1 | 1): void {
-    const selected = this.discovered.find((entry) => entry.habit.id === this.selectedHabitId);
-    if (!selected) {
-      return;
-    }
-    const currentYear = Number(this.calendar.today.slice(0, 4));
-    const earliest = Math.min(currentYear, Number(selected.habit.created.slice(0, 4)));
-    const year = Math.min(this.selectedHistoryYear ?? currentYear, currentYear);
-    this.selectedHistoryYear = Math.max(earliest, Math.min(currentYear, year + delta));
-    this.emit();
-  }
-
   async createHabit(name: string, target = 7): Promise<WriteResult | null> {
-    let habit: Habit;
-    try {
-      habit = createHabit({ name, target }, this.now());
-    } catch (error) {
-      this.setMessage('error', error instanceof Error ? error.message : String(error));
-      return null;
-    }
-    const path = await this.repository.findAvailablePath(habit.name);
-    const result = await this.creator.create(path, { habit });
-    if (result.status === 'applied') {
-      this.formResetVersion += 1;
-    }
-    await this.handleWriteResult(result);
-    return result;
+    return this.serializeNameChange(name, async () => {
+      try {
+        const habit = createHabit({ name, target }, this.now());
+        await this.assertNameAvailable(habit.name);
+        const path = await this.repository.findAvailablePath(habit.name);
+        const result = await this.creator.create(path, { habit });
+        if (result.status === 'applied') {
+          this.formResetVersion += 1;
+        }
+        await this.handleWriteResult(result);
+        return result;
+      } catch (error) {
+        this.setMessage('error', error instanceof Error ? error.message : String(error));
+        return null;
+      }
+    });
   }
 
-  async prepareDeletion(habitId: string): Promise<DeletionRequest | null> {
-    if (this.settingsChanging || this.pendingDeletions.has(habitId)) {
+  async prepareDeletion(habitId: string, signal?: AbortSignal): Promise<DeletionRequest | null> {
+    if (signal?.aborted || this.settingsChanging || this.pendingDeletions.has(habitId)) {
       return null;
     }
     const pending: PendingDeletion = {
@@ -487,6 +482,12 @@ export class DashboardController {
       dispatched: false,
     };
     this.pendingDeletions.set(habitId, pending);
+    const cancelPreparation = () => {
+      if (this.pendingDeletions.get(habitId) === pending) {
+        this.cancelDeletion(habitId, pending.request);
+      }
+    };
+    signal?.addEventListener('abort', cancelPreparation, { once: true });
     return this.serializeHabit(habitId, async () => {
       try {
         const fresh = await this.loadFresh(habitId);
@@ -501,7 +502,8 @@ export class DashboardController {
         pending.path = fresh.path;
         pending.baseContent = fresh.content;
         pending.phase = 'ready';
-        return { habitId, name: pending.name, path: pending.path };
+        pending.request = { habitId, name: pending.name, path: pending.path };
+        return pending.request;
       } catch {
         if (this.pendingDeletions.get(habitId) === pending) {
           this.pendingDeletions.delete(habitId);
@@ -509,7 +511,7 @@ export class DashboardController {
         }
         return null;
       }
-    });
+    }).finally(() => signal?.removeEventListener('abort', cancelPreparation));
   }
 
   isDeletionPending(habitId: string): boolean {
@@ -517,14 +519,19 @@ export class DashboardController {
     return !!pending && !pending.invalidated && pending.phase !== 'committing';
   }
 
-  cancelDeletion(habitId: string): void {
+  cancelDeletion(habitId: string, request?: DeletionRequest, reason?: 'conflict'): void {
     const pending = this.pendingDeletions.get(habitId);
-    if (!pending || pending.phase === 'committing') {
-      return;
+    const canCancel =
+      pending && pending.phase !== 'committing' && (!request || pending.request === request);
+    if (canCancel) {
+      pending.invalidated = true;
+      this.pendingDeletions.delete(habitId);
     }
-    pending.invalidated = true;
-    this.pendingDeletions.delete(habitId);
-    this.emit();
+    if (reason === 'conflict') {
+      this.setMessage('error', t('delete.conflict'));
+    } else if (canCancel) {
+      this.emit();
+    }
   }
 
   beginSettingsUpdate(): Promise<void> {
@@ -562,8 +569,12 @@ export class DashboardController {
     this.emit();
   }
 
-  async confirmDeletion(habitId: string): Promise<DeleteResult | null> {
+  async confirmDeletion(habitId: string, request?: DeletionRequest): Promise<DeleteResult | null> {
     const pending = this.pendingDeletions.get(habitId);
+    if (request && pending?.request !== request) {
+      this.setMessage('error', t('delete.conflict'));
+      return null;
+    }
     if (!pending || pending.invalidated || pending.phase !== 'ready' || this.settingsChanging) {
       return null;
     }
@@ -601,10 +612,6 @@ export class DashboardController {
       this.pendingDeletions.delete(pending.habitId);
     }
     if (result.status === 'applied') {
-      if (this.selectedHabitId === pending.habitId) {
-        this.selectedHabitId = null;
-        this.selectedHistoryYear = null;
-      }
       this.message = null;
       await this.refresh();
     } else if (!pending.invalidated || pending.dispatched) {
@@ -673,7 +680,12 @@ export class DashboardController {
   }
 
   async renameHabit(habitId: string, name: string): Promise<WriteResult | null> {
-    return this.applyLifecycle(habitId, (habit) => renameHabitRecord(habit, name));
+    if (this.pendingDeletions.has(habitId)) {
+      return null;
+    }
+    return this.serializeNameChange(name, () =>
+      this.applyLifecycle(habitId, (habit) => renameHabitRecord(habit, name), true),
+    );
   }
 
   async changeColor(habitId: string, color: string | null): Promise<WriteResult | null> {
@@ -707,16 +719,18 @@ export class DashboardController {
   private async applyLifecycle(
     habitId: string,
     transform: (habit: Habit) => Habit,
+    checkName = false,
   ): Promise<WriteResult | null> {
     if (this.pendingDeletions.has(habitId)) {
       return null;
     }
-    return this.serializeHabit(habitId, () => this.writeLifecycle(habitId, transform));
+    return this.serializeHabit(habitId, () => this.writeLifecycle(habitId, transform, checkName));
   }
 
   private async writeLifecycle(
     habitId: string,
     transform: (habit: Habit) => Habit,
+    checkName: boolean,
   ): Promise<WriteResult | null> {
     let fresh: DiscoveredHabit;
     try {
@@ -729,6 +743,9 @@ export class DashboardController {
     let updated: Habit;
     try {
       updated = transform(fresh.habit);
+      if (checkName && habitNameKey(updated.name) !== habitNameKey(fresh.habit.name)) {
+        await this.assertNameAvailable(updated.name, habitId);
+      }
     } catch (error) {
       this.setMessage('error', error instanceof Error ? error.message : String(error));
       return null;
@@ -766,6 +783,35 @@ export class DashboardController {
       throw new Error(t('error.habitMissing'));
     }
     return found;
+  }
+
+  private async assertNameAvailable(name: string, exceptId?: string): Promise<void> {
+    const key = habitNameKey(name);
+    const discovery = await this.repository.discover();
+    if (
+      discovery.habits.some(
+        ({ habit }) => habit.id !== exceptId && habitNameKey(habit.name) === key,
+      )
+    ) {
+      throw new Error(t('error.duplicateHabitName', { name }));
+    }
+  }
+
+  private serializeNameChange<T>(name: string, action: () => Promise<T>): Promise<T> {
+    const key = habitNameKey(name);
+    const previous = this.nameQueues.get(key) ?? Promise.resolve();
+    const next = previous.then(action, action);
+    const settled = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.nameQueues.set(key, settled);
+    void settled.then(() => {
+      if (this.nameQueues.get(key) === settled) {
+        this.nameQueues.delete(key);
+      }
+    });
+    return next;
   }
 
   private serializeHabit<T>(habitId: string, action: () => Promise<T>): Promise<T> {

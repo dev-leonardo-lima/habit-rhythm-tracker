@@ -2,11 +2,9 @@ import { t, tp } from '../i18n';
 import type { HistoryDay } from '../domain/habit-history';
 import type { HabitDetailViewModel } from './dashboard-controller';
 import { fullDate, monthShort, shortDate, weekdayName, weekdayShort } from './text';
-import { habitIcon } from './habit-icon-picker';
 
 export interface HabitHistoryHandlers {
   changeHistoryYear(delta: -1 | 1): void;
-  closeHabitHistory(): void;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -77,24 +75,6 @@ export function renderHabitHistory(
   if (detail.color) {
     section.style.setProperty('--ht-habit-color', detail.color);
   }
-
-  const heading = el('div', 'habit-tracker-history-heading');
-  const title = el('div', 'habit-tracker-history-title-group');
-  const icon = habitIcon(detail.icon);
-  if (icon) {
-    title.append(icon);
-  }
-  const titleText = el('div');
-  titleText.append(el('h2', 'habit-tracker-history-title', detail.name));
-  titleText.append(el('p', 'habit-tracker-history-subtitle', t('history.title')));
-  title.append(titleText);
-  heading.append(title);
-  const close = el('button', 'habit-tracker-history-close', t('action.close'));
-  close.type = 'button';
-  close.setAttribute('aria-label', t('history.closeAria', { name: detail.name }));
-  close.addEventListener('click', () => handlers.closeHabitHistory());
-  heading.append(close);
-  section.append(heading);
 
   const stats = el('div', 'habit-tracker-history-stats');
   stats.append(statistic(t('history.currentStreak'), tp('unit.week', history.currentStreak)));

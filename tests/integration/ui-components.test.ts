@@ -3,7 +3,7 @@ import type { DashboardHandlers } from '../../src/ui/dashboard-renderer';
 import type { DashboardViewModel, HabitSummaryViewModel } from '../../src/ui/dashboard-controller';
 import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { renderHabitForm, parseHabitForm } from '../../src/ui/habit-form';
-import { renderHabitSettings } from '../../src/ui/habit-settings';
+import { HabitEditor, type HabitEditorHandlers } from '../../src/ui/habit-editor';
 import { renderHabitGrid } from '../../src/ui/week-dashboard';
 import {
   monthLabel,
@@ -21,19 +21,22 @@ function handlers(): DashboardHandlers {
   return {
     createHabit: vi.fn(),
     toggleCompletion: vi.fn(),
-    toggleHabitHistory: vi.fn(),
-    closeHabitHistory: vi.fn(),
-    changeHistoryYear: vi.fn(),
-    renameHabit: vi.fn(),
-    changeColor: vi.fn(),
-    changeIcon: vi.fn(),
-    changeTarget: vi.fn(),
-    archiveHabit: vi.fn(),
-    reactivateHabit: vi.fn(),
-    cancelPendingArchive: vi.fn(),
-    deleteHabit: vi.fn(),
+    openHabit: vi.fn(),
     previousWeek: vi.fn(),
     nextWeek: vi.fn(),
+  };
+}
+
+function editorCallbacks(): HabitEditorHandlers {
+  return {
+    renameHabit: vi.fn().mockResolvedValue(null),
+    changeTarget: vi.fn().mockResolvedValue(null),
+    changeColor: vi.fn().mockResolvedValue(null),
+    changeIcon: vi.fn().mockResolvedValue(null),
+    archiveHabit: vi.fn().mockResolvedValue(null),
+    reactivateHabit: vi.fn().mockResolvedValue(null),
+    cancelPendingArchive: vi.fn().mockResolvedValue(null),
+    deleteHabit: vi.fn(),
   };
 }
 
@@ -47,6 +50,7 @@ function summary(overrides: Partial<HabitSummaryViewModel> = {}): HabitSummaryVi
     created: '2026-10-26',
     state: 'active',
     target: 4,
+    configuredTarget: 4,
     completedThisWeek: 2,
     streak: 2,
     pendingArchive: false,
@@ -61,32 +65,25 @@ function viewModel(overrides: Partial<DashboardViewModel> = {}): DashboardViewMo
     currentWeek: '2026-10-26',
     focusedWeek: '2026-10-26',
     loading: false,
+    settingsChanging: false,
     message: null,
     issues: [],
     weeks: [],
     habits: [],
-    detail: null,
+    duplicateHabitIds: new Set(),
     formResetVersion: 0,
     ...overrides,
   };
 }
 
 describe('UI components', () => {
-  it('identifies same-named habits by path and exposes the delete action', () => {
-    const container = document.createElement('div');
-    const callbacks = handlers();
-    renderHabitSettings(
-      container,
-      [summary(), summary({ habitId: 'other', path: 'Habits/Other.md' })],
-      callbacks,
-    );
-    const row = container.querySelector<HTMLElement>('[data-habit-id="habit-1"]');
-    expect(row?.textContent).toContain('Habits/Gym.md');
-    expect(row?.querySelector('summary')?.textContent).toContain('Habits/Gym.md');
-    const action = row?.querySelector<HTMLButtonElement>('[data-delete-habit-id]');
-    expect(action?.textContent).toBe('Delete habit');
-    expect(action?.getAttribute('aria-label')).toBe('Delete habit Gym: Habits/Gym.md');
-    action?.click();
+  it('exposes deletion with a disambiguated accessible name', () => {
+    const callbacks = editorCallbacks();
+    const editor = new HabitEditor(summary(), callbacks);
+    editor.update(summary(), true);
+    expect(editor.deleteButton.textContent).toBe('Delete');
+    expect(editor.deleteButton.getAttribute('aria-label')).toBe('Delete habit Gym: Habits/Gym.md');
+    editor.deleteButton.click();
     expect(callbacks.deleteHabit).toHaveBeenCalledWith('habit-1');
   });
 
@@ -117,7 +114,6 @@ describe('UI components', () => {
   it('renders lifecycle controls for active, pending-archive and archived habits', () => {
     const container = document.createElement('div');
     const callbacks = {
-      toggleHabitHistory: vi.fn(),
       renameHabit: vi.fn(),
       changeColor: vi.fn(),
       changeIcon: vi.fn(),
@@ -127,15 +123,27 @@ describe('UI components', () => {
       cancelPendingArchive: vi.fn(),
       deleteHabit: vi.fn(),
     };
-    renderHabitSettings(
-      container,
-      [
-        summary(),
-        summary({ habitId: 'habit-2', name: 'Read', state: 'archived' }),
-        summary({ habitId: 'habit-3', name: 'Walk', pendingArchive: true }),
-      ],
-      callbacks,
-    );
+    for (const habit of [
+      summary(),
+      summary({ habitId: 'habit-2', name: 'Read', state: 'archived' }),
+      summary({ habitId: 'habit-3', name: 'Walk', pendingArchive: true }),
+    ]) {
+      container.append(new HabitEditor(habit, callbacks).el);
+    }
+
+    for (const [label, caption, hint] of [
+      ['Archive Gym from next week', 'Archive', 'From next week.'],
+      ['Reactivate Read this week', 'Reactivate', 'This week.'],
+      ['Cancel pending archive for Walk', 'Cancel archive', 'Archive scheduled for next week.'],
+    ]) {
+      const button = container.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+      expect(button?.textContent).toBe(caption);
+      const panel = container.querySelector<HTMLElement>(
+        `#${button?.getAttribute('aria-describedby')}`,
+      );
+      expect(panel?.hidden).toBe(true);
+      expect(panel?.textContent).toBe(hint);
+    }
 
     const first = container.querySelector<HTMLElement>('[data-habit-id="habit-1"]');
     const nameInput = first?.querySelector('input') as HTMLInputElement;
@@ -171,7 +179,6 @@ describe('UI components', () => {
   it('renders an accessible color picker and removes a custom color', () => {
     const container = document.createElement('div');
     const callbacks = {
-      toggleHabitHistory: vi.fn(),
       renameHabit: vi.fn(),
       changeColor: vi.fn(),
       changeIcon: vi.fn(),
@@ -181,7 +188,7 @@ describe('UI components', () => {
       cancelPendingArchive: vi.fn(),
       deleteHabit: vi.fn(),
     };
-    renderHabitSettings(container, [summary({ color: '#3366cc' })], callbacks);
+    container.append(new HabitEditor(summary({ color: '#3366cc' }), callbacks).el);
 
     const input = container.querySelector<HTMLInputElement>('input[type="color"]');
     expect(input?.value).toBe('#3366cc');
@@ -198,7 +205,7 @@ describe('UI components', () => {
     expect(callbacks.changeColor).toHaveBeenCalledWith('habit-1', null);
 
     const themed = document.createElement('div');
-    renderHabitSettings(themed, [summary()], callbacks);
+    themed.append(new HabitEditor(summary(), callbacks).el);
     expect(
       (themed.querySelector('button[aria-label="Gym uses the theme color"]') as HTMLButtonElement)
         .disabled,
@@ -209,7 +216,7 @@ describe('UI components', () => {
     const weeks = document.createElement('div');
     renderHabitGrid(weeks, viewModel({ weeks: [] }), {
       toggleCompletion: vi.fn(),
-      toggleHabitHistory: vi.fn(),
+      openHabit: vi.fn(),
     });
     expect(weeks.textContent).toContain('No week to display');
   });
@@ -302,12 +309,13 @@ describe('UI components', () => {
     ).toBe('Draft habit');
 
     await harness.controller.createHabit('Read', 7);
+    // This creation did not submit the draft shown in this container.
     expect(
       container.querySelector<HTMLInputElement>('[data-testid="create-habit-form"] input')?.value,
-    ).toBe('');
+    ).toBe('Draft habit');
     expect(
       container.querySelector<HTMLSelectElement>('[data-testid="create-habit-form"] select')?.value,
-    ).toBe('7');
+    ).toBe('3');
 
     unsubscribe();
     container.remove();

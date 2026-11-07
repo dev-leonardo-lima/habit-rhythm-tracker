@@ -1,56 +1,25 @@
-import { ItemView, Modal, type App, type WorkspaceLeaf } from 'obsidian';
+import { ItemView, type WorkspaceLeaf } from 'obsidian';
 import { t } from '../i18n';
-import type { DashboardController } from './dashboard-controller';
+import type { DashboardController, DashboardMessage } from './dashboard-controller';
 import { createDashboardHandlers } from './controller-handlers';
 import { renderDashboard } from './dashboard-renderer';
+import { HabitDetailModal } from './habit-detail-modal';
+import type { HabitDraft } from './habit-editor';
+import type { WriteResult } from '../storage/guarded-write';
 
 export const VIEW_TYPE_HABIT_DASHBOARD = 'habit-rhythm-tracker-dashboard';
-
 export type ControllerProvider = () => DashboardController;
-
-class DeleteHabitModal extends Modal {
-  private confirmed = false;
-
-  constructor(
-    app: App,
-    private readonly name: string,
-    private readonly onDecision: (confirmed: boolean) => void,
-  ) {
-    super(app);
-  }
-
-  override onOpen(): void {
-    this.modalEl.classList.add('habit-tracker-delete-confirmation');
-    this.contentEl.classList.add('habit-tracker-delete-actions');
-    this.titleEl.textContent = t('delete.question', { name: this.name });
-    const cancel = createEl('button');
-    cancel.type = 'button';
-    cancel.textContent = t('action.cancel');
-    cancel.addEventListener('click', () => this.close());
-    const remove = createEl('button');
-    remove.type = 'button';
-    remove.classList.add('mod-warning');
-    remove.textContent = t('action.delete');
-    remove.addEventListener('click', () => {
-      this.confirmed = true;
-      this.close();
-    });
-    this.contentEl.replaceChildren(cancel, remove);
-    cancel.focus();
-  }
-
-  override onClose(): void {
-    this.onDecision(this.confirmed);
-  }
-}
 
 export class HabitDashboardView extends ItemView {
   private unsubscribe: (() => void) | null = null;
   private active = false;
-  private deletionModal: {
+  private rendering = false;
+  private modal: HabitDetailModal | null = null;
+  private readonly drafts = new Map<string, HabitDraft>();
+  private unavailableMessage: {
     habitId: string;
-    controller: DashboardController;
-    modal: DeleteHabitModal;
+    formResetVersion: number;
+    message: DashboardMessage;
   } | null = null;
 
   constructor(
@@ -59,104 +28,253 @@ export class HabitDashboardView extends ItemView {
   ) {
     super(leaf);
   }
-
   override getViewType(): string {
     return VIEW_TYPE_HABIT_DASHBOARD;
   }
-
   override getDisplayText(): string {
     return t('view.dashboard.title');
   }
-
   override getIcon(): string {
     return 'check-square';
+  }
+  private get controller(): DashboardController {
+    return this.provider();
   }
 
   override async onOpen(): Promise<void> {
     this.active = true;
+    this.unavailableMessage = null;
     this.contentEl.addClass('habit-tracker-view');
     this.subscribe();
     await this.controller.refreshClock();
     await this.controller.refresh();
   }
-
   override async onClose(): Promise<void> {
     this.active = false;
-    this.deletionModal?.modal.close();
     this.unsubscribe?.();
     this.unsubscribe = null;
+    this.modal?.close();
+    this.modal = null;
+    this.drafts.clear();
   }
-
-  /** Re-subscribes after settings validation rebuilds the controller stack. */
   rebind(): void {
+    this.modal?.close();
+    this.modal = null;
+    this.drafts.clear();
+    this.unavailableMessage = null;
     this.subscribe();
-    this.render();
   }
-
-  private get controller(): DashboardController {
-    return this.provider();
-  }
-
   private subscribe(): void {
     this.unsubscribe?.();
     this.unsubscribe = this.controller.subscribe(() => this.render());
     this.render();
   }
-
   private render(): void {
-    if (
-      this.deletionModal &&
-      !this.deletionModal.controller.isDeletionPending(this.deletionModal.habitId)
-    ) {
-      this.deletionModal.modal.close();
+    if (!this.active || this.rendering) {
+      return;
     }
-    renderDashboard(
-      this.contentEl,
-      this.controller.getViewModel(),
-      createDashboardHandlers(this.controller, (habitId) => this.requestDeletion(habitId)),
-    );
+    this.rendering = true;
+    try {
+      const controller = this.controller;
+      const model = controller.getViewModel();
+      const modal = this.modal;
+      if (
+        this.unavailableMessage &&
+        (model.message ||
+          model.formResetVersion !== this.unavailableMessage.formResetVersion ||
+          model.habits.some((habit) => habit.habitId === this.unavailableMessage?.habitId))
+      ) {
+        this.unavailableMessage = null;
+      }
+      if (model.settingsChanging) {
+        if (modal) {
+          this.rememberDraft(modal.habitId, modal.getDraft());
+        }
+        modal?.close();
+        this.modal = null;
+      } else if (modal) {
+        if (modal.controller !== controller) {
+          this.drafts.clear();
+          modal.close();
+          this.modal = null;
+        } else {
+          const detail = controller.getHabitDetail(modal.habitId, Number(model.today.slice(0, 4)));
+          if (detail) {
+            // The dialog retains its selected year; updates project that year internally.
+            modal.updateFromController(model, model.duplicateHabitIds.has(detail.habitId));
+          } else if (!model.loading && !modal.deletionInFlight) {
+            this.drafts.delete(modal.habitId);
+            this.unavailableMessage = {
+              habitId: modal.habitId,
+              formResetVersion: model.formResetVersion,
+              message: {
+                kind: 'warning',
+                text: t('details.unavailable', { name: modal.habitName }),
+              },
+            };
+            modal.close();
+            this.modal = null;
+          }
+        }
+      }
+      const displayed = {
+        ...model,
+        message: this.modal ? null : (model.message ?? this.unavailableMessage?.message ?? null),
+      };
+      const handlers = createDashboardHandlers(
+        controller,
+        (id, origin) => this.openHabit(id, origin),
+        () => {
+          this.unavailableMessage = null;
+        },
+      );
+      handlers.createHabit = (name, target) => this.createHabit(controller, name, target);
+      renderDashboard(this.contentEl, displayed, handlers);
+    } finally {
+      this.rendering = false;
+    }
   }
 
-  private async requestDeletion(habitId: string): Promise<void> {
-    if (this.deletionModal) {
+  private async createHabit(
+    controller: DashboardController,
+    name: string,
+    target: number,
+  ): Promise<WriteResult | null> {
+    this.unavailableMessage = null;
+    // Rebinding or reopening changes the subscription and owns a different form session.
+    const subscription = this.unsubscribe;
+    const fields = () => ({
+      name: this.contentEl.querySelector<HTMLInputElement>(
+        '[data-form-key="create"] [data-field-key="name"]',
+      ),
+      target: this.contentEl.querySelector<HTMLSelectElement>(
+        '[data-form-key="create"] [data-field-key="target"]',
+      ),
+    });
+    const submitted = fields();
+    const rawName = submitted.name?.value;
+    const rawTarget = submitted.target?.value;
+    const result = await controller.createHabit(name, target);
+    if (
+      result?.status === 'applied' &&
+      this.active &&
+      this.controller === controller &&
+      this.unsubscribe === subscription
+    ) {
+      const current = fields();
+      if (
+        current.name &&
+        current.target &&
+        current.name.value === rawName &&
+        current.target.value === rawTarget
+      ) {
+        current.name.value = '';
+        current.target.value = '7';
+      }
+    }
+    return result;
+  }
+
+  private rememberDraft(habitId: string, draft: HabitDraft): void {
+    if (Object.keys(draft).length) {
+      this.drafts.set(habitId, draft);
+    } else {
+      this.drafts.delete(habitId);
+    }
+  }
+
+  private openHabit(habitId: string, origin: 'grid' | 'archived' = 'grid'): void {
+    if (!this.active || this.modal || this.controller.getViewModel().settingsChanging) {
       return;
     }
     const controller = this.controller;
-    const request = await controller.prepareDeletion(habitId);
-    if (!request) {
+    const model = controller.getViewModel();
+    const initial = controller.getHabitDetail(habitId, Number(model.today.slice(0, 4)));
+    if (!initial) {
       return;
     }
-    if (!this.active || this.controller !== controller || !controller.isDeletionPending(habitId)) {
-      controller.cancelDeletion(habitId);
-      return;
-    }
-    const modal = new DeleteHabitModal(this.app, request.name, (confirmed) => {
-      this.deletionModal = null;
-      if (!confirmed) {
-        controller.cancelDeletion(habitId);
-        this.focusAfterDeletion(habitId);
-        return;
-      }
-      void controller.confirmDeletion(habitId).then((result) => {
-        if (result?.status === 'applied') {
-          this.focusAfterDeletion(habitId);
+    const scrollTop = this.contentEl.scrollTop;
+    this.unavailableMessage = null;
+    const modal = new HabitDetailModal(this.app, controller, initial, {
+      draft: this.drafts.get(habitId),
+      onClose: (draft) => {
+        if (this.modal === modal) {
+          this.modal = null;
         }
-      });
+        if (
+          this.active &&
+          this.controller === controller &&
+          !controller.getViewModel().settingsChanging &&
+          controller.getHabitDetail(habitId, initial.history.year)
+        ) {
+          this.rememberDraft(habitId, draft);
+        }
+        if (this.active) {
+          this.render();
+          this.contentEl.scrollTop = scrollTop;
+          const restore = () => {
+            if (this.active && !this.modal) {
+              this.focusOrigin(habitId, origin);
+            }
+          };
+          restore();
+          queueMicrotask(restore);
+        }
+      },
+      onSaved: (field, raw) => {
+        if (!this.active || this.controller !== controller) {
+          return;
+        }
+        const draft = this.drafts.get(habitId);
+        if (draft?.[field] === raw) {
+          delete draft[field];
+          if (Object.keys(draft).length === 0) {
+            this.drafts.delete(habitId);
+          }
+        }
+        if (this.modal?.controller === controller && this.modal.habitId === habitId) {
+          this.modal.acceptSaved(field, raw);
+        }
+      },
+      onDeleted: () => {
+        if (this.active && this.controller === controller) {
+          this.drafts.delete(habitId);
+          if (this.unavailableMessage?.habitId === habitId) {
+            this.unavailableMessage = null;
+          }
+          this.render();
+        }
+      },
+      onSettled: () => {
+        if (this.active && this.controller === controller) {
+          this.render();
+        }
+      },
     });
-    this.deletionModal = { habitId, controller, modal };
+    this.modal = modal;
     modal.open();
+    modal.updateFromController(model, model.duplicateHabitIds.has(habitId));
   }
 
-  private focusAfterDeletion(habitId: string): void {
-    const trigger = [
-      ...this.contentEl.querySelectorAll<HTMLButtonElement>('[data-delete-habit-id]'),
-    ].find((button) => button.dataset.deleteHabitId === habitId);
-    (
-      trigger ??
-      this.contentEl.querySelector<HTMLElement>(
-        'details[data-disclosure-key="manage"] > summary',
-      ) ??
-      this.contentEl.querySelector<HTMLElement>('input')
-    )?.focus({ preventScroll: true });
+  private focusOrigin(habitId: string, origin: 'grid' | 'archived'): void {
+    const controls = [
+      ...this.contentEl.querySelectorAll<HTMLButtonElement>('[data-open-habit-id]'),
+    ];
+    const matches = controls.filter((button) => button.dataset.openHabitId === habitId);
+    let target: HTMLElement | undefined =
+      matches.find(
+        (button) =>
+          !!button.closest('[data-disclosure-key="archived"]') === (origin === 'archived'),
+      ) ?? matches[0];
+    const archive = target?.closest<HTMLDetailsElement>('[data-disclosure-key="archived"]');
+    if (archive && !archive.open) {
+      target = archive.querySelector<HTMLElement>('summary') ?? undefined;
+    }
+    target ??=
+      this.contentEl.querySelector<HTMLElement>('[data-disclosure-key="archived"] > summary') ??
+      controls[0] ??
+      this.contentEl.querySelector<HTMLElement>('form[data-form-key="create"] input') ??
+      undefined;
+    target?.focus({ preventScroll: true });
   }
 }

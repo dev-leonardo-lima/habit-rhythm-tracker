@@ -1,0 +1,53 @@
+[
+  {
+    "viewport": [
+      320,
+      844
+    ],
+    "theme": "dark",
+    "overflow": false,
+    "smallControls": [],
+    "scrollers": [
+      "modal-content"
+    ],
+    "stats": [
+      "center",
+      "center",
+      "center"
+    ]
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "theme": "light",
+    "overflow": false,
+    "smallControls": [],
+    "scrollers": [
+      "modal-content"
+    ],
+    "stats": [
+      "center",
+      "center",
+      "center"
+    ]
+  },
+  {
+    "viewport": [
+      844,
+      390
+    ],
+    "theme": "dark",
+    "overflow": false,
+    "smallControls": [],
+    "scrollers": [
+      "modal-content"
+    ],
+    "stats": [
+      "center",
+      "center",
+      "center"
+    ]
+  }
+]

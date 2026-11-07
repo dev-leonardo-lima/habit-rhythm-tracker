@@ -5,6 +5,8 @@ import { DashboardController } from '../../src/ui/dashboard-controller';
 import { HabitDashboardView, VIEW_TYPE_HABIT_DASHBOARD } from '../../src/ui/dashboard-view';
 import { HabitTrackerSettingTab } from '../../src/ui/settings-tab';
 import { createHarness, localNoon } from '../helpers/controller-harness';
+import { addHabitNote, makeHabit } from '../helpers/fixtures';
+import { mountDashboard, openHabit, field } from '../helpers/dashboard-view';
 import { createFakeApp } from '../helpers/fake-obsidian-app';
 
 type MockPlugin = HabitTrackerPlugin & {
@@ -31,6 +33,29 @@ async function flush(): Promise<void> {
 }
 
 describe('plugin lifecycle and Obsidian views', () => {
+  it('closes details and discards folder-specific drafts when a controller is replaced', async () => {
+    const outgoing = createHarness({ now: () => localNoon(2026, 10, 28) });
+    const incoming = createHarness({ now: () => localNoon(2026, 10, 28) });
+    addHabitNote(outgoing.vault.files, makeHabit());
+    addHabitNote(incoming.vault.files, makeHabit());
+    await outgoing.controller.load();
+    await incoming.controller.load();
+    let current = outgoing.controller;
+    const view = await mountDashboard(current, () => current);
+    const dialog = openHabit(view);
+
+    field<HTMLInputElement>(dialog, 'name').value = 'Old folder draft';
+    dialog.querySelector<HTMLButtonElement>('[data-delete-habit-id]')!.click();
+    await vi.waitFor(() => expect(outgoing.controller.isDeletionPending('habit-1')).toBe(true));
+    current = incoming.controller;
+    view.rebind();
+    expect(dialog.isConnected).toBe(false);
+    expect(outgoing.controller.isDeletionPending('habit-1')).toBe(false);
+    const fresh = openHabit(view);
+
+    expect(field<HTMLInputElement>(fresh, 'name').value).toBe('Gym');
+  });
+
   it('registers commands, ribbon, view, settings and refresh listeners', async () => {
     const { app, workspace, vault } = createFakeApp();
     const plugin = new HabitTrackerPlugin(app, manifest as never) as MockPlugin;

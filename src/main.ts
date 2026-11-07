@@ -18,6 +18,7 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
   override settings: HabitTrackerSettings = { ...DEFAULT_SETTINGS };
   private controller: DashboardController | null = null;
   private pendingSettingsUpdates = 0;
+  private settingsUpdates: Promise<void> = Promise.resolve();
 
   override async onload(): Promise<void> {
     this.settings = resolveSettings(await this.loadData());
@@ -77,49 +78,44 @@ export default class HabitTrackerPlugin extends Plugin implements SettingsHost {
    */
   async updateSettings(patch: Partial<HabitTrackerSettings>): Promise<void> {
     const next = validateSettings({ ...this.settings, ...patch });
-    const previous = this.settings;
     const outgoing = this.controller;
     const pending = outgoing?.beginSettingsUpdate();
     this.pendingSettingsUpdates += 1;
-    this.settings = next;
-    try {
-      await this.saveData(next);
-      let active = outgoing;
-      let settled = pending;
-      for (;;) {
+    const update = this.settingsUpdates.then(async () => {
+      const active = this.controller;
+      const settled = active === outgoing ? pending : active?.beginSettingsUpdate();
+      try {
+        await this.saveData(next);
         await settled;
-        if (active === this.controller) {
-          break;
+        const outcome =
+          active?.getSettingsDeletionOutcome() ?? outgoing?.getSettingsDeletionOutcome();
+        this.settings = next;
+        this.configure();
+        if (this.pendingSettingsUpdates > 1) {
+          void this.controller?.beginSettingsUpdate();
         }
-        active = this.controller;
-        settled = active?.beginSettingsUpdate();
-      }
-      const outcome =
-        active?.getSettingsDeletionOutcome() ?? outgoing?.getSettingsDeletionOutcome();
-      this.configure();
-      if (this.pendingSettingsUpdates > 1) {
-        void this.controller?.beginSettingsUpdate();
-      }
-      if (outcome) {
-        this.controller?.restoreDeletionOutcome(outcome);
-      }
-      for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)) {
-        if (leaf.view instanceof HabitDashboardView) {
-          leaf.view.rebind();
+        if (outcome) {
+          this.controller?.restoreDeletionOutcome(outcome);
+        }
+        for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_HABIT_DASHBOARD)) {
+          if (leaf.view instanceof HabitDashboardView) {
+            leaf.view.rebind();
+          }
+        }
+        await this.controller?.load();
+      } finally {
+        this.pendingSettingsUpdates -= 1;
+        if (this.pendingSettingsUpdates === 0) {
+          this.controller?.endSettingsUpdate();
         }
       }
-      await this.controller?.load();
-    } catch (error) {
-      if (this.settings === next) {
-        this.settings = previous;
-      }
-      throw error;
-    } finally {
-      this.pendingSettingsUpdates -= 1;
-      if (this.pendingSettingsUpdates === 0) {
-        this.controller?.endSettingsUpdate();
-      }
-    }
+    });
+    // A failed save rejects its own caller without blocking later settings changes.
+    this.settingsUpdates = update.then(
+      () => undefined,
+      () => undefined,
+    );
+    return update;
   }
 
   private configure(): void {

@@ -1,0 +1,23 @@
+{
+  "before": {
+    "gap": 58.796875,
+    "viewport": [
+      957,
+      949
+    ],
+    "messages": [
+      "Vale a partir da próxima segunda-feira.",
+      "Meta semanal de 3 dias agendada para a próxima semana."
+    ]
+  },
+  "after": {
+    "gap": 37.3984375,
+    "viewport": [
+      957,
+      949
+    ],
+    "messages": [
+      "Meta semanal de 3 dias agendada para a próxima semana."
+    ]
+  }
+}

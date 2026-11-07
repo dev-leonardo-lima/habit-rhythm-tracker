@@ -4,6 +4,7 @@ import { parseHabitNote } from '../../src/storage/habit-note';
 import { createDashboardHandlers } from '../../src/ui/controller-handlers';
 import { renderDashboard } from '../../src/ui/dashboard-renderer';
 import { createHarness, localNoon } from '../helpers/controller-harness';
+import { mountDashboard, openHabit } from '../helpers/dashboard-view';
 import { addHabitNote, makeHabit } from '../helpers/fixtures';
 
 function useLanguage(language: string): void {
@@ -32,7 +33,7 @@ describe('US2: complete habit workflow in Portuguese', () => {
   it('creates, marks, navigates, reviews, renames, retargets, archives and reactivates', async () => {
     useLanguage('pt-BR');
     let now = localNoon(2026, 10, 28);
-    const { harness, container, render, unsubscribe } = setup(() => now);
+    const harness = createHarness({ now: () => now });
     addHabitNote(
       harness.vault.files,
       makeHabit({
@@ -43,8 +44,9 @@ describe('US2: complete habit workflow in Portuguese', () => {
       }),
       'Habits/Academia.md',
     );
-    await harness.controller.load();
-    render();
+    const view = await mountDashboard(harness.controller);
+    const dashboard = view.contentEl;
+    let container = dashboard;
 
     const mark = async (date: string): Promise<void> => {
       const checkbox = container.querySelector<HTMLInputElement>(
@@ -65,9 +67,7 @@ describe('US2: complete habit workflow in Portuguese', () => {
 
     await mark('2026-10-26');
     await mark('2026-10-27');
-    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toBe(
-      '2 / 2 · Concluída',
-    );
+    expect(container.querySelector('.habit-tracker-habit-status')?.textContent).toBe('2 / 2');
     expect(container.querySelector('.habit-tracker-meta-streak')?.textContent).toBe(
       'Sequência: 1 semana',
     );
@@ -81,8 +81,8 @@ describe('US2: complete habit workflow in Portuguese', () => {
       '26 out – 1 nov 2026',
     );
 
-    button(container, 'Ver histórico de Academia').click();
-    expect(container.textContent).toContain('Histórico do hábito');
+    container = openHabit(view);
+
     expect(container.textContent).toContain('Sequência atual');
     expect(container.textContent).toContain('1 semana');
     expect(container.textContent).toContain('3 dias');
@@ -112,7 +112,7 @@ describe('US2: complete habit workflow in Portuguese', () => {
     await vi.waitFor(() =>
       expect(harness.controller.getViewModel().habits[0]?.pendingArchive).toBe(true),
     );
-    expect(container.textContent).toContain('Arquivar na próxima semana');
+    expect(dashboard.textContent).toContain('Arquivar na próxima semana');
     button(container, 'Cancelar arquivamento pendente de Academia Nova').click();
     await vi.waitFor(() =>
       expect(harness.controller.getViewModel().habits[0]?.pendingArchive).toBe(false),
@@ -140,7 +140,7 @@ describe('US2: complete habit workflow in Portuguese', () => {
     now = localNoon(2026, 11, 2);
     await harness.controller.refreshClock();
     expect(harness.controller.getViewModel().habits[0]?.state).toBe('archived');
-    expect(container.textContent).toContain('Não há hábitos para acompanhar nesta semana.');
+    expect(dashboard.textContent).toContain('Não há hábitos para acompanhar nesta semana.');
 
     button(container, 'Reativar Academia Nova esta semana').click();
     await vi.waitFor(() =>
@@ -150,8 +150,7 @@ describe('US2: complete habit workflow in Portuguese', () => {
       parseHabitNote(harness.vault.files.get('Habits/Academia.md') ?? '').habit.completions,
     ).toEqual(['2025-12-30', '2026-10-26', '2026-10-27']);
 
-    unsubscribe();
-    container.remove();
+    await view.onClose();
   });
 
   it('shows Portuguese conflict, editor-blocked and invalid-note errors', async () => {
@@ -263,8 +262,14 @@ describe('US2: complete habit workflow in Portuguese', () => {
     addHabitNote(harness.vault.files, makeHabit({ name: 'Academia' }), 'Habits/Academia.md');
     await harness.controller.load();
     render();
-    expect(container.textContent).toContain('Gerenciar hábitos');
-    expect(container.textContent).toContain('Arquivar a partir da próxima semana');
+    const view = await mountDashboard(harness.controller);
+    const dialog = openHabit(view);
+
+    expect(dialog.querySelector('.habit-tracker-editor')?.getAttribute('aria-label')).toBe(
+      'Editar hábito Academia',
+    );
+    expect(dialog.textContent).toContain('Arquivar');
+    expect(dialog.textContent).toContain('A partir da próxima semana.');
     expect(container.textContent).not.toContain('Manage habits');
   });
 });

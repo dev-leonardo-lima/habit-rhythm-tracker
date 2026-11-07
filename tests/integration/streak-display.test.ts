@@ -43,7 +43,7 @@ describe('US2: dashboard progress and streak display', () => {
 
     const row = container.querySelector('.habit-tracker-habit-row');
     expect(row?.textContent).toContain('0 / 4');
-    expect(row?.textContent).toContain('In progress');
+    expect(row?.textContent).not.toContain('In progress');
     expect(row?.textContent).toContain('2 weeks');
   });
 
@@ -82,7 +82,7 @@ describe('US2: dashboard progress and streak display', () => {
 
     const current = container.querySelector('.habit-tracker-habit-row');
     expect(current?.textContent).toContain('4 / 4');
-    expect(current?.textContent).toContain('Successful');
+    expect(current?.textContent).not.toContain('Successful');
     expect(current?.textContent).toContain('3 weeks');
   });
 
