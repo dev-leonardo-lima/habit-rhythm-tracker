@@ -56,6 +56,7 @@ export default tseslint.config(
       'obsidianmd/prefer-create-el': 'warn',
       'obsidianmd/prefer-instanceof': 'warn',
       'obsidianmd/settings-tab/prefer-setting-definitions': 'warn',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/unbound-method': 'warn',
     },
   },

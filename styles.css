@@ -1930,7 +1930,14 @@
 }
 
 .habit-tracker-info {
-  display: contents;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.habit-tracker-editor-footer > .habit-tracker-info {
+  /* The action tooltip must not occupy a cell in the button grid. */
+  position: absolute;
 }
 
 .habit-tracker-editor .habit-tracker-info > button.habit-tracker-info-button {
@@ -2329,15 +2336,17 @@
   }
 
   .habit-tracker-editor-target-column {
-    display: contents;
+    /* Share the parent rows around appearance without flattening this wrapper. */
+    grid-area: target-start / 1 / preview-end / -1;
+    grid-template-rows: subgrid;
   }
 
   .habit-tracker-editor-target {
-    grid-area: target;
+    grid-area: 1 / 1;
   }
 
   .habit-tracker-editor-preview {
-    grid-area: preview;
+    grid-area: 3 / 1;
   }
 }
 

@@ -3,7 +3,8 @@
 ## Baseline and scope
 
 - Branch: `feature/005-habit-details-modal`, based on main commit `672c98a`.
-- Release candidate version is 0.4.0; minimum Obsidian version remains 1.14.4.
+- Feature version is 0.4.0; the community-review correction below targets patch 0.4.1.
+  Minimum Obsidian version remains 1.14.4.
   The maintainer authorized a minor bump with the feature commit: new habit details and name
   validation preserve existing notes, identities and history without a migration.
 - The initial baseline passed 238 tests. The current results below supersede intermediate runs.
@@ -18,7 +19,7 @@
 | Typecheck | PASS |
 | ESLint | PASS |
 | Prettier | PASS |
-| Version metadata | PASS; 0.4.0 remains consistent |
+| Version metadata | PASS; 0.4.1 remains consistent |
 | Full coverage suite | PASS; **42 files / 312 tests** |
 | Lines | **93.08% (2691/2891)**; required minimum 80% |
 | Branches | **84.99% (1365/1606)**; required minimum 80% |
@@ -112,6 +113,37 @@ Typecheck, lint, formatting, versions and the complete coverage suite pass. Nati
 pending under T048: the attempt again failed with `Sky Computer Use native pipe startup failed`.
 No GUI action was performed. Desktop DOM selection tests do not establish software-keyboard behavior
 on real mobile devices; T021 remains pending. Listing PNGs and note data are outside these fixes.
+
+## Community review follow-up — 0.4.1
+
+The published 0.4.0 review reported one unnecessary `ToggleEvent` assertion and two
+`display: contents` declarations. Both were reproduced before correction:
+
+- Type-aware ESLint reported the redundant assertion at `habit-icon-picker.ts:379`. The handler
+  now uses its inferred event type, and the existing source lint configuration enables
+  `@typescript-eslint/no-unnecessary-type-assertion` to catch recurrences.
+- The compatibility rule from [Obsidian's official Stylelint configuration](https://github.com/obsidianmd/stylelint-config)
+  reported `css-display-contents` at the same two original lines, 1933 and 2332, targeting Electron
+  39.0 / Chrome 142 (Obsidian 1.11.4). The corrected stylesheet produces **zero compatibility
+  warnings** with that target. The information control uses an inline flex box; its action tooltip
+  remains outside the button grid. The narrow target column shares parent rows with `subgrid`,
+  preserving name → target → appearance/actions → preview without flattening the wrapper.
+
+The production editor and installed Obsidian host stylesheet were rendered in isolated headless
+Chromium 153.0.8010.12 with synthetic data and the test icon/API registry. Compared the old and new
+styles at 1200 × 900, 320 × 844, 390 × 844 and 844 × 390, in English/pt-BR, light/dark, with and without
+pending target/archive changes: **32 cases passed**, with **0px maximum change** in the measured
+editor/field/action/preview bounds and no horizontal overflow. Information panels stayed inside the
+content bounds; archive timing and native-popover icon selection/preview updates worked in all cases.
+Desktop and narrow captures were visually inspected. These are browser-fixture checks, not native
+Obsidian, real mobile or screen-reader acceptance; the native pipe remained unavailable.
+
+Typecheck, ESLint, format/version checks, all 312 tests and the isolated production build pass for
+0.4.1. Coverage remains 93.08% lines / 84.99% branches. QA tooling was installed only in a temporary
+directory, with no project dependency changes. Temporary scripts, extracted host CSS and captures
+were removed. Existing listing PNGs, vault notes and the ignored root bundle were preserved.
+T021/T048 remain pending. The community site's review of a future published 0.4.1 is still separate
+from reproducing its checks locally.
 
 ## Native verification
 
@@ -207,8 +239,8 @@ unchecked; no claim of complete mobile acceptance or release exception is made.
   bundle were unchanged. The asynchronous follow-up also compared its own fresh pre-run snapshot.
   The persistent Preview has the current compiled files; the latest target/dashboard fixes still
   need the native reload recorded under T048. Production-vault plugin files were not updated.
-- The feature includes the authorized minor bump to 0.4.0. Merge and publication remain subsequent
-  release work under the release guide; T021/T048 acceptance gaps remain recorded above.
+- Version 0.4.0 was published before the community-review follow-up. Patch 0.4.1 needs its own
+  merge/publication under the release guide; T021/T048 acceptance gaps remain recorded above.
 
 ## Constitution review
 
