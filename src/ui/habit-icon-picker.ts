@@ -376,7 +376,7 @@ export function renderIconPicker(
   details.addEventListener('habit-tracker:close-icon-picker', () => closePopover(true));
   details.addEventListener('habit-tracker:dispose-icon-picker', () => closePopover(false));
   panel.addEventListener('toggle', (event) => {
-    if ((event as ToggleEvent).newState === 'closed') {
+    if (event.newState === 'closed') {
       closePopover(false);
     }
   });
